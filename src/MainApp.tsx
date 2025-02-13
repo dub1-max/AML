@@ -1,11 +1,11 @@
 // MainApp.tsx
 import React, { useState, useEffect } from 'react';
 import {
-    Search, AlertCircle, FileText, Shield, LogOut, Loader2, XCircle
+    Search, AlertCircle, FileText, Shield, LogOut, Loader2, XCircle, Link, Users, File
 } from 'lucide-react';
 import type { SearchResult, Tracking } from './types';
 import { useAuth } from './AuthContext';
-import ActivityDashboard from './ActivityDashboard';
+import ActivityDashboard from './Profiles';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -21,6 +21,8 @@ function MainApp(_props: MainAppProps) {
     const [tracking, setTracking] = useState<Tracking>({});
     const [trackedResults, setTrackedResults] = useState<SearchResult[]>([]);
     const [showDashboard, setShowDashboard] = useState(false);
+    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk'>('insights'); // Track active section
+
     const navigate = useNavigate();
 
     // Fetch tracked data (corrected headers)
@@ -32,7 +34,7 @@ function MainApp(_props: MainAppProps) {
             const response = await fetch(`${API_BASE_URL}/tracking`, {
                 credentials: 'include', // Removed unnecessary headers
             });
-            
+
             if (!response.ok) {
                 if (response.status === 401) {
                     navigate('/login');
@@ -40,10 +42,10 @@ function MainApp(_props: MainAppProps) {
                 }
                 throw new Error(`HTTP Error! Status: ${response.status}`);
             }
-            
+
             const trackingData: any[] = await response.json();
             const transformedTracking: Tracking = {};
-            
+
             trackingData.forEach(item => {
                 transformedTracking[item.name] = {
                     isTracking: item.isTracking === 1,
@@ -51,7 +53,7 @@ function MainApp(_props: MainAppProps) {
                     stopDate: item.stopDate
                 };
             });
-            
+
             setTracking(transformedTracking);
         } catch (error) {
             console.error('Could not fetch tracked data:', error);
@@ -76,7 +78,7 @@ function MainApp(_props: MainAppProps) {
                 const response = await fetch(`${API_BASE_URL}/persons`, {
                     credentials: 'include',
                 });
-                
+
                 if (!response.ok) {
                     if (response.status === 401) {
                         navigate('/login');
@@ -84,7 +86,7 @@ function MainApp(_props: MainAppProps) {
                     }
                     throw new Error(`HTTP Error! Status: ${response.status}`);
                 }
-                
+
                 const allResults: SearchResult[] = await response.json();
                 const tracked = allResults.filter(result => tracking[result.name]?.isTracking);
                 setTrackedResults(tracked);
@@ -134,7 +136,7 @@ function MainApp(_props: MainAppProps) {
     // Update tracking (corrected URL and error handling)
     const updateTracking = async (name: string, newTrackingStatus: boolean) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/tracking/${name}`, {
+            const response = await fetch(`<span class="math-inline">\{API\_BASE\_URL\}/tracking/</span>{name}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isTracking: newTrackingStatus }),
@@ -166,7 +168,7 @@ function MainApp(_props: MainAppProps) {
     const toggleTracking = (name: string) => {
         const currentTrackingStatus = tracking[name]?.isTracking ?? false;
         updateTracking(name, !currentTrackingStatus);
-        
+
         setTracking((prevTracking) => {
             const newTracking = { ...prevTracking };
             if (newTracking[name]) {
@@ -215,42 +217,65 @@ function MainApp(_props: MainAppProps) {
         return 'text-green-600';
     };
 
-    // JSX rendering remains the same as in the original corrected version
-    // ... (Include all the JSX from the original question here)
 
-
-
-
- return (
+    return (
         <div className="flex min-h-screen bg-gray-50">
             {/* Sidebar */}
             <div className="w-64 bg-[#4A1D96] text-white">
                 <div className="p-6">
                     <h1 className="text-2xl font-bold mb-8">AML Checker</h1>
                     <nav className="space-y-2">
-                        <button className="flex items-center space-x-3 w-full p-3 rounded-lg bg-[#5D2BA8] text-white">
-                            <AlertCircle className="w-5 h-5" />
-                            <span>Alerts</span>
-                        </button>
+                        
                         <button
-                            onClick={() => setShowDashboard(false)}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg  text-gray-300 ${!showDashboard
-                                ? 'bg-[#5D2BA8] text-white'
-                                : 'hover:bg-[#5D2BA8]'
-                                }`}
-                        >
-                            <FileText className="w-5 h-5" />
-                            <span>Alerts Dashboard</span>
-                        </button>
-                        <button
-                            onClick={() => setShowDashboard(true)}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${showDashboard
+                            onClick={() => { setShowDashboard(true); setActiveSection('insights'); }}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'insights'
                                 ? 'bg-[#5D2BA8] text-white'
                                 : 'hover:bg-[#5D2BA8]'
                                 }`}
                         >
                             <Shield className="w-5 h-5" />
-                            <span>Activity Dashboard</span>
+                            <span>Insights</span>
+                        </button>
+                        <button
+                            onClick={() => { setShowDashboard(false); setActiveSection('profiles'); }}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg  text-gray-300 ${activeSection === 'profiles'
+                                ? 'bg-[#5D2BA8] text-white'
+                                : 'hover:bg-[#5D2BA8]'
+                                }`}
+                        >
+                            <FileText className="w-5 h-5" />
+                            <span>Profiles</span>
+                        </button>
+                        {/* New Buttons */}
+                        <button
+                            onClick={() => setActiveSection('deepLink')}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'deepLink'
+                                ? 'bg-[#5D2BA8] text-white'
+                                : 'hover:bg-[#5D2BA8]'
+                                }`}
+                        >
+                            <Link className="w-5 h-5" />
+                            <span>Deep Link Onboarding</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('selfService')}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'selfService'
+                                ? 'bg-[#5D2BA8] text-white'
+                                : 'hover:bg-[#5D2BA8]'
+                                }`}
+                        >
+                            <Users className="w-5 h-5" />
+                            <span>Self Service Onboarding</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('bulk')}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'bulk'
+                                ? 'bg-[#5D2BA8] text-white'
+                                : 'hover:bg-[#5D2BA8]'
+                                }`}
+                        >
+                            <File className="w-5 h-5" />
+                            <span>Bulk Onboarding</span>
                         </button>
                     </nav>
                 </div>
@@ -274,15 +299,15 @@ function MainApp(_props: MainAppProps) {
                                 <span className="text-sm font-medium">
                                     {user?.name || 'User'}  {/* Use optional chaining */}
                                 </span>
-                                 <button
+                                <button
                                     onClick={async () => { // Make this onClick async
-                                        await logout();     // Wait for logout to complete
+                                        await logout();      // Wait for logout to complete
                                         navigate('/login'); // Then navigate
                                     }}
                                     className="ml-4 text-gray-600 hover:text-gray-800"
                                 >
                                     <LogOut className="w-5 h-5" />
-                                 </button>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -364,9 +389,9 @@ function MainApp(_props: MainAppProps) {
                                 <tbody>
                                     {(trackedResults.length > 0 ? trackedResults : searchResults).map(
                                         (result, index) => {
-                                             const isTracking =
+                                            const isTracking =
                                                 tracking[result.name]?.isTracking ?? false;
-                                             const agingContent = calculateAging(result);
+                                            const agingContent = calculateAging(result);
                                             return (
                                                 <tr
                                                     key={index}
@@ -421,7 +446,7 @@ function MainApp(_props: MainAppProps) {
                                                         </span>
                                                     </td>
                                                     <td>
-                                                         <button
+                                                        <button
                                                             onClick={() => toggleTracking(result.name)}
                                                             className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${isTracking ? 'bg-purple-500' : 'bg-gray-300'
                                                                 }`}

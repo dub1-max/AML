@@ -1,4 +1,4 @@
-// components/ActivityDashboard.tsx
+// Profiles.tsx
 import React from 'react';
 import type { SearchResult, Tracking } from './types'; // Adjust path as necessary
 
