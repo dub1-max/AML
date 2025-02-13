@@ -1,4 +1,4 @@
-// Profiles.tsx
+// Insights.tsx
 import React from 'react';
 import type { SearchResult, Tracking } from './types'; // Adjust path as necessary
 

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import type { SearchResult, Tracking } from './types';
 import { useAuth } from './AuthContext';
-import ActivityDashboard from './Profiles';
+import ActivityDashboard from './Insights';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:3001/api';
