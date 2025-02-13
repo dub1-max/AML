@@ -1,7 +1,7 @@
 // Register.tsx
 import React, { useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { Link } from 'react-router-dom'; // Import Link
+import { Link } from 'react-router-dom'; 
 
 export default function Register() {
   const [email, setEmail] = useState('');

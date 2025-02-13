@@ -1,23 +1,26 @@
-// types.ts
+// src/types.ts
+
 export interface SearchResult {
+  id: number; // Add id, as it is auto-incremented in the database
   name: string;
   type: string;
   country: string;
   identifiers: string;
   riskLevel: number;
-  sanctions: string[];
+  sanctions: string[]; // Good
   dataset: string;
-  lastUpdated?: string | null; // Changed to string | null for consistency
+  lastUpdated?: string; // Keep as optional string (ISO format)
 }
 
 export interface Tracking {
   [name: string]: {
       isTracking: boolean;
-      stopDate?: string; // ISO string
+      startDate?: string; // ISO string, optional
+      stopDate?: string;  // ISO string, optional
   };
 }
 
-export interface DailyData {
+export interface DailyData { // No changes needed here
   date: string;
   alerts: number;
   falsePositiveRate: number;
@@ -25,13 +28,13 @@ export interface DailyData {
 }
 
 export interface User {
-  id: string;
+  id: number; // Corrected to number
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user'; // Good
 }
 
-export interface AuthState {
+export interface AuthState {  //No change
   user: User | null;
   isAuthenticated: boolean;
 }
