@@ -1,7 +1,8 @@
 // MainApp.tsx
 import React, { useState, useEffect } from 'react';
 import {
-    Search, FileText, Shield, LogOut, Link, Users, File
+    Search, FileText, Shield, LogOut, Link, Users, File,
+    Plus
 } from 'lucide-react';
 import type { SearchResult, Tracking } from './types';
 import { useAuth } from './AuthContext';
@@ -249,7 +250,7 @@ function MainApp(_props: MainAppProps) {
                                 : 'hover:bg-[#5D2BA8]'
                                 }`}
                         >
-                            <Users className="w-5 h-5" />
+                            <Plus className="w-5 h-5" />
                             <span>Self Service Onboarding</span>
                         </button>
                         <button
