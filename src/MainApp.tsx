@@ -188,7 +188,7 @@ function MainApp(_props: MainAppProps) {
                                 : 'hover:bg-[#5D2BA8]'
                                 }`}
                         >
-                            <Shield className="w-5 h-5" />
+                            <FileText className="w-5 h-5" />
                             <span>Insights</span>
                         </button>
                         <button
@@ -203,7 +203,7 @@ function MainApp(_props: MainAppProps) {
                                 : 'hover:bg-[#5D2BA8]'
                                 }`}
                         >
-                            <FileText className="w-5 h-5" />
+                            <Users className="w-5 h-5" />
                             <span>Profiles</span>
                         </button>
 
