@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar } from 'lucide-react'; // Import the Calendar icon
+import { Calendar } from 'lucide-react';
 
 function IndividualOB() {
     const [fullName, setFullName] = useState('');
@@ -10,7 +10,7 @@ function IndividualOB() {
     const [nationality, setNationality] = useState('');
     const [countryOfResidence, setCountryOfResidence] = useState('');
     const [otherNationalities, setOtherNationalities] = useState(false);
-    const [specifiedOtherNationalities, setSpecifiedOtherNationalities] = useState('');  // Changed to string
+    const [specifiedOtherNationalities, setSpecifiedOtherNationalities] = useState('');
     const [nationalIdNumber, setNationalIdNumber] = useState('');
     const [nationalIdExpiry, setNationalIdExpiry] = useState('');
     const [passportNumber, setPassportNumber] = useState('');
@@ -20,7 +20,7 @@ function IndividualOB() {
     const [city, setCity] = useState('');
     const [zipCode, setZipCode] = useState('');
     const [contactNumber, setContactNumber] = useState('');
-    const [dialingCode, setDialingCode] = useState(''); // Added dialing code
+    const [dialingCode, setDialingCode] = useState('');
     const [workType, setWorkType] = useState('');
     const [industry, setIndustry] = useState('');
     const [productTypeOffered, setProductTypeOffered] = useState('');
@@ -28,23 +28,40 @@ function IndividualOB() {
     const [companyName, setCompanyName] = useState('');
     const [positionInCompany, setPositionInCompany] = useState('');
 
-    const handleSubmit = (event: React.FormEvent) => {
+    const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        console.log({
+
+        // Basic client-side validation (mirror server-side)
+        if (!fullName || !email) {
+            alert("Full Name and Email are required."); // Or use a more sophisticated UI element
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert("Invalid email format.");
+            return;
+        }
+         // Convert date strings to ISO format (YYYY-MM-DD) for consistency with MySQL DATE type
+        const formatDate = (dateString: string) => {
+          if (!dateString) return null; // Handle empty date strings
+           return new Date(dateString).toISOString().split('T')[0];
+        };
+
+        const formData = {
             fullName,
             email,
             residentStatus,
             gender,
-            dateOfBirth,
+            dateOfBirth: formatDate(dateOfBirth), // Format the date
             nationality,
             countryOfResidence,
             otherNationalities,
             specifiedOtherNationalities,
             nationalIdNumber,
-            nationalIdExpiry,
+            nationalIdExpiry: formatDate(nationalIdExpiry),  // Format the date
             passportNumber,
-            passportExpiry,
-            address,        // New fields in submission
+            passportExpiry: formatDate(passportExpiry), // Format the date
+            address,
             state,
             city,
             zipCode,
@@ -56,8 +73,56 @@ function IndividualOB() {
             productOffered,
             companyName,
             positionInCompany
-        });
-        // Add your API call or other submission logic here
+        };
+
+        try {
+            const response = await fetch('http://localhost:3001/api/registerIndividual', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert(data.message);  // Success message
+                // Optionally reset the form here:
+                setFullName('');
+                setEmail('');
+                setResidentStatus('');
+                setGender('');
+                setDateOfBirth('');
+                setNationality('');
+                setCountryOfResidence('');
+                setOtherNationalities(false);
+                setSpecifiedOtherNationalities('');
+                setNationalIdNumber('');
+                setNationalIdExpiry('');
+                setPassportNumber('');
+                setPassportExpiry('');
+                setAddress('');
+                setState('');
+                setCity('');
+                setZipCode('');
+                setContactNumber('');
+                setDialingCode('');
+                setWorkType('');
+                setIndustry('');
+                setProductTypeOffered('');
+                setProductOffered('');
+                setCompanyName('');
+                setPositionInCompany('');
+
+
+            } else {
+                alert(data.message || 'Registration failed'); // Show server error message
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            alert('An error occurred during submission. Please try again.'); // Network error
+        }
     };
 
     return (
@@ -141,13 +206,13 @@ function IndividualOB() {
                             className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         >
                             <option value="">Select Nationality</option>
-                            {/*  Example nationalities (add more as needed) */}
+                            {/* Example nationalities (add more as needed) */}
                             <option value="us">United States</option>
                             <option value="ca">Canada</option>
                             <option value="gb">United Kingdom</option>
                             <option value="fr">France</option>
                             <option value="de">Germany</option>
-                            {/*  Add more options here */}
+                            {/* Add more options here */}
                         </select>
                     </div>
 
@@ -280,7 +345,7 @@ function IndividualOB() {
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
                             placeholder="Enter address"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:sm:text-sm"
                         />
                     </div>
                     <div>
@@ -293,7 +358,7 @@ function IndividualOB() {
                         >
                             <option value="">Select State</option>
                             {/* Add state options here */}
-                             <option value="AL">Alabama</option>
+                            <option value="AL">Alabama</option>
                             <option value="AK">Alaska</option>
                             <option value="AZ">Arizona</option>
                             <option value="AR">Arkansas</option>
@@ -317,16 +382,16 @@ function IndividualOB() {
                         />
                     </div>
                     <div>
-                         <label htmlFor="dialingCode" className="block text-sm font-medium text-gray-700">DIALING CODE</label>
-                            <input
-                                type="text"
-                                id="dialingCode"
-                                value={dialingCode}
-                                onChange={(e) => setDialingCode(e.target.value)}
-                                placeholder="e.g., +1"
-                                className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            />
-                        </div>
+                        <label htmlFor="dialingCode" className="block text-sm font-medium text-gray-700">DIALING CODE</label>
+                        <input
+                            type="text"
+                            id="dialingCode"
+                            value={dialingCode}
+                            onChange={(e) => setDialingCode(e.target.value)}
+                            placeholder="e.g., +1"
+                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        />
+                    </div>
                     <div>
                         <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700">CONTACT NUMBER</label>
                         <input
@@ -340,8 +405,8 @@ function IndividualOB() {
                     </div>
                 </div>
 
-                 {/* Profile Information */}
-                 <h2 className="text-xl font-semibold mt-6 mb-4 text-gray-900">Profile Information</h2>
+                {/* Profile Information */}
+                <h2 className="text-xl font-semibold mt-6 mb-4 text-gray-900">Profile Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label htmlFor="workType" className="block text-sm font-medium text-gray-700">WORK TYPE</label>
@@ -359,23 +424,23 @@ function IndividualOB() {
                             {/* Add more options as needed */}
                         </select>
                     </div>
-                     <div>
+                    <div>
                         <label htmlFor="industry" className="block text-sm font-medium text-gray-700">INDUSTRY</label>
-                         <select
+                        <select
                             id="industry"
                             value={industry}
                             onChange={(e) => setIndustry(e.target.value)}
                             className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                          >
+                        >
                             <option value="">Select Industry</option>
                             <option value="finance">Finance</option>
                             <option value="technology">Technology</option>
                             <option value="healthcare">Healthcare</option>
                             <option value="education">Education</option>
                             <option value="retail">Retail</option>
-                             {/* Add more industry options here */}
-                          </select>
-                     </div>
+                            {/* Add more industry options here */}
+                        </select>
+                    </div>
                     <div>
                         <label htmlFor="productTypeOffered" className="block text-sm font-medium text-gray-700">PRODUCT TYPE OFFERED TO CUSTOMER</label>
                         <select
@@ -414,7 +479,7 @@ function IndividualOB() {
                         />
                     </div>
 
-                     <div>
+                    <div>
                         <label htmlFor="positionInCompany" className="block text-sm font-medium text-gray-700">POSITION IN COMPANY</label>
                         <input
                             type="text"

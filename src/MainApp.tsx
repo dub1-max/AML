@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 // Import the new components
 import IndividualOB from './IndividualOB';
 import CompanyOB from './CompanyOB';
+import Insights from './Insights';
 
 
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -349,11 +350,7 @@ function MainApp(_props: MainAppProps) {
 
                 {/* Conditionally render Insights, Profiles, IndividualOB, or CompanyOB */}
                 {showDashboard ? (
-                    Object.keys(tracking).length > 0 ? (
-                        <ActivityDashboard trackedResults={trackedResults} tracking={tracking} />
-                    ) : (
-                        <div>Loading...</div>
-                    )
+                    <Insights />
                 ) : showIndividualOB ? (
                     <IndividualOB />
                 ) : showCompanyOB ? (
