@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
+import { useAuth } from './AuthContext'; // Import useAuth
 
 function IndividualOB() {
     const [fullName, setFullName] = useState('');
@@ -27,6 +28,8 @@ function IndividualOB() {
     const [productOffered, setProductOffered] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [positionInCompany, setPositionInCompany] = useState('');
+
+    const { user } = useAuth(); // Use useAuth to get the user
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -82,6 +85,7 @@ function IndividualOB() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(formData),
+                credentials: 'include', // Ensure credentials are sent
             });
 
             const data = await response.json();
