@@ -21,7 +21,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.5",
-    "recharts": "^2.15.1"
+    "recharts": "^2.15.1",
+    "world-countries": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
@@ -40,6 +41,6 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.3.0",
-    "vite": "^5.4.2"
+    "vite": "^6.2.0"
   }
 }
