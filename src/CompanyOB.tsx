@@ -428,7 +428,7 @@ function CompanyOB() {
             disabled={loading}
             className="mt-4 px-6 py-2 bg-[#4A1D96] text-white rounded-lg hover:bg-[#3c177d] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 disabled:opacity-50"
           >
-            {loading ? "Submitting..." : "SEND LINK"}
+            {loading ? "Submitting..." : "REGISTER"}
           </button>
           {error && <p className="mt-2 text-red-500">{error}</p>}
         </div>
