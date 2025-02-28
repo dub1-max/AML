@@ -1,10 +1,8 @@
-// Profiles.tsx
 import React, { useState, useEffect } from 'react';
-import { Loader2, XCircle, Download } from 'lucide-react';
+import { Loader2, XCircle, Download, CheckCircle } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
-// REMOVE: import 'jspdf-autotable'; // We'll use dynamic import inside the functions.
 
 interface SearchResult {
     name: string;
@@ -43,6 +41,7 @@ interface CompanyOB {
     contact_phone: string;
     tax_number: string;
     regulatory_licenses: string;
+    status?: string;
 }
 
 interface IndividualOB {
@@ -72,6 +71,7 @@ interface IndividualOB {
     product_offered: string;
     company_name: string;
     position_in_company: string;
+    status?: string;
 }
 
 interface ProfilesProps {
@@ -87,6 +87,7 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
     const [activeTab, setActiveTab] = useState<'alerts' | 'customerProfiles'>('alerts');
     const [companyData, setCompanyData] = useState<CompanyOB[]>([]);
     const [individualData, setIndividualData] = useState<IndividualOB[]>([]);
+    const [allPersons, setAllPersons] = useState<SearchResult[]>([]);
 
     const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -94,6 +95,18 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
         if (!user) return;
 
         try {
+            // Fetch all persons data first
+            const personsResponse = await fetch(`${API_BASE_URL}/persons`, { credentials: 'include' });
+            if (!personsResponse.ok) {
+                if (personsResponse.status === 401) {
+                    navigate('/login');
+                    return;
+                }
+                throw new Error(`HTTP Error! Status: ${personsResponse.status}`);
+            }
+            const allPersonsData: SearchResult[] = await personsResponse.json();
+            setAllPersons(allPersonsData);
+
             // Fetch Tracking Data
             const trackingResponse = await fetch(`${API_BASE_URL}/tracking`, { credentials: 'include' });
             if (!trackingResponse.ok) {
@@ -114,17 +127,8 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
             });
             setTracking(transformedTracking);
 
-            // Fetch Persons Data (for tracked results)
-            const personsResponse = await fetch(`${API_BASE_URL}/persons`, { credentials: 'include' });
-            if (!personsResponse.ok) {
-                if (personsResponse.status === 401) {
-                    navigate('/login');
-                    return;
-                }
-                throw new Error(`HTTP Error! Status: ${personsResponse.status}`);
-            }
-            const allResults: SearchResult[] = await personsResponse.json();
-            const tracked = allResults.filter(result => transformedTracking[result.name]?.isTracking);
+            // Set tracked results
+            const tracked = allPersonsData.filter(result => transformedTracking[result.name]?.isTracking);
             setTrackedResults(tracked);
 
             // Fetch Customer Profiles (Company and Individual)
@@ -141,23 +145,85 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
 
             const companyDataResult: CompanyOB[] = await companyResponse.json();
             const individualDataResult: IndividualOB[] = await individualResponse.json();
-            setCompanyData(companyDataResult);
-            setIndividualData(individualDataResult);
+
+            // Update company status based on matches
+            const updatedCompanyData = companyDataResult.map(company => {
+                const hasMatch = checkForMatch(company.company_name, allPersonsData);
+                return {
+                    ...company,
+                    status: hasMatch ? 'pending' : 'approved'
+                };
+            });
+
+            // Update individual status based on matches
+            const updatedIndividualData = individualDataResult.map(individual => {
+                const hasMatch = checkForMatch(individual.full_name, allPersonsData);
+                return {
+                    ...individual,
+                    status: hasMatch ? 'pending' : 'approved'
+                };
+            });
+
+            setCompanyData(updatedCompanyData);
+            setIndividualData(updatedIndividualData);
+
+            // Update status in the database
+            for (const company of updatedCompanyData) {
+                await updateCompanyStatus(company.company_name, company.status || 'approved');
+            }
+
+            for (const individual of updatedIndividualData) {
+                await updateIndividualStatus(individual.full_name, individual.status || 'approved');
+            }
 
         } catch (error) {
             console.error('Could not fetch data:', error);
         }
     };
 
+    // Check if a name matches any person in the persons table
+    const checkForMatch = (name: string, personsData: SearchResult[]): boolean => {
+        return personsData.some(person => 
+            person.name.toLowerCase().includes(name.toLowerCase()) || 
+            name.toLowerCase().includes(person.name.toLowerCase())
+        );
+    };
+
+    // Update company status in the database
+    const updateCompanyStatus = async (companyName: string, status: string) => {
+        try {
+            await fetch(`${API_BASE_URL}/updateCompanyStatus`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ companyName, status }),
+                credentials: 'include',
+            });
+        } catch (error) {
+            console.error('Error updating company status:', error);
+        }
+    };
+
+    // Update individual status in the database
+    const updateIndividualStatus = async (fullName: string, status: string) => {
+        try {
+            await fetch(`${API_BASE_URL}/updateIndividualStatus`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fullName, status }),
+                credentials: 'include',
+            });
+        } catch (error) {
+            console.error('Error updating individual status:', error);
+        }
+    };
 
     useEffect(() => {
         fetchData();
     }, [user, navigate]);
 
-
     const updateTracking = async (name: string, newTrackingStatus: boolean) => {
         try {
-            const response = await fetch(`<span class="math-inline">\{API\_BASE\_URL\}/tracking/</span>{name}`, {
+            const response = await fetch(`${API_BASE_URL}/tracking/${name}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isTracking: newTrackingStatus }),
@@ -187,8 +253,6 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
         updateTracking(name, !currentTrackingStatus);
     };
 
-
-
     const calculateAging = (result: SearchResult): string => {
         const trackingInfo = tracking[result.name];
 
@@ -211,39 +275,37 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
     };
 
     const generateIndividualPDF = async (individual: IndividualOB) => {
-      const jsPDF = (await import('jspdf')).default; // Ensure jsPDF is properly imported
-      const autoTable = (await import('jspdf-autotable')).default; // Import autoTable properly
-  
-      const doc = new jsPDF();
-  
-      const addCustomerInfo = (doc: jsPDF, title: string, data: [string, any][]) => {
-          doc.setFontSize(14);
-          doc.text(title, 14, 20);
-          doc.setFontSize(12);
-          const startY = 30;
-  
-          data.forEach(([key, value], index: number) => {
-              const yOffset = startY + index * 10;
-              doc.text(`${key}:`, 14, yOffset);
-              doc.text(String(value), 80, yOffset);
-          });
-      };
-  
-      const customerData: [string, any][] = [
-          ["Id", individual.user_id],
-          ["Full Name", individual.full_name],
-          ["Resident Status", individual.resident_status],
-          ["Date of Birth", individual.date_of_birth],
-          ["Nationality", individual.nationality],
-          ["National ID Document Number", individual.national_id_number],
-          ["ID Expiry Date", individual.national_id_expiry],
-          ["Passport Document Number", individual.passport_number],
-          ["Passport Expiry Date", individual.passport_expiry],
-      ];
-
+        const jsPDF = (await import('jspdf')).default;
+        const autoTable = (await import('jspdf-autotable')).default;
+    
+        const doc = new jsPDF();
+    
+        const addCustomerInfo = (doc: jsPDF, title: string, data: [string, any][]) => {
+            doc.setFontSize(14);
+            doc.text(title, 14, 20);
+            doc.setFontSize(12);
+            const startY = 30;
+    
+            data.forEach(([key, value], index: number) => {
+                const yOffset = startY + index * 10;
+                doc.text(`${key}:`, 14, yOffset);
+                doc.text(String(value), 80, yOffset);
+            });
+        };
+    
+        const customerData: [string, any][] = [
+            ["Id", individual.user_id],
+            ["Full Name", individual.full_name],
+            ["Resident Status", individual.resident_status],
+            ["Date of Birth", individual.date_of_birth],
+            ["Nationality", individual.nationality],
+            ["National ID Document Number", individual.national_id_number],
+            ["ID Expiry Date", individual.national_id_expiry],
+            ["Passport Document Number", individual.passport_number],
+            ["Passport Expiry Date", individual.passport_expiry],
+        ];
 
         addCustomerInfo(doc, "Customer Information", customerData);
-
 
         // Key Findings Section
         doc.addPage();
@@ -254,13 +316,11 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
         doc.text("Resolved Matches: Genuine: 0, Not Genuine: 0", 14, 40);
         doc.text("Unresolved Matches: 0", 14, 50);
 
-
-
         // Risk Ratings Section
         doc.addPage();
         doc.setFontSize(14);
         doc.text("Risk Ratings", 14, 20);
-        autoTable(doc, { // Attach autoTable function to jsPDF
+        autoTable(doc, {
             startY: 30,
             head: [["Risk factor matrix", "Score", "Level"]],
             body: [
@@ -282,36 +342,32 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
                 valign: 'middle'
             },
             columnStyles: {
-                0: { cellWidth: 60 },  // Risk Factor
-                1: { cellWidth: 30 },  // score
-                2: { cellWidth: 30 },  // Level
-
+                0: { cellWidth: 60 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 30 },
             }
         });
-        doc.save(`${individual.full_name}_profile.pdf`);
 
-        //Risk Factor Override
-        const riskOverrideData = [
-            ["Risk factor override", "Override To", "Level"],
-            ["Suspicious Transaction Report Filed", "N/A", "low"],
-            ["Non Resident", "N/A", "low"],
-            ["Residence Country is Sanctioned", "N/A", "low"],
-            ["Nationality Country is Sanctioned", "N/A", "low"],
-            ["Contact No. Code Country is Sanctioned", "N/A", "low"],
-            ["Sanction Hit", "N/A", "low"],
-            ["PEP", "N/A", "low"],
-            ["Special Interest Hit", "N/A", "low"],
-            ["Document Verification", "N/A", "low"],
-            ["Adverse Media Hit", "N/A", "low"],
-            ["Overall Rating", "low", "low"],
+        const nextStartY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 40;
 
-        ];
-
-        (doc as any).autoTable({
-            //startY: doc.autoTableEndPosY() + 20, // Start after the previous table
-            head: [riskOverrideData[0]],
-            body: riskOverrideData.slice(1),
-            theme: 'grid',
+        // Risk Factor Override
+        autoTable(doc, {
+            startY: nextStartY,
+            head: [["Risk factor override", "Override To", "Level"]],
+            body: [
+                ["Suspicious Transaction Report Filed", "N/A", "low"],
+                ["Non Resident", "N/A", "low"],
+                ["Residence Country is Sanctioned", "N/A", "low"],
+                ["Nationality Country is Sanctioned", "N/A", "low"],
+                ["Contact No. Code Country is Sanctioned", "N/A", "low"],
+                ["Sanction Hit", "N/A", "low"],
+                ["PEP", "N/A", "low"],
+                ["Special Interest Hit", "N/A", "low"],
+                ["Document Verification", "N/A", "low"],
+                ["Adverse Media Hit", "N/A", "low"],
+                ["Overall Rating", "low", "low"],
+            ],
+            theme: "grid",
             styles: {
                 fontSize: 10,
                 cellPadding: 2,
@@ -320,129 +376,125 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
                 valign: 'middle'
             },
             columnStyles: {
-                0: { cellWidth: 60 },  // Risk Factor
-                1: { cellWidth: 30 },  // score
-                2: { cellWidth: 30 },  // Level
-
+                0: { cellWidth: 60 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 30 },
             }
-
         });
-
 
         doc.save(`${individual.full_name}_profile.pdf`);
     };
 
     const generateCompanyPDF = async (company: CompanyOB) => {
-      const jsPDF = (await import('jspdf')).default; // Import jsPDF
-      const autoTable = (await import('jspdf-autotable')).default; // Import autoTable
-  
-      const doc = new jsPDF();
-  
-      const addCompanyInfo = (doc: jsPDF, title: string, data: [string, any][]) => {
-          doc.setFontSize(14);
-          doc.text(title, 14, 20);
-          doc.setFontSize(12);
-          const startY = 30;
-  
-          data.forEach(([key, value], index: number) => {
-              const yOffset = startY + index * 10;
-              doc.text(`${key}:`, 14, yOffset);
-              doc.text(String(value), 80, yOffset);
-          });
-      };
-  
-      const companyData: [string, any][] = [
-          ["Id", company.user_id],
-          ["Company Name", company.company_name],
-          ["Registration Number", company.registration_number],
-          ["Company Type", company.company_type],
-          ["Incorporation Date", company.incorporation_date],
-          ["Contact Email", company.contact_email],
-          ["Contact Phone", company.contact_phone],
-      ];
-  
-      addCompanyInfo(doc, "Company Information", companyData);
-  
-      // Key Findings Section
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Key Findings", 14, 20);
-      doc.setFontSize(12);
-      doc.text("Total Matches: 0", 14, 30);
-      doc.text("Resolved Matches: Genuine: 0, Not Genuine: 0", 14, 40);
-      doc.text("Unresolved Matches: 0", 14, 50);
-  
-      // Risk Ratings Section
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Risk Ratings", 14, 20);
-  
-      autoTable(doc, { // ✅ Use autoTable directly
-          startY: 30,
-          head: [["Risk factor matrix", "Score", "Level"]],
-          body: [
-              ["Country of Residence", "5", "medium"],
-              ["Delivery Channel", "0", "low"],
-              ["Industry", "0", "low"],
-              ["Product", "0", "low"],
-              ["State", "0", "low"],
-              ["PEP", "0", "low"],
-              ["Document Verification", "0", "low"],
-              ["Base Rating", "5", "low"],
-          ],
-          theme: "grid",
-          styles: {
-              fontSize: 10,
-              cellPadding: 2,
-              overflow: 'linebreak',
-              halign: 'left',
-              valign: 'middle'
-          },
-          columnStyles: {
-              0: { cellWidth: 60 },  // Risk Factor
-              1: { cellWidth: 30 },  // Score
-              2: { cellWidth: 30 },  // Level
-          }
-      });
-  
-      // ✅ Fix: Ensure `lastAutoTable` exists before using `finalY`
-      const nextStartY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 40;
-  
-      // Risk Factor Override
-      autoTable(doc, { 
-          startY: nextStartY, // ✅ Dynamically set start position
-          head: [["Risk factor override", "Override To", "Level"]],
-          body: [
-              ["Suspicious Transaction Report Filed", "N/A", "low"],
-              ["Non Resident", "N/A", "low"],
-              ["Residence Country is Sanctioned", "N/A", "low"],
-              ["Nationality Country is Sanctioned", "N/A", "low"],
-              ["Contact No. Code Country is Sanctioned", "N/A", "low"],
-              ["Sanction Hit", "N/A", "low"],
-              ["PEP", "N/A", "low"],
-              ["Special Interest Hit", "N/A", "low"],
-              ["Document Verification", "N/A", "low"],
-              ["Adverse Media Hit", "N/A", "low"],
-              ["Overall Rating", "low", "low"],
-          ],
-          theme: "grid",
-          styles: {
-              fontSize: 10,
-              cellPadding: 2,
-              overflow: 'linebreak',
-              halign: 'left',
-              valign: 'middle'
-          },
-          columnStyles: {
-              0: { cellWidth: 60 },  // Risk Factor
-              1: { cellWidth: 30 },  // Override To
-              2: { cellWidth: 30 },  // Level
-          }
-      });
-  
-      doc.save(`${company.company_name}_profile.pdf`);
-  };
-  
+        const jsPDF = (await import('jspdf')).default;
+        const autoTable = (await import('jspdf-autotable')).default;
+    
+        const doc = new jsPDF();
+    
+        const addCompanyInfo = (doc: jsPDF, title: string, data: [string, any][]) => {
+            doc.setFontSize(14);
+            doc.text(title, 14, 20);
+            doc.setFontSize(12);
+            const startY = 30;
+    
+            data.forEach(([key, value], index: number) => {
+                const yOffset = startY + index * 10;
+                doc.text(`${key}:`, 14, yOffset);
+                doc.text(String(value), 80, yOffset);
+            });
+        };
+    
+        const companyData: [string, any][] = [
+            ["Id", company.user_id],
+            ["Company Name", company.company_name],
+            ["Registration Number", company.registration_number],
+            ["Company Type", company.company_type],
+            ["Incorporation Date", company.incorporation_date],
+            ["Contact Email", company.contact_email],
+            ["Contact Phone", company.contact_phone],
+        ];
+    
+        addCompanyInfo(doc, "Company Information", companyData);
+    
+        // Key Findings Section
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.text("Key Findings", 14, 20);
+        doc.setFontSize(12);
+        doc.text("Total Matches: 0", 14, 30);
+        doc.text("Resolved Matches: Genuine: 0, Not Genuine: 0", 14, 40);
+        doc.text("Unresolved Matches: 0", 14, 50);
+    
+        // Risk Ratings Section
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.text("Risk Ratings", 14, 20);
+    
+        autoTable(doc, {
+            startY: 30,
+            head: [["Risk factor matrix", "Score", "Level"]],
+            body: [
+                ["Country of Residence", "5", "medium"],
+                ["Delivery Channel", "0", "low"],
+                ["Industry", "0", "low"],
+                ["Product", "0", "low"],
+                ["State", "0", "low"],
+                ["PEP", "0", "low"],
+                ["Document Verification", "0", "low"],
+                ["Base Rating", "5", "low"],
+            ],
+            theme: "grid",
+            styles: {
+                fontSize: 10,
+                cellPadding: 2,
+                overflow: 'linebreak',
+                halign: 'left',
+                valign: 'middle'
+            },
+            columnStyles: {
+                0: { cellWidth: 60 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 30 },
+            }
+        });
+    
+        const nextStartY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 40;
+    
+        // Risk Factor Override
+        autoTable(doc, { 
+            startY: nextStartY,
+            head: [["Risk factor override", "Override To", "Level"]],
+            body: [
+                ["Suspicious Transaction Report Filed", "N/A", "low"],
+                ["Non Resident", "N/A", "low"],
+                ["Residence Country is Sanctioned", "N/A", "low"],
+                ["Nationality Country is Sanctioned", "N/A", "low"],
+                ["Contact No. Code Country is Sanctioned", "N/A", "low"],
+                ["Sanction Hit", "N/A", "low"],
+                ["PEP", "N/A", "low"],
+                ["Special Interest Hit", "N/A", "low"],
+                ["Document Verification", "N/A", "low"],
+                ["Adverse Media Hit", "N/A", "low"],
+                ["Overall Rating", "low", "low"],
+            ],
+            theme: "grid",
+            styles: {
+                fontSize: 10,
+                cellPadding: 2,
+                overflow: 'linebreak',
+                halign: 'left',
+                valign: 'middle'
+            },
+            columnStyles: {
+                0: { cellWidth: 60 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 30 },
+            }
+        });
+    
+        doc.save(`${company.company_name}_profile.pdf`);
+    };
+    
     return (
         <div className="p-6">
             <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
@@ -546,145 +598,121 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
                         <table className="min-w-full">
                             <thead>
                                 <tr className="text-left text-sm text-gray-500">
-                                    {/* Added px-6 to all th and td elements */}
                                     <th className="pb-4 px-6 whitespace-nowrap">User ID</th>
                                     <th className="pb-4 px-6 whitespace-nowrap">Full Name</th>
                                     <th className="pb-4 px-6 whitespace-nowrap">Email</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Resident Status</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Gender</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Date of Birth</th>
                                     <th className="pb-4 px-6 whitespace-nowrap">Nationality</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Country of Residence</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Other Nationalities</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Specified Other Nationalities</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">National ID Number</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">National ID Expiry</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Passport Number</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Passport Expiry</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Address</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">State</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">City</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Zip Code</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Contact Number</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Dialing Code</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Work Type</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Industry</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Product Type Offered</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Product Offered</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Company Name</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Position in Company</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap"></th> {/* Empty header for download button */}
+                                    <th className="pb-4 px-6 whitespace-nowrap">Status</th>
+                                    <th className="pb-4 px-6 whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {individualData.map((individual, index) => (
-                                    <tr key={index} className="border-t border-gray-100 hover:bg-gray-50">
-                                        <td className="py-4 px-6">{individual.user_id}</td>
-                                        <td className="py-4 px-6">{individual.full_name}</td>
-                                        <td className="py-4 px-6">{individual.email}</td>
-                                        <td className="py-4 px-6">{individual.resident_status}</td>
-                                        <td className="py-4 px-6">{individual.gender}</td>
-                                        <td className="py-4 px-6">{individual.date_of_birth}</td>
-                                        <td className="py-4 px-6">{individual.nationality}</td>
-                                        <td className="py-4 px-6">{individual.country_of_residence}</td>
-                                        <td className="py-4 px-6">{individual.other_nationalities}</td>
-                                        <td className="py-4 px-6">{individual.specified_other_nationalities}</td>
-                                        <td className="py-4 px-6">{individual.national_id_number}</td>
-                                        <td className="py-4 px-6">{individual.national_id_expiry}</td>
-                                        <td className="py-4 px-6">{individual.passport_number}</td>
-                                        <td className="py-4 px-6">{individual.passport_expiry}</td>
-                                        <td className="py-4 px-6">{individual.address}</td>
-                                        <td className="py-4 px-6">{individual.state}</td>
-                                        <td className="py-4 px-6">{individual.city}</td>
-                                        <td className="py-4 px-6">{individual.zip_code}</td>
-                                        <td className="py-4 px-6">{individual.contact_number}</td>
-                                        <td className="py-4 px-6">{individual.dialing_code}</td>
-                                        <td className="py-4 px-6">{individual.work_type}</td>
-                                        <td className="py-4 px-6">{individual.industry}</td>
-                                        <td className="py-4 px-6">{individual.product_type_offered}</td>
-                                        <td className="py-4 px-6">{individual.product_offered}</td>
-                                        <td className="py-4 px-6">{individual.company_name}</td>
-                                        <td className="py-4 px-6">{individual.position_in_company}</td>
-                                        <td className="py-4 px-6">
-                                            <button
-                                                onClick={() => generateIndividualPDF(individual)}
-                                                className="text-purple-600 hover:text-purple-800"
-                                                title="Download PDF"
-                                            >
-                                                <Download className="w-5 h-5" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {individualData.map((individual, index) => {
+                                    const matchFound = checkForMatch(individual.full_name, allPersons);
+                                    return (
+                                        <tr key={index} className="border-t border-gray-100 hover:bg-gray-50">
+                                            <td className="py-4 px-6">{individual.user_id}</td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center space-x-3">
+                                                    <img 
+                                                        src={`https://ui-avatars.com/api/?name=${individual.full_name}`} 
+                                                        alt={individual.full_name} 
+                                                        className="w-8 h-8 rounded-full" 
+                                                    />
+                                                    <span>{individual.full_name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">{individual.email}</td>
+                                            <td className="py-4 px-6">{individual.nationality}</td>
+                                            <td className="py-4 px-6">
+                                                {matchFound ? (
+                                                    <div className="flex items-center px-3 py-2 rounded-full bg-yellow-100 w-fit">
+                                                        <span className="text-yellow-800 font-medium text-sm flex items-center">
+                                                            <span className="mr-2">⚠️</span> Pending
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center px-3 py-2 rounded-full bg-green-100 w-fit">
+                                                        <span className="text-green-800 font-medium text-sm flex items-center">
+                                                            <CheckCircle className="w-4 h-4 mr-1" /> Approved
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <button
+                                                    onClick={() => generateIndividualPDF(individual)}
+                                                    className="text-purple-600 hover:text-purple-800"
+                                                    title="Download PDF"
+                                                >
+                                                    <Download className="w-5 h-5" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
 
-                    <h2 className="text-xl font-semibold mb-4">Company Customers</h2>
+                    <h2 className="text-xl font-semibold my-6">Company Customers</h2>
                     <div className="overflow-x-auto">
                         <table className="min-w-full">
                             <thead>
                                 <tr className="text-left text-sm text-gray-500">
-                                    {/* Added px-6 */}
                                     <th className="pb-4 px-6 whitespace-nowrap">User ID</th>
                                     <th className="pb-4 px-6 whitespace-nowrap">Company Name</th>
                                     <th className="pb-4 px-6 whitespace-nowrap">Registration Number</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Company Type</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Incorporation Date</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Business Nature</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Industry Sector</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Annual Turnover</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Employee Count</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Website URL</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Registered Address</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Operating Address</th>
                                     <th className="pb-4 px-6 whitespace-nowrap">Country</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">State</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">City</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Postal Code</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Contact Person Name</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Contact Email</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Contact Phone</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Tax Number</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap">Regulatory Licenses</th>
-                                    <th className="pb-4 px-6 whitespace-nowrap"></th> {/* Empty header for download button */}
+                                    <th className="pb-4 px-6 whitespace-nowrap">Status</th>
+                                    <th className="pb-4 px-6 whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {companyData.map((company, index) => (
-                                    <tr key={index} className="border-t border-gray-100 hover:bg-gray-50">
-                                        <td className="py-4 px-6">{company.user_id}</td>
-                                        <td className="py-4 px-6">{company.company_name}</td>
-                                        <td className="py-4 px-6">{company.registration_number}</td>
-                                        <td className="py-4 px-6">{company.company_type}</td>
-                                        <td className="py-4 px-6">{company.incorporation_date}</td>
-                                        <td className="py-4 px-6">{company.business_nature}</td>
-                                        <td className="py-4 px-6">{company.industry_sector}</td>
-                                        <td className="py-4 px-6">{company.annual_turnover}</td>
-                                        <td className="py-4 px-6">{company.employee_count}</td>
-                                        <td className="py-4 px-6">{company.website_url}</td>
-                                        <td className="py-4 px-6">{company.registered_address}</td>
-                                        <td className="py-4 px-6">{company.operating_address}</td>
-                                        <td className="py-4 px-6">{company.country}</td>
-                                        <td className="py-4 px-6">{company.state}</td>
-                                        <td className="py-4 px-6">{company.city}</td>
-                                        <td className="py-4 px-6">{company.postal_code}</td>
-                                        <td className="py-4 px-6">{company.contact_person_name}</td>
-                                        <td className="py-4 px-6">{company.contact_email}</td>
-                                        <td className="py-4 px-6">{company.contact_phone}</td>
-                                        <td className="py-4 px-6">{company.tax_number}</td>
-                                        <td className="py-4 px-6">{company.regulatory_licenses}</td>
-                                        <td className="py-4 px-6">
-                                            <button
-                                                onClick={() => generateCompanyPDF(company)}
-                                                className="text-purple-600 hover:text-purple-800"
-                                                title="Download PDF"
-                                            >
-                                                <Download className="w-5 h-5" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {companyData.map((company, index) => {
+                                    const matchFound = checkForMatch(company.company_name, allPersons);
+                                    return (
+                                        <tr key={index} className="border-t border-gray-100 hover:bg-gray-50">
+                                            <td className="py-4 px-6">{company.user_id}</td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center space-x-3">
+                                                    <img 
+                                                        src={`https://ui-avatars.com/api/?name=${company.company_name}`} 
+                                                        alt={company.company_name} 
+                                                        className="w-8 h-8 rounded-full" 
+                                                    />
+                                                    <span>{company.company_name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-6">{company.registration_number}</td>
+                                            <td className="py-4 px-6">{company.country}</td>
+                                            <td className="py-4 px-6">
+                                                {matchFound ? (
+                                                    <div className="flex items-center px-3 py-2 rounded-full bg-yellow-100 w-fit">
+                                                        <span className="text-yellow-800 font-medium text-sm flex items-center">
+                                                            <span className="mr-2">⚠️</span> Pending
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center px-3 py-2 rounded-full bg-green-100 w-fit">
+                                                        <span className="text-green-800 font-medium text-sm flex items-center">
+                                                            <CheckCircle className="w-4 h-4 mr-1" /> Approved
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="py-4 px-6">
+                                                <button
+                                                    onClick={() => generateCompanyPDF(company)}
+                                                    className="text-purple-600 hover:text-purple-800"
+                                                    title="Download PDF"
+                                                >
+                                                    <Download className="w-5 h-5" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
