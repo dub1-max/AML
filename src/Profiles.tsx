@@ -89,7 +89,7 @@ function Profiles({ searchResults, isLoading }: ProfilesProps) {
     const [individualData, setIndividualData] = useState<IndividualOB[]>([]);
     const [allPersons, setAllPersons] = useState<SearchResult[]>([]);
 
-    const API_BASE_URL = 'http://localhost:3001/api';
+    const API_BASE_URL = 'http://137.184.150.6/api';
 
     const fetchData = async () => {
         if (!user) return;

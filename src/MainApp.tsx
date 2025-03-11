@@ -15,7 +15,7 @@ import CompanyOB from './CompanyOB';
 import Insights from './Insights';
 
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://137.184.150.6/api';
 
 interface MainAppProps { }
 

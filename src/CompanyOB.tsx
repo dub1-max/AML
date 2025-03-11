@@ -87,7 +87,7 @@ function CompanyOB() {
     };
 
     try {
-      const response = await fetch("http://137.184.150.6:3001/api/registerCompany", {
+      const response = await fetch("http://137.184.150.6/api/registerCompany", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
