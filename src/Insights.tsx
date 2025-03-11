@@ -44,7 +44,7 @@ function Insights(_props: InsightsProps) {
 
         try {
             // Fetch Individual Customers (for logged-in user)
-            const individualResponse = await fetch('http://localhost:3001/api/individualob', {
+            const individualResponse = await fetch('http://137.184.150.6:3001/api/individualob', {
                 method: 'GET',
                 credentials: 'include', // Ensures session authentication works
             });
@@ -59,7 +59,7 @@ function Insights(_props: InsightsProps) {
             const individualData = await individualResponse.json();
 
             // Fetch Company Customers (for logged-in user)
-            const companyResponse = await fetch('http://localhost:3001/api/companyob', {
+            const companyResponse = await fetch('http://137.184.150.6:3001/api/companyob', {
                 method: 'GET',
                 credentials: 'include', // Ensures session authentication works
             });
