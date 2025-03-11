@@ -2,9 +2,32 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 
+interface FormData {
+  companyName: string;
+  registrationNumber: string;
+  companyType: string;
+  incorporationDate: string;
+  businessNature: string;
+  industrySector: string;
+  annualTurnover: string;
+  employeeCount: string;
+  websiteUrl: string;
+  registeredAddress: string;
+  operatingAddress: string;
+  country: string;
+  state: string;
+  city: string;
+  postalCode: string;
+  contactPersonName: string;
+  contactEmail: string;
+  contactPhone: string;
+  taxNumber: string;
+  regulatoryLicenses: string;
+}
+
 function CompanyOB() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     companyName: "",
     registrationNumber: "",
     companyType: "",
@@ -28,9 +51,9 @@ function CompanyOB() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -38,7 +61,7 @@ function CompanyOB() {
     }));
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string): string | null => {
     if (!dateString) return null;
     try {
       const date = new Date(dateString);
@@ -53,7 +76,7 @@ function CompanyOB() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -69,7 +92,7 @@ function CompanyOB() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: 'include', // Add this line to include credentials
+        credentials: 'include',
         body: JSON.stringify(formattedFormData),
       });
 
@@ -80,9 +103,13 @@ function CompanyOB() {
       }
 
       alert("Company registration successful!");
-      
+      navigate("/mainapp"); // Example navigation after successful submission
     } catch (err) {
-      setError(err.message || "An unexpected error occurred");
+      if (err instanceof Error) {
+        setError(err.message || "An unexpected error occurred");
+      } else {
+        setError("An unexpected error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -96,7 +123,7 @@ function CompanyOB() {
     { code: "AU", name: "Australia" },
   ];
 
-  const statesByCountry = {
+  const statesByCountry: { [key: string]: string[] } = {
     US: ["Alabama", "Alaska", "Arizona", "Arkansas", "California"],
     CA: ["Ontario", "Quebec", "British Columbia", "Alberta"],
     GB: ["England", "Scotland", "Wales", "Northern Ireland"],
