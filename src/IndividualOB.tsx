@@ -79,7 +79,7 @@ function IndividualOB() {
         };
 
         try {
-            const response = await fetch('http://137.184.150.6/api/registerIndividual', {
+            const response = await fetch('http://localhost:3001/api/registerIndividual', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

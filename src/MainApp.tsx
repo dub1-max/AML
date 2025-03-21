@@ -15,7 +15,7 @@ import CompanyOB from './CompanyOB';
 import Insights from './Insights';
 
 
-const API_BASE_URL = 'http://137.184.150.6/api';
+const API_BASE_URL = 'http://localhost:3001/api';
 
 interface MainAppProps { }
 
@@ -237,38 +237,6 @@ function MainApp(_props: MainAppProps) {
                                 </button>
                             </div>
                         )}
-
-                        <button
-                            onClick={() => {
-                                setActiveSection('selfService');
-                                setShowCompanyOB(false);
-                                setShowIndividualOB(false);
-                                setShowDashboard(false); // Add this to ensure correct view
-
-                            }}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'selfService'
-                                ? 'bg-[#5D2BA8] text-white'
-                                : 'hover:bg-[#5D2BA8]'
-                                }`}
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span>Self Service Onboarding</span>
-                        </button>
-                        <button
-                            onClick={() => {
-                                setActiveSection('bulk');
-                                setShowCompanyOB(false);
-                                setShowIndividualOB(false);
-                                setShowDashboard(false); // Add this to ensure correct view
-                            }}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'bulk'
-                                ? 'bg-[#5D2BA8] text-white'
-                                : 'hover:bg-[#5D2BA8]'
-                                }`}
-                        >
-                            <File className="w-5 h-5" />
-                            <span>Bulk Onboarding</span>
-                        </button>
                     </nav>
                 </div>
             </div>
