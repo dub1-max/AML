@@ -96,7 +96,7 @@ function Profiles({ searchResults, isLoading: initialLoading }: ProfilesProps) {
   const [isLoading, setIsLoading] = useState(initialLoading); // Local loading state
 
 
-  const API_BASE_URL = 'http://localhost:3001/api';
+  const API_BASE_URL = 'http://137.184.150.6/api';
 
     // --- Helper Functions ---
 

@@ -11,7 +11,7 @@ interface AuthContextProps {
     loading: boolean;
 }
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = 'http://137.184.150.6/api';
 
 const AuthContext = createContext<AuthContextProps>({
     user: null,
