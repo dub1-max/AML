@@ -135,7 +135,7 @@ function Profiles({ searchResults, isLoading: initialLoading }: ProfilesProps) {
 
   const updateTracking = async (name: string, newTrackingStatus: boolean) => {
     try {
-      const response = await fetch(`<span class="math-inline">\{API\_BASE\_URL\}/tracking/</span>{name}`, {
+      const response = await fetch(`${API_BASE_URL}/tracking/${name}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isTracking: newTrackingStatus }),
