@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { getApiBaseUrl } from './config';
 
 interface SearchResult {
   name: string;
@@ -80,8 +81,6 @@ interface ProfilesProps {
   isLoading: boolean;            // Initial loading state from parent
 }
 
-
-
 function Profiles({ searchResults, isLoading: initialLoading }: ProfilesProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -95,413 +94,409 @@ function Profiles({ searchResults, isLoading: initialLoading }: ProfilesProps) {
   const [allPersons, setAllPersons] = useState<SearchResult[]>([]);   // Data from /api/persons
   const [isLoading, setIsLoading] = useState(initialLoading); // Local loading state
 
+  const API_BASE_URL = getApiBaseUrl();
 
-  const API_BASE_URL = 'http://137.184.150.6/api';
+  // --- Helper Functions ---
 
-    // --- Helper Functions ---
+  const checkForMatch = (name: string, personsData: SearchResult[]): boolean => {
+    return personsData.some(person =>
+        person.name.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(person.name.toLowerCase())
+    );
+};
 
-    const checkForMatch = (name: string, personsData: SearchResult[]): boolean => {
-      return personsData.some(person =>
-          person.name.toLowerCase().includes(name.toLowerCase()) ||
-          name.toLowerCase().includes(person.name.toLowerCase())
-      );
-  };
-
-  const updateCompanyStatus = async (companyName: string, status: string) => {
-    try {
-      await fetch(`${API_BASE_URL}/updateCompanyStatus`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyName, status }),
-        credentials: 'include',
-      });
-    } catch (error) {
-      console.error('Error updating company status:', error);
-    }
-  };
-
-  const updateIndividualStatus = async (fullName: string, status: string) => {
-    try {
-      await fetch(`${API_BASE_URL}/updateIndividualStatus`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, status }),
-        credentials: 'include',
-      });
-    } catch (error) {
-      console.error('Error updating individual status:', error);
-    }
-  };
-
-  const updateTracking = async (name: string, newTrackingStatus: boolean) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/tracking/${name}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isTracking: newTrackingStatus }),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          navigate('/login');
-          return;
-        }
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.message || `Server error: ${response.status}`;
-        throw new Error(errorMessage);
-      }
-        await fetchData(); // Refetch ALL data after updating.  Crucial for consistency.
-
-    } catch (error: any) {
-      console.error('Error updating tracking:', error.message);
-    }
-  };
-
-  const toggleTracking = (name: string) => {
-    const currentTrackingStatus = tracking[name]?.isTracking ?? false;
-    updateTracking(name, !currentTrackingStatus);
-  };
-
-  const calculateAging = (result: SearchResult): string => {
-    const trackingInfo = tracking[result.name];
-
-    if (trackingInfo?.isTracking) {
-      return trackingInfo.startDate
-        ? `${Math.floor((Date.now() - new Date(trackingInfo.startDate).getTime()) / (1000 * 60 * 60 * 24))}D`
-        : '0D';
-    } else if (trackingInfo?.stopDate && trackingInfo.startDate) {
-      const diffInDays = Math.floor((new Date(trackingInfo.stopDate).getTime() - new Date(trackingInfo.startDate).getTime()) / (1000 * 60 * 60 * 24));
-      return `<span style="color: red;">${diffInDays}D</span>`;
-    } else {
-      return 'None';
-    }
-  };
-
-  const getRiskColor = (percentage: number): string => {
-    if (percentage >= 85) return 'text-red-600';
-    if (percentage >= 60) return 'text-yellow-600';
-    return 'text-green-600';
-  };
-
-
-    const generateIndividualPDF = async (individual: IndividualOB) => {
-      const jsPDF = (await import('jspdf')).default;
-      const autoTable = (await import('jspdf-autotable')).default;
-
-      const doc = new jsPDF();
-
-      const addCustomerInfo = (doc: jsPDF, title: string, data: [string, any][]) => {
-          doc.setFontSize(14);
-          doc.text(title, 14, 20);
-          doc.setFontSize(12);
-          const startY = 30;
-
-          data.forEach(([key, value], index: number) => {
-              const yOffset = startY + index * 10;
-              doc.text(`${key}:`, 14, yOffset);
-              doc.text(String(value), 80, yOffset);
-          });
-      };
-
-      const customerData: [string, any][] = [
-          ["Id", individual.user_id],
-          ["Full Name", individual.full_name],
-          ["Resident Status", individual.resident_status],
-          ["Date of Birth", individual.date_of_birth],
-          ["Nationality", individual.nationality],
-          ["National ID Document Number", individual.national_id_number],
-          ["ID Expiry Date", individual.national_id_expiry],
-          ["Passport Document Number", individual.passport_number],
-          ["Passport Expiry Date", individual.passport_expiry],
-      ];
-
-      addCustomerInfo(doc, "Customer Information", customerData);
-
-      // Key Findings Section
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Key Findings", 14, 20);
-      doc.setFontSize(12);
-      doc.text("Total Matches: 0", 14, 30);
-      doc.text("Resolved Matches: Genuine: 0, Not Genuine: 0", 14, 40);
-      doc.text("Unresolved Matches: 0", 14, 50);
-
-      // Risk Ratings Section
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Risk Ratings", 14, 20);
-      autoTable(doc, {
-          startY: 30,
-          head: [["Risk factor matrix", "Score", "Level"]],
-          body: [
-              ["Country of Residence", "5", "medium"],
-              ["Delivery Channel", "0", "low"],
-              ["Industry", "0", "low"],
-              ["Product", "0", "low"],
-              ["State", "0", "low"],
-              ["PEP", "0", "low"],
-              ["Document Verification", "0", "low"],
-              ["Base Rating", "5", "low"],
-          ],
-          theme: "grid",
-          styles: {
-              fontSize: 10,
-              cellPadding: 2,
-              overflow: 'linebreak',
-              halign: 'left',
-              valign: 'middle'
-          },
-          columnStyles: {
-              0: { cellWidth: 60 },
-              1: { cellWidth: 30 },
-              2: { cellWidth: 30 },
-          }
-      });
-
-      const nextStartY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 40;
-
-      // Risk Factor Override
-      autoTable(doc, {
-          startY: nextStartY,
-          head: [["Risk factor override", "Override To", "Level"]],
-          body: [
-              ["Suspicious Transaction Report Filed", "N/A", "low"],
-              ["Non Resident", "N/A", "low"],
-              ["Residence Country is Sanctioned", "N/A", "low"],
-              ["Nationality Country is Sanctioned", "N/A", "low"],
-              ["Contact No. Code Country is Sanctioned", "N/A", "low"],
-              ["Sanction Hit", "N/A", "low"],
-              ["PEP", "N/A", "low"],
-              ["Special Interest Hit", "N/A", "low"],
-              ["Document Verification", "N/A", "low"],
-              ["Adverse Media Hit", "N/A", "low"],
-              ["Overall Rating", "low", "low"],
-          ],
-          theme: "grid",
-          styles: {
-              fontSize: 10,
-              cellPadding: 2,
-              overflow: 'linebreak',
-              halign: 'left',
-              valign: 'middle'
-          },
-          columnStyles: {
-              0: { cellWidth: 60 },
-              1: { cellWidth: 30 },
-              2: { cellWidth: 30 },
-          }
-      });
-
-      doc.save(`${individual.full_name}_profile.pdf`);
-    };
-
-    const generateCompanyPDF = async (company: CompanyOB) => {
-      const jsPDF = (await import('jspdf')).default;
-      const autoTable = (await import('jspdf-autotable')).default;
-
-      const doc = new jsPDF();
-
-      const addCompanyInfo = (doc: jsPDF, title: string, data: [string, any][]) => {
-          doc.setFontSize(14);
-          doc.text(title, 14, 20);
-          doc.setFontSize(12);
-          const startY = 30;
-
-          data.forEach(([key, value], index: number) => {
-              const yOffset = startY + index * 10;
-              doc.text(`${key}:`, 14, yOffset);
-              doc.text(String(value), 80, yOffset);
-          });
-      };
-
-      const companyData: [string, any][] = [
-          ["Id", company.user_id],
-          ["Company Name", company.company_name],
-          ["Registration Number", company.registration_number],
-          ["Company Type", company.company_type],
-          ["Incorporation Date", company.incorporation_date],
-          ["Contact Email", company.contact_email],
-          ["Contact Phone", company.contact_phone],
-      ];
-
-      addCompanyInfo(doc, "Company Information", companyData);
-
-      // Key Findings Section
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Key Findings", 14, 20);
-      doc.setFontSize(12);
-      doc.text("Total Matches: 0", 14, 30);
-      doc.text("Resolved Matches: Genuine: 0, Not Genuine: 0", 14, 40);
-      doc.text("Unresolved Matches: 0", 14, 50);
-
-      // Risk Ratings Section
-      doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Risk Ratings", 14, 20);
-
-      autoTable(doc, {
-          startY: 30,
-          head: [["Risk factor matrix", "Score", "Level"]],
-          body: [
-              ["Country of Residence", "5", "medium"],
-              ["Delivery Channel", "0", "low"],
-              ["Industry", "0", "low"],
-              ["Product", "0", "low"],
-              ["State", "0", "low"],
-              ["PEP", "0", "low"],
-              ["Document Verification", "0", "low"],
-              ["Base Rating", "5", "low"],
-          ],
-          theme: "grid",
-          styles: {
-              fontSize: 10,
-              cellPadding: 2,
-              overflow: 'linebreak',
-              halign: 'left',
-              valign: 'middle'
-          },
-          columnStyles: {
-              0: { cellWidth: 60 },
-              1: { cellWidth: 30 },
-              2: { cellWidth: 30 },
-          }
-      });
-
-      const nextStartY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 40;
-
-      // Risk Factor Override
-      autoTable(doc, {
-          startY: nextStartY,
-          head: [["Risk factor override", "Override To", "Level"]],
-          body: [
-              ["Suspicious Transaction Report Filed", "N/A", "low"],
-              ["Non Resident", "N/A", "low"],
-              ["Residence Country is Sanctioned", "N/A", "low"],
-              ["Nationality Country is Sanctioned", "N/A", "low"],
-              ["Contact No. Code Country is Sanctioned", "N/A", "low"],
-              ["Sanction Hit", "N/A", "low"],
-              ["PEP", "N/A", "low"],
-              ["Special Interest Hit", "N/A", "low"],
-              ["Document Verification", "N/A", "low"],
-              ["Adverse Media Hit", "N/A", "low"],
-              ["Overall Rating", "low", "low"],
-          ],
-          theme: "grid",
-          styles: {
-              fontSize: 10,
-              cellPadding: 2,
-              overflow: 'linebreak',
-              halign: 'left',
-              valign: 'middle'
-          },
-          columnStyles: {
-              0: { cellWidth: 60 },
-              1: { cellWidth: 30 },
-              2: { cellWidth: 30 },
-          }
-      });
-
-      doc.save(`${company.company_name}_profile.pdf`);
-    };
-
-
-
-  // --- Main Data Fetching Function ---
-  const fetchData = async () => {
-    if (!user) return;
-      setIsLoading(true);
-
-    try {
-        // Fetch Tracking Data FIRST
-      const trackingResponse = await fetch(`${API_BASE_URL}/tracking`, { credentials: 'include' });
-      if (!trackingResponse.ok) {
-        if(trackingResponse.status === 401) {
-            navigate('/login');
-            return;
-        }
-        throw new Error(`HTTP Error! Status: ${trackingResponse.status}`);
-    }
-    const trackingData: any[] = await trackingResponse.json();
-    const transformedTracking: Tracking = {};
-    trackingData.forEach(item => {
-      transformedTracking[item.name] = {
-        isTracking: item.isTracking === 1,
-        startDate: item.startDate,
-        stopDate: item.stopDate
-      };
+const updateCompanyStatus = async (companyName: string, status: string) => {
+  try {
+    await fetch(`${API_BASE_URL}/updateCompanyStatus`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ companyName, status }),
+      credentials: 'include',
     });
-    setTracking(transformedTracking);
+  } catch (error) {
+    console.error('Error updating company status:', error);
+  }
+};
 
+const updateIndividualStatus = async (fullName: string, status: string) => {
+  try {
+    await fetch(`${API_BASE_URL}/updateIndividualStatus`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fullName, status }),
+      credentials: 'include',
+    });
+  } catch (error) {
+    console.error('Error updating individual status:', error);
+  }
+};
 
-        // Fetch All Persons (for matching)
-        const personsResponse = await fetch(`${API_BASE_URL}/persons`, { credentials: 'include' });
-        if (!personsResponse.ok) {
-            if (personsResponse.status === 401) {
-                navigate('/login');
-                return;
-            }
-            throw new Error(`HTTP Error! Status: ${personsResponse.status}`);
-        }
-        const allPersonsData: SearchResult[] = await personsResponse.json();
-        setAllPersons(allPersonsData);
+const updateTracking = async (name: string, newTrackingStatus: boolean) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tracking/${name}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isTracking: newTrackingStatus }),
+      credentials: 'include',
+    });
 
-    // Set tracked results *after* fetching both persons and tracking
-    const tracked = allPersonsData.filter(result => transformedTracking[result.name]?.isTracking);
-    setTrackedResults(tracked);
-
-
-    // Fetch Company Data
-    const companyResponse = await fetch(`${API_BASE_URL}/companyob`, { credentials: 'include' });
-    if (!companyResponse.ok) {
-      if (companyResponse.status === 401) {
+    if (!response.ok) {
+      if (response.status === 401) {
         navigate('/login');
         return;
       }
-      throw new Error(`HTTP Error! Status: ${companyResponse.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.message || `Server error: ${response.status}`;
+      throw new Error(errorMessage);
     }
-    const companyDataResult: CompanyOB[] = await companyResponse.json();
+      await fetchData(); // Refetch ALL data after updating.  Crucial for consistency.
 
-    // Fetch Individual Data
-    const individualResponse = await fetch(`${API_BASE_URL}/individualob`, { credentials: 'include' });
-    if (!individualResponse.ok) {
-        if(individualResponse.status === 401){
-            navigate('/login');
-            return;
-        }
-      throw new Error(`HTTP Error! Status: ${individualResponse.status}`);
-    }
-    const individualDataResult: IndividualOB[] = await individualResponse.json();
-
-    // Update Company and Individual Statuses and set state *once*
-    const updatedCompanyData = companyDataResult.map(company => ({
-      ...company,
-      status: checkForMatch(company.company_name, allPersonsData) ? 'pending' : 'approved'
-    }));
-
-    const updatedIndividualData = individualDataResult.map(individual => ({
-      ...individual,
-      status: checkForMatch(individual.full_name, allPersonsData) ? 'pending' : 'approved'
-    }));
-
-    setCompanyData(updatedCompanyData);
-    setIndividualData(updatedIndividualData);
-
-
-    // Update statuses in the database *after* setting local state
-    for (const company of updatedCompanyData) {
-      await updateCompanyStatus(company.company_name, company.status || 'approved');
-    }
-    for (const individual of updatedIndividualData) {
-      await updateIndividualStatus(individual.full_name, individual.status || 'approved');
-    }
-
-  } catch (error) {
-    console.error('Could not fetch data:', error);
-  } finally {
-    setIsLoading(false); // Ensure loading is set to false regardless of success/failure
+  } catch (error: any) {
+    console.error('Error updating tracking:', error.message);
   }
+};
+
+const toggleTracking = (name: string) => {
+  const currentTrackingStatus = tracking[name]?.isTracking ?? false;
+  updateTracking(name, !currentTrackingStatus);
+};
+
+const calculateAging = (result: SearchResult): string => {
+  const trackingInfo = tracking[result.name];
+
+  if (trackingInfo?.isTracking) {
+    return trackingInfo.startDate
+      ? `${Math.floor((Date.now() - new Date(trackingInfo.startDate).getTime()) / (1000 * 60 * 60 * 24))}D`
+      : '0D';
+  } else if (trackingInfo?.stopDate && trackingInfo.startDate) {
+    const diffInDays = Math.floor((new Date(trackingInfo.stopDate).getTime() - new Date(trackingInfo.startDate).getTime()) / (1000 * 60 * 60 * 24));
+    return `<span style="color: red;">${diffInDays}D</span>`;
+  } else {
+    return 'None';
+  }
+};
+
+const getRiskColor = (percentage: number): string => {
+  if (percentage >= 85) return 'text-red-600';
+  if (percentage >= 60) return 'text-yellow-600';
+  return 'text-green-600';
+};
+
+const generateIndividualPDF = async (individual: IndividualOB) => {
+  const jsPDF = (await import('jspdf')).default;
+  const autoTable = (await import('jspdf-autotable')).default;
+
+  const doc = new jsPDF();
+
+  const addCustomerInfo = (doc: jsPDF, title: string, data: [string, any][]) => {
+      doc.setFontSize(14);
+      doc.text(title, 14, 20);
+      doc.setFontSize(12);
+      const startY = 30;
+
+      data.forEach(([key, value], index: number) => {
+          const yOffset = startY + index * 10;
+          doc.text(`${key}:`, 14, yOffset);
+          doc.text(String(value), 80, yOffset);
+      });
+  };
+
+  const customerData: [string, any][] = [
+      ["Id", individual.user_id],
+      ["Full Name", individual.full_name],
+      ["Resident Status", individual.resident_status],
+      ["Date of Birth", individual.date_of_birth],
+      ["Nationality", individual.nationality],
+      ["National ID Document Number", individual.national_id_number],
+      ["ID Expiry Date", individual.national_id_expiry],
+      ["Passport Document Number", individual.passport_number],
+      ["Passport Expiry Date", individual.passport_expiry],
+  ];
+
+  addCustomerInfo(doc, "Customer Information", customerData);
+
+  // Key Findings Section
+  doc.addPage();
+  doc.setFontSize(14);
+  doc.text("Key Findings", 14, 20);
+  doc.setFontSize(12);
+  doc.text("Total Matches: 0", 14, 30);
+  doc.text("Resolved Matches: Genuine: 0, Not Genuine: 0", 14, 40);
+  doc.text("Unresolved Matches: 0", 14, 50);
+
+  // Risk Ratings Section
+  doc.addPage();
+  doc.setFontSize(14);
+  doc.text("Risk Ratings", 14, 20);
+  autoTable(doc, {
+      startY: 30,
+      head: [["Risk factor matrix", "Score", "Level"]],
+      body: [
+          ["Country of Residence", "5", "medium"],
+          ["Delivery Channel", "0", "low"],
+          ["Industry", "0", "low"],
+          ["Product", "0", "low"],
+          ["State", "0", "low"],
+          ["PEP", "0", "low"],
+          ["Document Verification", "0", "low"],
+          ["Base Rating", "5", "low"],
+      ],
+      theme: "grid",
+      styles: {
+          fontSize: 10,
+          cellPadding: 2,
+          overflow: 'linebreak',
+          halign: 'left',
+          valign: 'middle'
+      },
+      columnStyles: {
+          0: { cellWidth: 60 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 30 },
+      }
+  });
+
+  const nextStartY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 40;
+
+  // Risk Factor Override
+  autoTable(doc, {
+      startY: nextStartY,
+      head: [["Risk factor override", "Override To", "Level"]],
+      body: [
+          ["Suspicious Transaction Report Filed", "N/A", "low"],
+          ["Non Resident", "N/A", "low"],
+          ["Residence Country is Sanctioned", "N/A", "low"],
+          ["Nationality Country is Sanctioned", "N/A", "low"],
+          ["Contact No. Code Country is Sanctioned", "N/A", "low"],
+          ["Sanction Hit", "N/A", "low"],
+          ["PEP", "N/A", "low"],
+          ["Special Interest Hit", "N/A", "low"],
+          ["Document Verification", "N/A", "low"],
+          ["Adverse Media Hit", "N/A", "low"],
+          ["Overall Rating", "low", "low"],
+      ],
+      theme: "grid",
+      styles: {
+          fontSize: 10,
+          cellPadding: 2,
+          overflow: 'linebreak',
+          halign: 'left',
+          valign: 'middle'
+      },
+      columnStyles: {
+          0: { cellWidth: 60 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 30 },
+      }
+  });
+
+  doc.save(`${individual.full_name}_profile.pdf`);
+};
+
+const generateCompanyPDF = async (company: CompanyOB) => {
+  const jsPDF = (await import('jspdf')).default;
+  const autoTable = (await import('jspdf-autotable')).default;
+
+  const doc = new jsPDF();
+
+  const addCompanyInfo = (doc: jsPDF, title: string, data: [string, any][]) => {
+      doc.setFontSize(14);
+      doc.text(title, 14, 20);
+      doc.setFontSize(12);
+      const startY = 30;
+
+      data.forEach(([key, value], index: number) => {
+          const yOffset = startY + index * 10;
+          doc.text(`${key}:`, 14, yOffset);
+          doc.text(String(value), 80, yOffset);
+      });
+  };
+
+  const companyData: [string, any][] = [
+      ["Id", company.user_id],
+      ["Company Name", company.company_name],
+      ["Registration Number", company.registration_number],
+      ["Company Type", company.company_type],
+      ["Incorporation Date", company.incorporation_date],
+      ["Contact Email", company.contact_email],
+      ["Contact Phone", company.contact_phone],
+  ];
+
+  addCompanyInfo(doc, "Company Information", companyData);
+
+  // Key Findings Section
+  doc.addPage();
+  doc.setFontSize(14);
+  doc.text("Key Findings", 14, 20);
+  doc.setFontSize(12);
+  doc.text("Total Matches: 0", 14, 30);
+  doc.text("Resolved Matches: Genuine: 0, Not Genuine: 0", 14, 40);
+  doc.text("Unresolved Matches: 0", 14, 50);
+
+  // Risk Ratings Section
+  doc.addPage();
+  doc.setFontSize(14);
+  doc.text("Risk Ratings", 14, 20);
+
+  autoTable(doc, {
+      startY: 30,
+      head: [["Risk factor matrix", "Score", "Level"]],
+      body: [
+          ["Country of Residence", "5", "medium"],
+          ["Delivery Channel", "0", "low"],
+          ["Industry", "0", "low"],
+          ["Product", "0", "low"],
+          ["State", "0", "low"],
+          ["PEP", "0", "low"],
+          ["Document Verification", "0", "low"],
+          ["Base Rating", "5", "low"],
+      ],
+      theme: "grid",
+      styles: {
+          fontSize: 10,
+          cellPadding: 2,
+          overflow: 'linebreak',
+          halign: 'left',
+          valign: 'middle'
+      },
+      columnStyles: {
+          0: { cellWidth: 60 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 30 },
+      }
+  });
+
+  const nextStartY = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 10 : 40;
+
+  // Risk Factor Override
+  autoTable(doc, {
+      startY: nextStartY,
+      head: [["Risk factor override", "Override To", "Level"]],
+      body: [
+          ["Suspicious Transaction Report Filed", "N/A", "low"],
+          ["Non Resident", "N/A", "low"],
+          ["Residence Country is Sanctioned", "N/A", "low"],
+          ["Nationality Country is Sanctioned", "N/A", "low"],
+          ["Contact No. Code Country is Sanctioned", "N/A", "low"],
+          ["Sanction Hit", "N/A", "low"],
+          ["PEP", "N/A", "low"],
+          ["Special Interest Hit", "N/A", "low"],
+          ["Document Verification", "N/A", "low"],
+          ["Adverse Media Hit", "N/A", "low"],
+          ["Overall Rating", "low", "low"],
+      ],
+      theme: "grid",
+      styles: {
+          fontSize: 10,
+          cellPadding: 2,
+          overflow: 'linebreak',
+          halign: 'left',
+          valign: 'middle'
+      },
+      columnStyles: {
+          0: { cellWidth: 60 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 30 },
+      }
+  });
+
+  doc.save(`${company.company_name}_profile.pdf`);
+};
+
+// --- Main Data Fetching Function ---
+const fetchData = async () => {
+  if (!user) return;
+    setIsLoading(true);
+
+  try {
+      // Fetch Tracking Data FIRST
+    const trackingResponse = await fetch(`${API_BASE_URL}/tracking`, { credentials: 'include' });
+    if (!trackingResponse.ok) {
+      if(trackingResponse.status === 401) {
+          navigate('/login');
+          return;
+      }
+      throw new Error(`HTTP Error! Status: ${trackingResponse.status}`);
+  }
+  const trackingData: any[] = await trackingResponse.json();
+  const transformedTracking: Tracking = {};
+  trackingData.forEach(item => {
+    transformedTracking[item.name] = {
+      isTracking: item.isTracking === 1,
+      startDate: item.startDate,
+      stopDate: item.stopDate
+    };
+  });
+  setTracking(transformedTracking);
+
+
+      // Fetch All Persons (for matching)
+      const personsResponse = await fetch(`${API_BASE_URL}/persons`, { credentials: 'include' });
+      if (!personsResponse.ok) {
+          if (personsResponse.status === 401) {
+              navigate('/login');
+              return;
+          }
+          throw new Error(`HTTP Error! Status: ${personsResponse.status}`);
+      }
+      const allPersonsData: SearchResult[] = await personsResponse.json();
+      setAllPersons(allPersonsData);
+
+  // Set tracked results *after* fetching both persons and tracking
+  const tracked = allPersonsData.filter(result => transformedTracking[result.name]?.isTracking);
+  setTrackedResults(tracked);
+
+
+  // Fetch Company Data
+  const companyResponse = await fetch(`${API_BASE_URL}/companyob`, { credentials: 'include' });
+  if (!companyResponse.ok) {
+    if (companyResponse.status === 401) {
+      navigate('/login');
+      return;
+    }
+    throw new Error(`HTTP Error! Status: ${companyResponse.status}`);
+  }
+  const companyDataResult: CompanyOB[] = await companyResponse.json();
+
+  // Fetch Individual Data
+  const individualResponse = await fetch(`${API_BASE_URL}/individualob`, { credentials: 'include' });
+  if (!individualResponse.ok) {
+      if(individualResponse.status === 401){
+          navigate('/login');
+          return;
+      }
+    throw new Error(`HTTP Error! Status: ${individualResponse.status}`);
+  }
+  const individualDataResult: IndividualOB[] = await individualResponse.json();
+
+  // Update Company and Individual Statuses and set state *once*
+  const updatedCompanyData = companyDataResult.map(company => ({
+    ...company,
+    status: checkForMatch(company.company_name, allPersonsData) ? 'pending' : 'approved'
+  }));
+
+  const updatedIndividualData = individualDataResult.map(individual => ({
+    ...individual,
+    status: checkForMatch(individual.full_name, allPersonsData) ? 'pending' : 'approved'
+  }));
+
+  setCompanyData(updatedCompanyData);
+  setIndividualData(updatedIndividualData);
+
+
+  // Update statuses in the database *after* setting local state
+  for (const company of updatedCompanyData) {
+    await updateCompanyStatus(company.company_name, company.status || 'approved');
+  }
+  for (const individual of updatedIndividualData) {
+    await updateIndividualStatus(individual.full_name, individual.status || 'approved');
+  }
+
+} catch (error) {
+  console.error('Could not fetch data:', error);
+} finally {
+  setIsLoading(false); // Ensure loading is set to false regardless of success/failure
+}
 };
 
 // --- useEffect Hooks ---

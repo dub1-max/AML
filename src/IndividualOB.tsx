@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { useAuth } from './AuthContext'; // Import useAuth
+import { getApiBaseUrl } from './config';
 
 function IndividualOB() {
+    const API_BASE_URL = getApiBaseUrl();
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [residentStatus, setResidentStatus] = useState('');
@@ -79,7 +81,7 @@ function IndividualOB() {
         };
 
         try {
-            const response = await fetch('http://137.184.150.6/api/registerIndividual', {
+            const response = await fetch(`${API_BASE_URL}/registerIndividual`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -13,9 +13,9 @@ import { useNavigate } from 'react-router-dom';
 import IndividualOB from './IndividualOB';
 import CompanyOB from './CompanyOB';
 import Insights from './Insights';
+import { getApiBaseUrl } from './config';
 
-
-const API_BASE_URL = 'http://137.184.150.6/api';
+const API_BASE_URL = getApiBaseUrl();
 
 interface MainAppProps { }
 
@@ -32,8 +32,6 @@ function MainApp(_props: MainAppProps) {
     const [deepLinkSubSection, setDeepLinkSubSection] = useState<'individual' | 'company' | null>(null);
     const [showIndividualOB, setShowIndividualOB] = useState(false); // State for Individual Onboarding page
     const [showCompanyOB, setShowCompanyOB] = useState(false);       // State for Company Onboarding page
-
-
 
     const navigate = useNavigate();
 

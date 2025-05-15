@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
+import { getApiBaseUrl } from './config';
 
 interface FormData {
   companyName: string;
@@ -27,6 +28,7 @@ interface FormData {
 
 function CompanyOB() {
   const navigate = useNavigate();
+  const API_BASE_URL = getApiBaseUrl();
   const [formData, setFormData] = useState<FormData>({
     companyName: "",
     registrationNumber: "",
@@ -87,7 +89,7 @@ function CompanyOB() {
     };
 
     try {
-      const response = await fetch("http://137.184.150.6/api/registerCompany", {
+      const response = await fetch(`${API_BASE_URL}/registerCompany`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,6 +1,7 @@
 // src/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { AuthState, User } from './types';
+import { getApiBaseUrl } from './config';
 
 interface AuthContextProps {
     user: User | null;
@@ -11,7 +12,7 @@ interface AuthContextProps {
     loading: boolean;
 }
 
-const API_BASE_URL = 'http://137.184.150.6/api';
+const API_BASE_URL = getApiBaseUrl();
 
 const AuthContext = createContext<AuthContextProps>({
     user: null,

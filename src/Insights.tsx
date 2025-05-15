@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getApiBaseUrl } from './config';
 
 interface InsightsProps {}
 
@@ -20,6 +21,7 @@ function Insights(_props: InsightsProps) {
     const toDateRef = useRef<HTMLInputElement>(null);
     const { user } = useAuth();
     const navigate = useNavigate();
+    const API_BASE_URL = getApiBaseUrl();
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -44,7 +46,7 @@ function Insights(_props: InsightsProps) {
 
         try {
             // Fetch Individual Customers (for logged-in user)
-            const individualResponse = await fetch('http://137.184.150.6/api/individualob', {
+            const individualResponse = await fetch(`${API_BASE_URL}/individualob`, {
                 method: 'GET',
                 credentials: 'include', // Ensures session authentication works
             });
@@ -59,7 +61,7 @@ function Insights(_props: InsightsProps) {
             const individualData = await individualResponse.json();
 
             // Fetch Company Customers (for logged-in user)
-            const companyResponse = await fetch('http://137.184.150.6/api/companyob', {
+            const companyResponse = await fetch(`${API_BASE_URL}/companyob`, {
                 method: 'GET',
                 credentials: 'include', // Ensures session authentication works
             });
