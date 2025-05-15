@@ -1,5 +1,5 @@
 // MainApp.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Search, FileText, Shield, LogOut, Link, Users, File,
     Plus
@@ -9,6 +9,7 @@ import { useAuth } from './AuthContext';
 import ActivityDashboard from './Insights';
 import Profiles from './Profiles';
 import { useNavigate } from 'react-router-dom';
+import debounce from 'lodash/debounce';
 // Import the new components
 import IndividualOB from './IndividualOB';
 import CompanyOB from './CompanyOB';
@@ -16,6 +17,21 @@ import Insights from './Insights';
 import { getApiBaseUrl } from './config';
 
 const API_BASE_URL = getApiBaseUrl();
+
+// Cache interface
+interface SearchCache {
+    [key: string]: {
+        results: SearchResult[];
+        timestamp: number;
+    };
+}
+
+// Cache interface for tracking data
+interface TrackingCache {
+    data: Tracking;
+    persons: SearchResult[];
+    timestamp: number;
+}
 
 interface MainAppProps { }
 
@@ -32,14 +48,128 @@ function MainApp(_props: MainAppProps) {
     const [deepLinkSubSection, setDeepLinkSubSection] = useState<'individual' | 'company' | null>(null);
     const [showIndividualOB, setShowIndividualOB] = useState(false); // State for Individual Onboarding page
     const [showCompanyOB, setShowCompanyOB] = useState(false);       // State for Company Onboarding page
-
+    
+    // Add search cache
+    const [searchCache] = useState<SearchCache>({});
+    
+    // Add tracking cache
+    const [trackingCache, setTrackingCache] = useState<TrackingCache | null>(null);
+    
     const navigate = useNavigate();
 
-    const fetchTrackedData = async () => {
+    // Cache duration in milliseconds (5 minutes)
+    const CACHE_DURATION = 5 * 60 * 1000;
+    
+    // Minimum search term length
+    const MIN_SEARCH_LENGTH = 2;
+
+    // Cache duration for tracking data (2 minutes)
+    const TRACKING_CACHE_DURATION = 2 * 60 * 1000;
+
+    const fetchTrackedData = useCallback(async () => {
         if (!user) return;
 
+        // Check cache first
+        if (trackingCache && Date.now() - trackingCache.timestamp < TRACKING_CACHE_DURATION) {
+            setTracking(trackingCache.data);
+            setTrackedResults(trackingCache.persons);
+            return;
+        }
+
+        setIsLoading(true);
+
         try {
-            const response = await fetch(`${API_BASE_URL}/tracking`, {
+            // Use Promise.all to fetch tracking and persons data in parallel
+            const [trackingResponse, personsResponse] = await Promise.all([
+                fetch(`${API_BASE_URL}/tracking`, { credentials: 'include' }),
+                fetch(`${API_BASE_URL}/persons`, { credentials: 'include' })
+            ]);
+
+            // Handle authentication errors
+            if (trackingResponse.status === 401 || personsResponse.status === 401) {
+                navigate('/login');
+                return;
+            }
+
+            if (!trackingResponse.ok || !personsResponse.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            // Parse both responses in parallel
+            const [trackingData, allPersonsData] = await Promise.all([
+                trackingResponse.json(),
+                personsResponse.json()
+            ]);
+
+            // Transform tracking data
+            const transformedTracking: Tracking = {};
+            trackingData.forEach((item: any) => {
+                transformedTracking[item.name] = {
+                    isTracking: item.isTracking === 1,
+                    startDate: item.startDate,
+                    stopDate: item.stopDate
+                };
+            });
+
+            // Filter tracked persons
+            const tracked = allPersonsData.filter((result: SearchResult) => 
+                transformedTracking[result.name]?.isTracking
+            );
+
+            // Update cache
+            setTrackingCache({
+                data: transformedTracking,
+                persons: tracked,
+                timestamp: Date.now()
+            });
+
+            // Update state
+            setTracking(transformedTracking);
+            setTrackedResults(tracked);
+
+        } catch (error) {
+            console.error('Could not fetch tracked data:', error);
+            setTracking({});
+            setTrackedResults([]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user, navigate]);
+
+    // Refresh tracking data periodically
+    useEffect(() => {
+        fetchTrackedData();
+        
+        // Set up periodic refresh every 2 minutes
+        const refreshInterval = setInterval(fetchTrackedData, TRACKING_CACHE_DURATION);
+        
+        return () => clearInterval(refreshInterval);
+    }, [fetchTrackedData]);
+
+    // Update tracking with optimistic updates
+    const updateTracking = useCallback(async (name: string, newTrackingStatus: boolean) => {
+        try {
+            // Optimistically update UI
+            const updatedTracking = { ...tracking };
+            updatedTracking[name] = {
+                ...updatedTracking[name],
+                isTracking: newTrackingStatus,
+                startDate: newTrackingStatus ? new Date().toISOString() : undefined,
+                stopDate: !newTrackingStatus ? new Date().toISOString() : undefined
+            };
+            setTracking(updatedTracking);
+
+            // Update tracked results immediately
+            const updatedResults = trackedResults.filter(result => 
+                updatedTracking[result.name]?.isTracking
+            );
+            setTrackedResults(updatedResults);
+
+            // Make API call
+            const response = await fetch(`${API_BASE_URL}/tracking/${name}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isTracking: newTrackingStatus }),
                 credentials: 'include',
             });
 
@@ -48,67 +178,42 @@ function MainApp(_props: MainAppProps) {
                     navigate('/login');
                     return;
                 }
-                throw new Error(`HTTP Error! Status: ${response.status}`);
+                throw new Error(`Server error: ${response.status}`);
             }
 
-            const trackingData: any[] = await response.json();
-            const transformedTracking: Tracking = {};
-
-            trackingData.forEach(item => {
-                transformedTracking[item.name] = {
-                    isTracking: item.isTracking === 1,
-                    startDate: item.startDate,
-                    stopDate: item.stopDate
-                };
-            });
-
-            setTracking(transformedTracking);
-        } catch (error) {
-            console.error('Could not fetch tracked data:', error);
-            setTracking({});
-        }
-    };
-
-    useEffect(() => {
-        fetchTrackedData();
-    }, [user, navigate]);
-
-    useEffect(() => {
-        const fetchTracked = async () => {
-            if (Object.keys(tracking).length === 0) {
-                setTrackedResults([]);
-                return;
-            }
-            try {
-                const response = await fetch(`${API_BASE_URL}/persons`, {
-                    credentials: 'include',
+            // Update cache
+            if (trackingCache) {
+                setTrackingCache({
+                    ...trackingCache,
+                    data: updatedTracking,
+                    persons: updatedResults,
+                    timestamp: Date.now()
                 });
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        navigate('/login');
-                        return;
-                    }
-                    throw new Error(`HTTP Error! Status: ${response.status}`);
-                }
-
-                const allResults: SearchResult[] = await response.json();
-                const tracked = allResults.filter(result => tracking[result.name]?.isTracking);
-                setTrackedResults(tracked);
-            } catch (error) {
-                console.error('Could not fetch tracked results:', error);
-                setTrackedResults([]);
-
             }
-        };
-        fetchTracked();
-    }, [tracking, user, navigate]);
 
-    const handleSearch = async () => {
-        if (!searchTerm && !searchId) {
+        } catch (error) {
+            console.error('Error updating tracking:', error);
+            // Revert optimistic update on error
+            await fetchTrackedData();
+        }
+    }, [tracking, trackedResults, trackingCache, navigate]);
+
+    const handleSearch = useCallback(async () => {
+        if ((!searchTerm && !searchId) || (searchTerm && searchTerm.length < MIN_SEARCH_LENGTH)) {
             setSearchResults([]);
             return;
         }
+
+        // Create cache key from search parameters
+        const cacheKey = `${searchTerm}-${searchId}`;
+
+        // Check cache first
+        const cachedData = searchCache[cacheKey];
+        if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+            setSearchResults(cachedData.results);
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -129,6 +234,13 @@ function MainApp(_props: MainAppProps) {
             }
 
             const data: SearchResult[] = await response.json();
+            
+            // Update cache
+            searchCache[cacheKey] = {
+                results: data,
+                timestamp: Date.now()
+            };
+            
             setSearchResults(data);
         } catch (error) {
             console.error('Search failed:', error);
@@ -136,7 +248,22 @@ function MainApp(_props: MainAppProps) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [searchTerm, searchId, searchCache, navigate]);
+
+    // Create debounced search function
+    const debouncedSearch = useCallback(
+        debounce(handleSearch, 300),
+        [handleSearch]
+    );
+
+    // Update search when terms change
+    useEffect(() => {
+        debouncedSearch();
+        return () => {
+            debouncedSearch.cancel();
+        };
+    }, [searchTerm, searchId, debouncedSearch]);
+
     const handleDeepLinkClick = () => {
         if (activeSection === 'deepLink') {
             setActiveSection('insights'); // Or any other default section
@@ -288,8 +415,14 @@ function MainApp(_props: MainAppProps) {
                                     <input
                                         type="text"
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Search by name"
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setSearchTerm(value);
+                                            if (value.length < MIN_SEARCH_LENGTH) {
+                                                setSearchResults([]);
+                                            }
+                                        }}
+                                        placeholder={`Search by name (min. ${MIN_SEARCH_LENGTH} characters)`}
                                         className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     />
                                 </div>
@@ -299,13 +432,20 @@ function MainApp(_props: MainAppProps) {
                                 <input
                                     type="text"
                                     value={searchId}
-                                    onChange={(e) => setSearchId(e.target.value)}
+                                    onChange={(e) => {
+                                        setSearchId(e.target.value);
+                                    }}
                                     placeholder="Search by ID"
                                     className="px-4 py-2 rounded-lg border border-gray-200 text-sm"
                                 />
                                 <button
-                                    onClick={handleSearch}
-                                    className="px-6 py-2 bg-[#4A1D96] text-white rounded-lg text-sm"
+                                    onClick={() => handleSearch()}
+                                    disabled={searchTerm.length > 0 && searchTerm.length < MIN_SEARCH_LENGTH}
+                                    className={`px-6 py-2 bg-[#4A1D96] text-white rounded-lg text-sm ${
+                                        searchTerm.length > 0 && searchTerm.length < MIN_SEARCH_LENGTH 
+                                        ? 'opacity-50 cursor-not-allowed' 
+                                        : ''
+                                    }`}
                                 >
                                     APPLY
                                 </button>
