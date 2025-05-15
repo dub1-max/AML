@@ -123,6 +123,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
           <table className="w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500">
+              <th className="pb-4 px-6 whitespace-nowrap">TYPE</th>
                 <th className="pb-4 px-6 whitespace-nowrap">CUSTOMER</th>
                 <th className="pb-4 px-6 whitespace-nowrap">FULL NAME</th>
                 <th className="pb-4 px-6 whitespace-nowrap">NATIONALITY</th>
