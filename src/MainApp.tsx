@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Search, FileText, Shield, LogOut, Link, Users, File,
-    Plus
+    Plus, Loader2
 } from 'lucide-react';
 import type { SearchResult, Tracking } from './types';
 import { useAuth } from './AuthContext';
@@ -15,6 +15,9 @@ import IndividualOB from './IndividualOB';
 import CompanyOB from './CompanyOB';
 import Insights from './Insights';
 import { getApiBaseUrl } from './config';
+import ActiveTracking from './ActiveTracking';
+import ErrorBoundary from './components/ErrorBoundary';
+import CustomerProfiles from './CustomerProfiles';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -44,10 +47,10 @@ function MainApp(_props: MainAppProps) {
     const [tracking, setTracking] = useState<Tracking>({});
     const [trackedResults, setTrackedResults] = useState<SearchResult[]>([]);
     const [showDashboard, setShowDashboard] = useState(true);
-    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk'>('insights');
+    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking' | 'customerProfiles'>('insights');
     const [deepLinkSubSection, setDeepLinkSubSection] = useState<'individual' | 'company' | null>(null);
-    const [showIndividualOB, setShowIndividualOB] = useState(false); // State for Individual Onboarding page
-    const [showCompanyOB, setShowCompanyOB] = useState(false);       // State for Company Onboarding page
+    const [showIndividualOB, setShowIndividualOB] = useState(false);
+    const [showCompanyOB, setShowCompanyOB] = useState(false);
     
     // Add search cache
     const [searchCache] = useState<SearchCache>({});
@@ -210,7 +213,7 @@ function MainApp(_props: MainAppProps) {
         // Check cache first
         const cachedData = searchCache[cacheKey];
         if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
-            setSearchResults(cachedData.results);
+            setSearchResults(cachedData.results || []);
             return;
         }
 
@@ -233,15 +236,17 @@ function MainApp(_props: MainAppProps) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const data: SearchResult[] = await response.json();
+            const responseData = await response.json();
+            const results = Array.isArray(responseData.data) ? responseData.data : [];
             
             // Update cache
             searchCache[cacheKey] = {
-                results: data,
+                results,
                 timestamp: Date.now()
             };
             
-            setSearchResults(data);
+            setSearchResults(results);
+            console.log('Search results:', results.length); // Debug log
         } catch (error) {
             console.error('Search failed:', error);
             setSearchResults([]);
@@ -310,14 +315,44 @@ function MainApp(_props: MainAppProps) {
                                 setShowCompanyOB(false);
                                 setShowIndividualOB(false);
                             }}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'insights'
-                                ? 'bg-[#5D2BA8] text-white'
-                                : 'hover:bg-[#5D2BA8]'
-                                }`}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
+                                activeSection === 'insights' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                            }`}
                         >
                             <FileText className="w-5 h-5" />
                             <span>Insights</span>
                         </button>
+
+                        <button
+                            onClick={() => {
+                                setShowDashboard(false);
+                                setActiveSection('activeTracking');
+                                setShowCompanyOB(false);
+                                setShowIndividualOB(false);
+                            }}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
+                                activeSection === 'activeTracking' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                            }`}
+                        >
+                            <Shield className="w-5 h-5" />
+                            <span>Active Tracking</span>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                setShowDashboard(false);
+                                setActiveSection('customerProfiles');
+                                setShowCompanyOB(false);
+                                setShowIndividualOB(false);
+                            }}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
+                                activeSection === 'customerProfiles' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                            }`}
+                        >
+                            <Users className="w-5 h-5" />
+                            <span>Customer Profiles</span>
+                        </button>
+
                         <button
                             onClick={() => {
                                 setShowDashboard(false);
@@ -325,10 +360,9 @@ function MainApp(_props: MainAppProps) {
                                 setShowCompanyOB(false);
                                 setShowIndividualOB(false);
                             }}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg  text-gray-300 ${activeSection === 'profiles'
-                                ? 'bg-[#5D2BA8] text-white'
-                                : 'hover:bg-[#5D2BA8]'
-                                }`}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
+                                activeSection === 'profiles' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                            }`}
                         >
                             <Users className="w-5 h-5" />
                             <span>Profiles</span>
@@ -371,10 +405,11 @@ function MainApp(_props: MainAppProps) {
                 <header className="bg-white border-b border-gray-200">
                     <div className="flex justify-between items-center px-6 py-4">
                         <h2 className="text-xl font-semibold">
-                            {/*Correct Title */}
                             {showDashboard ? 'Activity Dashboard' : 
                              showIndividualOB ? 'Individual Onboarding' :
                              showCompanyOB ? 'Company Onboarding' :
+                             activeSection === 'activeTracking' ? 'Active Tracking' :
+                             activeSection === 'customerProfiles' ? 'Customer Profiles' :
                             'Alerts'}
                         </h2>
                         <div className="flex items-center space-x-4">
@@ -400,7 +435,8 @@ function MainApp(_props: MainAppProps) {
                         </div>
                     </div>
 
-                    {!showDashboard && !showIndividualOB && !showCompanyOB && (
+                    {!showDashboard && !showIndividualOB && !showCompanyOB && 
+                     activeSection !== 'activeTracking' && activeSection !== 'customerProfiles' && (
                         <div className="px-6 py-3 flex items-center space-x-4 border-t border-gray-200">
                             <div className="flex space-x-2">
                                 <button className="px-4 py-1 rounded-full bg-[#4A1D96] text-white text-sm">
@@ -454,18 +490,39 @@ function MainApp(_props: MainAppProps) {
                     )}
                 </header>
 
-                {/* Conditionally render Insights, Profiles, IndividualOB, or CompanyOB */}
+                {/* Conditionally render components with ErrorBoundary */}
                 {showDashboard ? (
-                    <Insights />
+                    <ErrorBoundary>
+                        <Insights />
+                    </ErrorBoundary>
                 ) : showIndividualOB ? (
-                    <IndividualOB />
+                    <ErrorBoundary>
+                        <IndividualOB />
+                    </ErrorBoundary>
                 ) : showCompanyOB ? (
-                    <CompanyOB />
+                    <ErrorBoundary>
+                        <CompanyOB />
+                    </ErrorBoundary>
+                ) : activeSection === 'activeTracking' ? (
+                    <ErrorBoundary>
+                        <ActiveTracking
+                            trackedResults={trackedResults}
+                            tracking={tracking}
+                            isLoading={isLoading}
+                            onToggleTracking={updateTracking}
+                        />
+                    </ErrorBoundary>
+                ) : activeSection === 'customerProfiles' ? (
+                    <ErrorBoundary>
+                        <CustomerProfiles />
+                    </ErrorBoundary>
                 ) : (
-                    <Profiles
-                        searchResults={searchResults}
-                        isLoading={isLoading}
-                    />
+                    <ErrorBoundary>
+                        <Profiles
+                            searchResults={searchResults || []}
+                            isLoading={isLoading}
+                        />
+                    </ErrorBoundary>
                 )}
             </div>
         </div>
