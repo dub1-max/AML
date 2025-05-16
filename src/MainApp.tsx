@@ -89,7 +89,6 @@ function MainApp(_props: MainAppProps) {
     // Minimum time between refreshes (3 seconds)
     const REFRESH_COOLDOWN = 3000;
 
-    // Use a memoized fetchTrackedData function to prevent unnecessary refetches
     const fetchTrackedData = useCallback(async () => {
         if (!user) return;
         
@@ -103,32 +102,23 @@ function MainApp(_props: MainAppProps) {
         console.log('🔍 Starting fetchTrackedData');
         setLastRefreshTimestamp(now);
 
-        // Check cache first - optimization to avoid unnecessary network requests
+        // Check cache first
         if (trackingCache && Date.now() - trackingCache.timestamp < TRACKING_CACHE_DURATION) {
             console.log('🔍 Using cached tracking data');
             setTracking(trackingCache.data);
             setTrackedResults(trackingCache.persons);
-            setIsLoading(false); // Ensure loading is set to false when using cache
             return;
         }
 
         setIsLoading(true);
 
         try {
-            // Add cache busting parameter to prevent browser caching
-            const cacheBuster = `_=${Date.now()}`;
-            console.log('🔍 Fetching tracked persons data from API...');
-            
+            console.log('🔍 Fetching tracked persons data from new endpoint...');
+            // Use the new endpoint that returns complete information in one request
+            // Don't include additional headers that might trigger CORS issues
             const trackedPersonsResponse = await fetch(
-                `${API_BASE_URL}/tracked-persons?${cacheBuster}`, 
-                { 
-                    credentials: 'include',
-                    headers: {
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache',
-                        'Expires': '0'
-                    }
-                }
+                `${API_BASE_URL}/tracked-persons`, 
+                { credentials: 'include' }
             );
 
             if (trackedPersonsResponse.status === 401) {
@@ -159,6 +149,8 @@ function MainApp(_props: MainAppProps) {
                 };
             });
 
+            console.log('🔍 Transformed tracking data:', transformedTracking);
+
             // Create SearchResult objects from the response
             const tracked = trackedPersons.map((person: any) => ({
                 id: person.id,
@@ -171,41 +163,41 @@ function MainApp(_props: MainAppProps) {
                 dataset: person.dataset || ''
             }));
 
-            // Update cache with a timestamp
-            const newCache = {
+            console.log('🔍 Final tracked results:', tracked);
+            console.log('🔍 Final tracked results count:', tracked.length);
+
+            // Update cache
+            setTrackingCache({
                 data: transformedTracking,
                 persons: tracked,
                 timestamp: Date.now()
-            };
-            setTrackingCache(newCache);
+            });
 
             // Update state
+            console.log('🔍 Updating state with tracked results');
             setTracking(transformedTracking);
             setTrackedResults(tracked);
 
         } catch (error) {
             console.error('🔍 Could not fetch tracked data:', error);
-            // Don't clear existing data on error to maintain UI stability
+            setTracking({});
+            setTrackedResults([]);
         } finally {
             setIsLoading(false);
+            console.log('🔍 Completed fetchTrackedData');
         }
-    }, [user, navigate, lastRefreshTimestamp, trackingCache]);
+    }, [user, navigate]);
 
-    // Refresh tracking data only when actively viewing the relevant section
+    // Refresh tracking data periodically
     useEffect(() => {
         console.log('Fetching tracked data...');
         fetchTrackedData();
         
-        // Set up periodic refresh only when the activeTracking section is active
-        let refreshInterval: NodeJS.Timeout | null = null;
-        if (activeSection === 'activeTracking') {
-            refreshInterval = setInterval(fetchTrackedData, TRACKING_CACHE_DURATION);
-        }
+        // Set up periodic refresh every 2 minutes
+        const refreshInterval = setInterval(fetchTrackedData, TRACKING_CACHE_DURATION);
         
-        return () => {
-            if (refreshInterval) clearInterval(refreshInterval);
-        };
-    }, [fetchTrackedData, activeSection]);
+        return () => clearInterval(refreshInterval);
+    }, [fetchTrackedData]);
 
     // Add debug logging for render
     console.log('MainApp render state:', {
