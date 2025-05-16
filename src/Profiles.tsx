@@ -1,15 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, XCircle, CheckCircle } from 'lucide-react';
+import { Loader2, XCircle, CheckCircle, FileText } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './config';
-
-interface SearchResult {
-  name: string;
-  identifiers: string;
-  country: string;
-  riskLevel: number;
-}
+import { generateCustomerPDF } from './utils/pdfGenerator';
+import { SearchResult as AppSearchResult } from './types';
 
 interface Tracking {
   [key: string]: {
@@ -20,7 +15,7 @@ interface Tracking {
 }
 
 interface ProfilesProps {
-  searchResults: SearchResult[];  // Initial search results from parent
+  searchResults: AppSearchResult[];  // Initial search results from parent
   isLoading: boolean;            // Initial loading state from parent
 }
 
@@ -31,12 +26,13 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
 
   // Initialize state
   const [tracking, setTracking] = useState<Tracking>({});
-  const [trackedResults, setTrackedResults] = useState<SearchResult[]>([]);
+  const [trackedResults, setTrackedResults] = useState<AppSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(initialLoading);
   const [error, setError] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
 
   // Calculate aging with memoization
-  const calculateAging = useCallback((result: SearchResult): string => {
+  const calculateAging = useCallback((result: AppSearchResult): string => {
     const trackingInfo = tracking[result.name];
     
     if (!trackingInfo) return 'None';
@@ -100,6 +96,23 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
     }
   };
 
+  const handleGeneratePDF = async (person: AppSearchResult) => {
+    try {
+      // Set PDF generation status for this person
+      setGeneratingPdf(prev => ({ ...prev, [person.id]: true }));
+      
+      // Generate the PDF
+      await generateCustomerPDF(person);
+      
+      // Reset PDF generation status
+      setGeneratingPdf(prev => ({ ...prev, [person.id]: false }));
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setGeneratingPdf(prev => ({ ...prev, [person.id]: false }));
+      alert('Failed to generate PDF. Please try again.');
+    }
+  };
+
   // Show error state if there's an error
   if (error) {
     return (
@@ -123,7 +136,6 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
           <table className="w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500">
-              <th className="pb-4 px-6 whitespace-nowrap">TYPE</th>
                 <th className="pb-4 px-6 whitespace-nowrap">CUSTOMER</th>
                 <th className="pb-4 px-6 whitespace-nowrap">FULL NAME</th>
                 <th className="pb-4 px-6 whitespace-nowrap">NATIONALITY</th>
@@ -139,9 +151,6 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
               {safeSearchResults.map((result, index) => (
                 <tr key={`search-${index}`} className="border-t border-gray-100 hover:bg-gray-50">
                   <td className="py-4 px-6">
-                    <div className={`w-1 h-6 rounded-full ${getRiskColor(result.riskLevel).replace('text', 'bg')}`}></div>
-                  </td>
-                  <td className="py-4 px-6">
                     <div className="flex items-center space-x-3">
                       <img src={`https://ui-avatars.com/api/?name=${result.name}`} alt={result.name} className="w-8 h-8 rounded-full" />
                       <span className="text-sm">{result.identifiers}</span>
@@ -156,7 +165,18 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <div className="w-6 h-6 rounded-full bg-gray-100"></div>
+                    <button 
+                      onClick={() => handleGeneratePDF(result)}
+                      disabled={generatingPdf[result.id]}
+                      className="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-full transition-colors duration-200"
+                      title="Download Report"
+                    >
+                      {generatingPdf[result.id] ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FileText className="w-4 h-4" />
+                      )}
+                    </button>
                   </td>
                   <td className="py-4 px-6">
                     <span className={`text-sm ${getRiskColor(result.riskLevel)}`}>{result.riskLevel}%</span>
@@ -182,7 +202,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
               ))}
               {safeSearchResults.length === 0 && !isLoading && (
                 <tr>
-                  <td colSpan={10} className="py-4 px-6 text-center text-gray-500">
+                  <td colSpan={9} className="py-4 px-6 text-center text-gray-500">
                     No results found
                   </td>
                 </tr>

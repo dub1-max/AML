@@ -10,7 +10,7 @@ interface ActiveTrackingProps {
     onToggleTracking: (name: string, newTrackingStatus: boolean) => Promise<void>;
 }
 
-type SortableColumn = 'type' | 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status';
+type SortableColumn = 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking }: ActiveTrackingProps) {
@@ -116,8 +116,6 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
             const multiplier = sortDirection === 'asc' ? 1 : -1;
             
             switch (sortColumn) {
-                case 'type':
-                    return multiplier * (a.type || '').localeCompare(b.type || '');
                 case 'identifiers':
                     return multiplier * (a.identifiers || '').localeCompare(b.identifiers || '');
                 case 'name':
@@ -210,9 +208,6 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                     <table className="w-full">
                         <thead>
                             <tr className="text-left text-sm text-gray-500">
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('type')}>
-                                    TYPE {renderSortIndicator('type')}
-                                </th>
                                 <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('identifiers')}>
                                     CUSTOMER {renderSortIndicator('identifiers')}
                                 </th>
@@ -250,9 +245,6 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                             ? 'bg-white' 
                                             : 'bg-gray-50'
                                     }`}>
-                                    <td className="py-4 px-6">
-                                        <div className={`w-1 h-6 rounded-full ${getRiskColor(result.riskLevel || 0).replace('text', 'bg')}`}></div>
-                                    </td>
                                     <td className="py-4 px-6">
                                         <div className="flex items-center space-x-3">
                                             <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(result.name || 'Unknown')}`} alt={result.name || 'Unknown'} className="w-8 h-8 rounded-full" />
