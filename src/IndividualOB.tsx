@@ -198,15 +198,12 @@ function IndividualOB() {
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700">DATE OF BIRTH</label>
-                    <div className="relative">
-                        <input
-                            type="date"
-                            value={dateOfBirth}
-                            onChange={(e) => setDateOfBirth(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10"
-                        />
-                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    </div>
+                    <input
+                        type="date"
+                        value={dateOfBirth}
+                        onChange={(e) => setDateOfBirth(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700">NATIONALITY</label>
@@ -293,15 +290,12 @@ function IndividualOB() {
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700">NATIONAL ID EXPIRY</label>
-                    <div className="relative">
-                        <input
-                            type="date"
-                            value={nationalIdExpiry}
-                            onChange={(e) => setNationalIdExpiry(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10"
-                        />
-                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    </div>
+                    <input
+                        type="date"
+                        value={nationalIdExpiry}
+                        onChange={(e) => setNationalIdExpiry(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
                 </div>
 
                 <div>
@@ -317,15 +311,12 @@ function IndividualOB() {
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700">PASSPORT EXPIRY</label>
-                    <div className="relative">
-                        <input
-                            type="date"
-                            value={passportExpiry}
-                            onChange={(e) => setPassportExpiry(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10"
-                        />
-                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    </div>
+                    <input
+                        type="date"
+                        value={passportExpiry}
+                        onChange={(e) => setPassportExpiry(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
                 </div>
 
                 {/* Contact Information - Section Header */}
