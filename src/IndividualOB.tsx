@@ -132,7 +132,12 @@ function IndividualOB() {
                 setPositionInCompany('');
                 
                 // Redirect to Active Tracking tab
-                navigate('/mainapp', { state: { activeSection: 'activeTracking' } });
+                navigate('/mainapp', { 
+                    state: { 
+                        activeSection: 'activeTracking',
+                        refreshData: false 
+                    } 
+                });
             } else {
                 alert(data.message || 'Registration failed'); // Show server error message
             }

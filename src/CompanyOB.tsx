@@ -111,7 +111,12 @@ function CompanyOB() {
       }
 
       alert("Company registration successful! Redirecting to Active Tracking.");
-      navigate("/mainapp", { state: { activeSection: 'activeTracking' } });
+      navigate("/mainapp", { 
+        state: { 
+          activeSection: 'activeTracking',
+          refreshData: false 
+        } 
+      });
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message || "An unexpected error occurred");

@@ -253,14 +253,14 @@ function MainApp(_props: MainAppProps) {
     }, [tracking, trackedResults, trackingCache, navigate]);
 
     // Add a function to handle tab changes
-    const handleTabChange = useCallback((section: string) => {
+    const handleTabChange = useCallback((section: string, shouldRefreshData: boolean = true) => {
         setActiveSection(section as any);
         setShowCompanyOB(false);
         setShowIndividualOB(false);
         setShowDashboard(section === 'insights');
         
-        // Fetch fresh data when switching to active tracking
-        if (section === 'activeTracking') {
+        // Fetch fresh data when switching to active tracking, but only if shouldRefreshData is true
+        if (section === 'activeTracking' && shouldRefreshData) {
             console.log('🔄 Switching to Screening tab - fetching fresh data');
             // Force data refresh by invalidating cache
             setTrackingCache(null);
@@ -629,10 +629,14 @@ function MainApp(_props: MainAppProps) {
         } || {};
         
         if (state.activeSection) {
-            handleTabChange(state.activeSection);
+            // Determine if we should refresh data based on the refreshData flag
+            const shouldRefresh = state.refreshData === true;
+            
+            // Call handleTabChange with the refreshData flag
+            handleTabChange(state.activeSection, shouldRefresh);
             
             // If refreshData flag is set, force a refresh of tracked data
-            if (state.refreshData && state.activeSection === 'activeTracking') {
+            if (shouldRefresh && state.activeSection === 'activeTracking') {
                 console.log('📊 Refreshing tracked data after profile update');
                 
                 // First invalidate cache to force fresh data fetch
@@ -644,19 +648,10 @@ function MainApp(_props: MainAppProps) {
                 
                 // Also fetch pending approvals to ensure consistency
                 fetchPendingApprovals();
-                
-                // Clear the state IMMEDIATELY to prevent infinite refreshing
-                window.history.replaceState(
-                    { 
-                        ...state,
-                        refreshData: false  // Set to false instead of removing completely
-                    }, 
-                    document.title
-                );
-            } else {
-                // Clear the state for other navigations
-                window.history.replaceState({}, document.title);
             }
+            
+            // Always clear the state to prevent re-triggering
+            window.history.replaceState({}, document.title);
         }
     }, [location, handleTabChange, fetchTrackedData, fetchPendingApprovals]);
 
