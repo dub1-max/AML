@@ -13,6 +13,7 @@ interface Customer {
     fullName?: string;
     companyName?: string;
     name?: string; // Added for fallback
+    full_name?: string; // Added for snake_case field handling
     email?: string;
     status: 'pending' | 'approved' | 'rejected';
     type: 'individual' | 'company';
@@ -185,13 +186,14 @@ function Insights(_props: InsightsProps) {
     };
 
     // Get customer's name for display
-    const getCustomerName = (customer: Customer): string => {
-        if (customer.type === 'individual') {
-            return customer.fullName || customer.name || 'Individual Customer';
-        } else {
-            return customer.companyName || customer.name || 'Company';
-        }
-    };
+const getCustomerName = (customer: Customer): string => {
+    if (customer.type === 'individual') {
+        // Check for both camelCase and snake_case versions of name fields
+        return customer.fullName || customer.name || (customer as any).full_name || 'Individual Customer';
+    } else {
+        return customer.companyName || customer.name || 'Company';
+    }
+};
 
     // Render customer list for a given status
     const renderCustomerList = (status: string | null) => {
@@ -348,7 +350,7 @@ function Insights(_props: InsightsProps) {
                                 {/* Display all available properties */}
                                 {Object.entries(selectedCustomer).map(([key, value]) => {
                                     // Skip already displayed or internal properties
-                                    if (['id', 'type', 'fullName', 'companyName', 'name', 'email', 'status', 'createdAt', 'updatedAt'].includes(key)) {
+                                    if (['id', 'type', 'fullName', 'companyName', 'name', 'full_name', 'email', 'status', 'createdAt', 'updatedAt'].includes(key)) {
                                         return null;
                                     }
                                     
