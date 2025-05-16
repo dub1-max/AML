@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Loader2, XCircle, Download, CheckCircle } from 'lucide-react';
 import { SearchResult, Tracking } from './types';
 
@@ -10,6 +10,19 @@ interface ActiveTrackingProps {
 }
 
 function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking }: ActiveTrackingProps) {
+    console.log('🔶 ActiveTracking rendered with props:', { 
+        trackedResultsLength: trackedResults?.length || 0,
+        trackingKeys: Object.keys(tracking || {}),
+        isLoading 
+    });
+    
+    // Add effect to log information on mount and updates
+    useEffect(() => {
+        console.log('🔶 ActiveTracking mount/update effect');
+        console.log('🔶 trackedResults details:', trackedResults);
+        console.log('🔶 tracking details:', tracking);
+    }, [trackedResults, tracking]);
+
     const getRiskColor = (percentage: number): string => {
         if (percentage >= 85) return 'text-red-600';
         if (percentage >= 60) return 'text-yellow-600';
@@ -17,9 +30,17 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
     };
 
     const calculateAging = (result: SearchResult): string => {
-        const trackingInfo = tracking[result.name];
+        if (!result) {
+            console.warn('🔶 calculateAging called with null/undefined result');
+            return 'None';
+        }
+
+        const trackingInfo = tracking?.[result.name];
         
-        if (!trackingInfo) return 'None';
+        if (!trackingInfo) {
+            console.warn(`🔶 No tracking info for ${result.name}`);
+            return 'None';
+        }
         
         if (trackingInfo.isTracking) {
             return trackingInfo.startDate
@@ -32,22 +53,48 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                 (new Date(trackingInfo.stopDate).getTime() - new Date(trackingInfo.startDate).getTime()) / 
                 (1000 * 60 * 60 * 24)
             );
-            return `<span style="color: red;">${diffInDays}D</span>`;
+            return `${diffInDays}D`;
         }
         
         return 'None';
     };
+
+    // Add safety check for trackedResults
+    const safeTrackedResults = Array.isArray(trackedResults) ? trackedResults : [];
+    console.log('🔶 Safe tracked results count:', safeTrackedResults.length);
+    
+    if (safeTrackedResults.length === 0 && !isLoading) {
+        console.log('🔶 No tracked results and not loading');
+    }
+
+    // Sort results to show active tracking first
+    const sortedResults = [...safeTrackedResults].sort((a, b) => {
+        const aIsTracking = tracking?.[a.name]?.isTracking ? 1 : 0;
+        const bIsTracking = tracking?.[b.name]?.isTracking ? 1 : 0;
+        return bIsTracking - aIsTracking;
+    });
 
     return (
         <div className="p-6">
             <div className="mb-6">
                 <h2 className="text-2xl font-semibold">Active Tracking</h2>
                 <p className="text-gray-600">Monitor and manage your tracked profiles</p>
+                <p className="text-sm text-gray-500">
+                    Total tracked items: {safeTrackedResults.length} 
+                    (Active: {safeTrackedResults.filter(r => tracking?.[r.name]?.isTracking).length})
+                </p>
             </div>
 
             {isLoading ? (
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                </div>
+            ) : safeTrackedResults.length === 0 ? (
+                <div className="bg-yellow-50 border border-yellow-100 p-4 rounded-md">
+                    <p className="text-center text-yellow-700">No tracked persons found</p>
+                    <p className="text-center text-sm text-yellow-600 mt-2">
+                        There are {Object.keys(tracking || {}).length} tracking entries but no matching person records.
+                    </p>
                 </div>
             ) : (
                 <div className="overflow-x-auto">
@@ -67,20 +114,29 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                             </tr>
                         </thead>
                         <tbody>
-                            {trackedResults.map((result, index) => (
-                                <tr key={index} className="border-t border-gray-100 hover:bg-gray-50">
+                            {sortedResults.map((result, index) => (
+                                <tr key={`tracked-${index}-${result.name}`} 
+                                    className={`border-t border-gray-100 hover:bg-gray-50 ${
+                                        tracking?.[result.name]?.isTracking 
+                                            ? 'bg-white' 
+                                            : 'bg-gray-50'
+                                    }`}>
                                     <td className="py-4 px-6">
-                                        <div className={`w-1 h-6 rounded-full ${getRiskColor(result.riskLevel).replace('text', 'bg')}`}></div>
+                                        <div className={`w-1 h-6 rounded-full ${getRiskColor(result.riskLevel || 0).replace('text', 'bg')}`}></div>
                                     </td>
                                     <td className="py-4 px-6">
                                         <div className="flex items-center space-x-3">
-                                            <img src={`https://ui-avatars.com/api/?name=${result.name}`} alt={result.name} className="w-8 h-8 rounded-full" />
-                                            <span className="text-sm">{result.identifiers}</span>
+                                            <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(result.name || 'Unknown')}`} alt={result.name || 'Unknown'} className="w-8 h-8 rounded-full" />
+                                            <span className="text-sm">{result.identifiers || 'N/A'}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6 text-sm">{result.name}</td>
-                                    <td className="py-4 px-6 text-sm">{result.country}</td>
-                                    <td className="py-4 px-6 text-sm" dangerouslySetInnerHTML={{ __html: calculateAging(result) }} />
+                                    <td className="py-4 px-6 text-sm">{result.name || 'Unknown'}</td>
+                                    <td className="py-4 px-6 text-sm">{result.country || 'Unknown'}</td>
+                                    <td className="py-4 px-6 text-sm">
+                                        <span className={tracking?.[result.name]?.isTracking ? 'text-green-600' : 'text-red-600'}>
+                                            {calculateAging(result)}
+                                        </span>
+                                    </td>
                                     <td className="py-4 px-6">
                                         <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
                                             <XCircle className="w-4 h-4 text-red-500" />
@@ -90,18 +146,24 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                         <div className="w-6 h-6 rounded-full bg-gray-100"></div>
                                     </td>
                                     <td className="py-4 px-6">
-                                        <span className={`text-sm ${getRiskColor(result.riskLevel)}`}>{result.riskLevel}%</span>
+                                        <span className={`text-sm ${getRiskColor(result.riskLevel || 0)}`}>{result.riskLevel || 0}%</span>
                                     </td>
                                     <td className="py-4 px-6">
-                                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Review</span>
+                                        <span className={`px-2 py-1 text-xs rounded-full ${
+                                            tracking?.[result.name]?.isTracking
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-red-100 text-red-800'
+                                        }`}>
+                                            {tracking?.[result.name]?.isTracking ? 'Active' : 'Inactive'}
+                                        </span>
                                     </td>
                                     <td className="py-4 px-6">
                                         <button
-                                            onClick={() => onToggleTracking(result.name, !tracking[result.name]?.isTracking)}
-                                            className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${tracking[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'}`}
+                                            onClick={() => onToggleTracking(result.name, !tracking?.[result.name]?.isTracking)}
+                                            className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${tracking?.[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'}`}
                                         >
                                             <div
-                                                className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${tracking[result.name]?.isTracking ? 'translate-x-3' : 'translate-x-0'}`}
+                                                className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${tracking?.[result.name]?.isTracking ? 'translate-x-3' : 'translate-x-0'}`}
                                             ></div>
                                         </button>
                                     </td>

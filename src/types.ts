@@ -1,22 +1,30 @@
 // src/types.ts
 
 export interface SearchResult {
-  id: number; // Add id, as it is auto-incremented in the database
+  id: number;
   name: string;
   type: string;
   country: string;
   identifiers: string;
   riskLevel: number;
-  sanctions: string[]; // Good
+  sanctions: string[];
   dataset: string;
-  lastUpdated?: string; // Keep as optional string (ISO format)
+  lastUpdated?: string;
+}
+
+export interface TrackingItem {
+  name: string;
+  isTracking: number;  // Server sends 1 or 0
+  startDate: string | null;
+  stopDate: string | null;
+  lastUpdated?: string;
 }
 
 export interface Tracking {
   [name: string]: {
       isTracking: boolean;
-      startDate?: string; // ISO string, optional
-      stopDate?: string;  // ISO string, optional
+      startDate?: string;
+      stopDate?: string;
   };
 }
 

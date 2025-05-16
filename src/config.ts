@@ -1,6 +1,7 @@
 export const FRONTEND_URLS = [
     
     'http://137.184.150.6:5173'
+    
 ];
 
 export const API_BASE_URLS = [

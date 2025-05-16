@@ -4,7 +4,7 @@ import {
     Search, FileText, Shield, LogOut, Link, Users, File,
     Plus, Loader2
 } from 'lucide-react';
-import type { SearchResult, Tracking } from './types';
+import type { SearchResult, Tracking, TrackingItem } from './types';
 import { useAuth } from './AuthContext';
 import ActivityDashboard from './Insights';
 import Profiles from './Profiles';
@@ -71,9 +71,12 @@ function MainApp(_props: MainAppProps) {
 
     const fetchTrackedData = useCallback(async () => {
         if (!user) return;
+        
+        console.log('🔍 Starting fetchTrackedData');
 
         // Check cache first
         if (trackingCache && Date.now() - trackingCache.timestamp < TRACKING_CACHE_DURATION) {
+            console.log('🔍 Using cached tracking data');
             setTracking(trackingCache.data);
             setTrackedResults(trackingCache.persons);
             return;
@@ -82,42 +85,58 @@ function MainApp(_props: MainAppProps) {
         setIsLoading(true);
 
         try {
-            // Use Promise.all to fetch tracking and persons data in parallel
-            const [trackingResponse, personsResponse] = await Promise.all([
-                fetch(`${API_BASE_URL}/tracking`, { credentials: 'include' }),
-                fetch(`${API_BASE_URL}/persons`, { credentials: 'include' })
-            ]);
+            console.log('🔍 Fetching tracked persons data from new endpoint...');
+            // Use the new endpoint that returns complete information in one request
+            // Don't include additional headers that might trigger CORS issues
+            const trackedPersonsResponse = await fetch(
+                `${API_BASE_URL}/tracked-persons`, 
+                { credentials: 'include' }
+            );
 
-            // Handle authentication errors
-            if (trackingResponse.status === 401 || personsResponse.status === 401) {
+            if (trackedPersonsResponse.status === 401) {
+                console.error('🔍 Authentication error - redirecting to login');
                 navigate('/login');
                 return;
             }
 
-            if (!trackingResponse.ok || !personsResponse.ok) {
-                throw new Error('Network response was not ok');
+            if (!trackedPersonsResponse.ok) {
+                console.error(`🔍 Tracked persons response error: ${trackedPersonsResponse.status}`);
+                throw new Error('Network response was not ok for tracked persons');
             }
 
-            // Parse both responses in parallel
-            const [trackingData, allPersonsData] = await Promise.all([
-                trackingResponse.json(),
-                personsResponse.json()
-            ]);
+            const responseData = await trackedPersonsResponse.json();
+            console.log('🔍 Tracked persons data from server:', responseData);
 
-            // Transform tracking data
+            // Get the tracked results array
+            const trackedPersons = Array.isArray(responseData.data) ? responseData.data : [];
+            console.log('🔍 Tracked persons array length:', trackedPersons.length);
+
+            // Transform tracking data into the expected format
             const transformedTracking: Tracking = {};
-            trackingData.forEach((item: any) => {
-                transformedTracking[item.name] = {
-                    isTracking: item.isTracking === 1,
-                    startDate: item.startDate,
-                    stopDate: item.stopDate
+            trackedPersons.forEach((person: any) => {
+                transformedTracking[person.name] = {
+                    isTracking: person.isTracking === 1,
+                    startDate: person.startDate,
+                    stopDate: person.stopDate
                 };
             });
 
-            // Filter tracked persons
-            const tracked = allPersonsData.filter((result: SearchResult) => 
-                transformedTracking[result.name]?.isTracking
-            );
+            console.log('🔍 Transformed tracking data:', transformedTracking);
+
+            // Create SearchResult objects from the response
+            const tracked = trackedPersons.map((person: any) => ({
+                id: person.id,
+                name: person.name,
+                type: person.type || 'Unknown',
+                country: person.country || 'Unknown',
+                identifiers: person.identifiers || 'N/A',
+                riskLevel: person.riskLevel || 50,
+                sanctions: Array.isArray(person.sanctions) ? person.sanctions : [],
+                dataset: person.dataset || ''
+            }));
+
+            console.log('🔍 Final tracked results:', tracked);
+            console.log('🔍 Final tracked results count:', tracked.length);
 
             // Update cache
             setTrackingCache({
@@ -127,20 +146,23 @@ function MainApp(_props: MainAppProps) {
             });
 
             // Update state
+            console.log('🔍 Updating state with tracked results');
             setTracking(transformedTracking);
             setTrackedResults(tracked);
 
         } catch (error) {
-            console.error('Could not fetch tracked data:', error);
+            console.error('🔍 Could not fetch tracked data:', error);
             setTracking({});
             setTrackedResults([]);
         } finally {
             setIsLoading(false);
+            console.log('🔍 Completed fetchTrackedData');
         }
     }, [user, navigate]);
 
     // Refresh tracking data periodically
     useEffect(() => {
+        console.log('Fetching tracked data...');
         fetchTrackedData();
         
         // Set up periodic refresh every 2 minutes
@@ -148,6 +170,14 @@ function MainApp(_props: MainAppProps) {
         
         return () => clearInterval(refreshInterval);
     }, [fetchTrackedData]);
+
+    // Add debug logging for render
+    console.log('MainApp render state:', {
+        activeSection,
+        trackedResults,
+        tracking,
+        isLoading
+    });
 
     // Update tracking with optimistic updates
     const updateTracking = useCallback(async (name: string, newTrackingStatus: boolean) => {
@@ -506,8 +536,8 @@ function MainApp(_props: MainAppProps) {
                 ) : activeSection === 'activeTracking' ? (
                     <ErrorBoundary>
                         <ActiveTracking
-                            trackedResults={trackedResults}
-                            tracking={tracking}
+                            trackedResults={Array.isArray(trackedResults) ? trackedResults : []}
+                            tracking={tracking || {}}
                             isLoading={isLoading}
                             onToggleTracking={updateTracking}
                         />
