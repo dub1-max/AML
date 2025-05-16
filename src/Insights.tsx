@@ -84,13 +84,18 @@ function Insights(_props: InsightsProps) {
             }
             const individualData = await individualResponse.json();
             console.log('Individual data:', individualData); // Debug log
+            // Debug individual fields to see what's available
+            individualData.forEach((customer: any) => {
+                console.log('Customer data keys:', Object.keys(customer));
+                console.log('Full Name value:', customer.full_name);
+            });
             
             // Process individual data to ensure proper naming
             setIndividualCustomers(individualData.map((customer: any) => ({
                 ...customer,
                 type: 'individual',
                 // Ensure we have a name to display from whatever field is available
-                fullName: customer.fullName || customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Unknown'
+                fullName: customer.fullName || customer.name || customer.full_name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Unknown'
             })));
 
             // Fetch Company Customers (for logged-in user)
@@ -185,15 +190,15 @@ function Insights(_props: InsightsProps) {
         return allCustomers.filter(customer => customer.status === status);
     };
 
-    // Get customer's name for display
-const getCustomerName = (customer: Customer): string => {
-    if (customer.type === 'individual') {
-        // Check for both camelCase and snake_case versions of name fields
-        return customer.fullName || customer.name || (customer as any).full_name || 'Individual Customer';
-    } else {
-        return customer.companyName || customer.name || 'Company';
-    }
-};
+        // Get customer's name for display
+    const getCustomerName = (customer: Customer): string => {
+        if (customer.type === 'individual') {
+            // Check for both camelCase and snake_case versions of name fields
+            return customer.fullName || customer.name || customer.full_name || 'Individual Customer';
+        } else {
+            return customer.companyName || customer.name || 'Company';
+        }
+    };
 
     // Render customer list for a given status
     const renderCustomerList = (status: string | null) => {
@@ -240,7 +245,10 @@ const getCustomerName = (customer: Customer): string => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm font-medium text-gray-900">
-                                        {getCustomerName(customer)}
+                                        {customer.type === 'individual' && customer.full_name ? 
+                                            customer.full_name : 
+                                            getCustomerName(customer)
+                                        }
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -304,7 +312,9 @@ const getCustomerName = (customer: Customer): string => {
                                     <>
                                         <div>
                                             <dt className="text-sm font-medium text-gray-500">Full Name</dt>
-                                            <dd className="mt-1 text-sm text-gray-900">{getCustomerName(selectedCustomer)}</dd>
+                                            <dd className="mt-1 text-sm text-gray-900">
+                                                {selectedCustomer.full_name || getCustomerName(selectedCustomer)}
+                                            </dd>
                                         </div>
                                         {selectedCustomer.email && (
                                             <div>
