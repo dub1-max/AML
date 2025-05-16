@@ -95,7 +95,7 @@ function CompanyOB() {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/registerCompany`, {
+      const response = await fetch(`${API_BASE_URL}/api/registerCompany`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

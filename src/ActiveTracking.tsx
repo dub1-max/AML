@@ -453,7 +453,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                                 className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${tracking?.[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'}`}
                                             >
                                                 <div
-                                                    className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${tracking?.[result.name]?.isTracking ? 'translate-x-3' : 'translate-x-0'}`}
+                                                    className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${tracking?.[result.name]?.isTracking ? 'translate-x-5' : 'translate-x-0.5'}`}
                                                 ></div>
                                             </button>
                                             
