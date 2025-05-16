@@ -3,6 +3,12 @@ import React, { useState, useEffect } from 'react'; // Import useEffect
 import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+// Add preload function for MainApp
+const preloadMainApp = () => {
+    // This will load the MainApp component in the background
+    import('../MainApp').catch(err => console.error('Error preloading MainApp:', err));
+};
+
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -21,6 +27,11 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(''); // Clear previous error
+        
+        // Start preloading MainApp when login button is clicked
+        // This gives us a head start on loading the component
+        preloadMainApp();
+        
         const success = await login(email, password);  // await the login promise
         if (!success) {
            setError("Invalid Credentials")

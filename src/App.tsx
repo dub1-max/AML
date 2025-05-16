@@ -1,12 +1,14 @@
 // src/App.tsx
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 
-// Replace direct imports with lazy loading
+// Import MainApp directly for faster loading
+import MainApp from './MainApp';
+
+// Only lazy-load components that aren't critical for the main user flow
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
-const MainApp = lazy(() => import('./MainApp'));
 const EditProfile = lazy(() => import('./EditProfile'));
 
 // Loading component with minimal footprint
@@ -15,6 +17,29 @@ const LoadingSpinner = () => (
         <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
 );
+
+// Preload helper
+const preloadComponent = (importFn: () => Promise<any>) => {
+    importFn();
+};
+
+// Preload the EditProfile component when authenticated
+const PreloadEditProfile = () => {
+    const { isAuthenticated } = useAuth();
+    
+    useEffect(() => {
+        if (isAuthenticated) {
+            // Preload EditProfile after a delay when user is authenticated
+            const timer = setTimeout(() => {
+                preloadComponent(() => import('./EditProfile'));
+            }, 2000); // 2-second delay
+            
+            return () => clearTimeout(timer);
+        }
+    }, [isAuthenticated]);
+    
+    return null;
+};
 
 interface ProtectedRouteProps {
     children: JSX.Element;
@@ -34,6 +59,7 @@ function App() {
     return (
         <Router>
             <AuthProvider>
+                <PreloadEditProfile />
                 <Suspense fallback={<LoadingSpinner />}>
                     <Routes>
                         <Route path="/login" element={<Login />} />
