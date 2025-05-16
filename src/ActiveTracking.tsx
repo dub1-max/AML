@@ -208,31 +208,31 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                     <table className="w-full">
                         <thead>
                             <tr className="text-left text-sm text-gray-500">
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('identifiers')}>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('identifiers')}>
                                     CUSTOMER {renderSortIndicator('identifiers')}
                                 </th>
                                 <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('name')}>
                                     FULL NAME {renderSortIndicator('name')}
                                 </th>
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('country')}>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('country')}>
                                     NATIONALITY {renderSortIndicator('country')}
                                 </th>
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('aging')}>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('aging')}>
                                     AGING {renderSortIndicator('aging')}
                                 </th>
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('blacklist')}>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('blacklist')}>
                                     BLACKLIST STATUS {renderSortIndicator('blacklist')}
                                 </th>
-                                <th className="pb-4 px-6 whitespace-nowrap">
+                                <th className="pb-4 px-6 whitespace-nowrap text-center">
                                     DOCUMENTATION
                                 </th>
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('risk')}>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('risk')}>
                                     RISK RATING {renderSortIndicator('risk')}
                                 </th>
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('status')}>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('status')}>
                                     STATUS {renderSortIndicator('status')}
                                 </th>
-                                <th className="pb-4 px-6 whitespace-nowrap">
+                                <th className="pb-4 px-6 whitespace-nowrap text-center">
                                     TRACKING
                                 </th>
                             </tr>
@@ -245,16 +245,16 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                             ? 'bg-white' 
                                             : 'bg-gray-50'
                                     }`}>
-                                    <td className="py-4 px-6">
-                                        <div className="flex items-center space-x-3">
+                                    <td className="py-4 px-6 text-center">
+                                        <div className="flex items-center space-x-3 justify-center">
                                             <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(result.name || 'Unknown')}`} alt={result.name || 'Unknown'} className="w-8 h-8 rounded-full" />
                                             <span className="text-sm">{result.identifiers || 'N/A'}</span>
                                         </div>
                                     </td>
                                     <td className="py-4 px-6 text-sm">{result.name || 'Unknown'}</td>
-                                    <td className="py-4 px-6 text-sm">
+                                    <td className="py-4 px-6 text-sm text-center">
                                         {result.country && result.country !== 'Unknown' && result.country !== 'N/A' ? (
-                                            <div className="flex items-center">
+                                            <div className="flex items-center justify-center">
                                                 <img 
                                                     src={`https://flagcdn.com/w20/${result.country.toLowerCase()}.png`}
                                                     alt={result.country}
@@ -267,22 +267,22 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                             "-"
                                         )}
                                     </td>
-                                    <td className="py-4 px-6 text-sm">
+                                    <td className="py-4 px-6 text-sm text-center">
                                         <span className={tracking?.[result.name]?.isTracking ? 'text-green-600' : 'text-red-600'}>
                                             {calculateAging(result)}
                                         </span>
                                     </td>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-6 text-center">
                                         {/* Blacklist status based on dataset */}
                                         {result.dataset === 'onboarded' ? (
-                                            <div className="flex items-center">
+                                            <div className="flex items-center justify-center">
                                                 <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
                                                     <CheckCircle className="w-4 h-4 text-green-500" />
                                                 </div>
                                                 <span className="ml-2 text-xs text-green-600">Not Blacklisted</span>
                                             </div>
                                         ) : (
-                                            <div className="flex items-center">
+                                            <div className="flex items-center justify-center">
                                                 <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
                                                     <XCircle className="w-4 h-4 text-red-500" />
                                                 </div>
@@ -290,41 +290,47 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                             </div>
                                         )}
                                     </td>
-                                    <td className="py-4 px-6">
-                                        <button 
-                                            onClick={() => handleGeneratePDF(result)}
-                                            disabled={generatingPdf[result.id]}
-                                            className="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-full transition-colors duration-200"
-                                            title="Download Report"
-                                        >
-                                            {generatingPdf[result.id] ? (
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                <FileText className="w-4 h-4" />
-                                            )}
-                                        </button>
+                                    <td className="py-4 px-6 text-center">
+                                        <div className="flex justify-center">
+                                            <button 
+                                                onClick={() => handleGeneratePDF(result)}
+                                                disabled={generatingPdf[result.id]}
+                                                className="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-full transition-colors duration-200"
+                                                title="Download Report"
+                                            >
+                                                {generatingPdf[result.id] ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <FileText className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </div>
                                     </td>
-                                    <td className="py-4 px-6">
+                                    <td className="py-4 px-6 text-center">
                                         <span className={`text-sm ${getRiskColor(result.riskLevel || 0)}`}>{result.riskLevel || 0}%</span>
                                     </td>
-                                    <td className="py-4 px-6">
-                                        <span className={`px-2 py-1 text-xs rounded-full ${
-                                            tracking?.[result.name]?.isTracking
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                        }`}>
-                                            {tracking?.[result.name]?.isTracking ? 'Active' : 'Inactive'}
-                                        </span>
+                                    <td className="py-4 px-6 text-center">
+                                        <div className="flex justify-center">
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                tracking?.[result.name]?.isTracking
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                            }`}>
+                                                {tracking?.[result.name]?.isTracking ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </div>
                                     </td>
-                                    <td className="py-4 px-6">
-                                        <button
-                                            onClick={() => onToggleTracking(result.name, !tracking?.[result.name]?.isTracking)}
-                                            className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${tracking?.[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'}`}
-                                        >
-                                            <div
-                                                className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${tracking?.[result.name]?.isTracking ? 'translate-x-3' : 'translate-x-0'}`}
-                                            ></div>
-                                        </button>
+                                    <td className="py-4 px-6 text-center">
+                                        <div className="flex justify-center">
+                                            <button
+                                                onClick={() => onToggleTracking(result.name, !tracking?.[result.name]?.isTracking)}
+                                                className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${tracking?.[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'}`}
+                                            >
+                                                <div
+                                                    className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${tracking?.[result.name]?.isTracking ? 'translate-x-3' : 'translate-x-0'}`}
+                                                ></div>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

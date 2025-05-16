@@ -661,7 +661,7 @@ function MainApp(_props: MainAppProps) {
                             }`}
                         >
                             <Users className="w-5 h-5" />
-                            <span>Profiles</span>
+                            <span>Direct Search</span>
                         </button>
 
                         {/* Deep Link Onboarding Button and Sub-Options */}

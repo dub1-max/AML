@@ -136,30 +136,30 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
           <table className="w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500">
-                <th className="pb-4 px-6 whitespace-nowrap">CUSTOMER</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">CUSTOMER</th>
                 <th className="pb-4 px-6 whitespace-nowrap">FULL NAME</th>
-                <th className="pb-4 px-6 whitespace-nowrap">NATIONALITY</th>
-                <th className="pb-4 px-6 whitespace-nowrap">AGING</th>
-                <th className="pb-4 px-6 whitespace-nowrap">NAME SCREENING</th>
-                <th className="pb-4 px-6 whitespace-nowrap">DOCUMENTATION</th>
-                <th className="pb-4 px-6 whitespace-nowrap">RISK RATING</th>
-                <th className="pb-4 px-6 whitespace-nowrap">STATUS</th>
-                <th className="pb-4 px-6 whitespace-nowrap">TRACKING</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">NATIONALITY</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">AGING</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">NAME SCREENING</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">DOCUMENTATION</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">RISK RATING</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">STATUS</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">TRACKING</th>
               </tr>
             </thead>
             <tbody>
               {safeSearchResults.map((result, index) => (
                 <tr key={`search-${index}`} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-3">
+                  <td className="py-4 px-6 text-center">
+                    <div className="flex items-center space-x-3 justify-center">
                       <img src={`https://ui-avatars.com/api/?name=${result.name}`} alt={result.name} className="w-8 h-8 rounded-full" />
                       <span className="text-sm">{result.identifiers}</span>
                     </div>
                   </td>
                   <td className="py-4 px-6 text-sm">{result.name}</td>
-                  <td className="py-4 px-6 text-sm">
+                  <td className="py-4 px-6 text-sm text-center">
                     {result.country && result.country !== 'Unknown' && result.country !== 'N/A' ? (
-                      <div className="flex items-center">
+                      <div className="flex items-center justify-center">
                         <img 
                           src={`https://flagcdn.com/w20/${result.country.toLowerCase()}.png`}
                           alt={result.country}
@@ -172,45 +172,53 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                       "-"
                     )}
                   </td>
-                  <td className="py-4 px-6 text-sm" dangerouslySetInnerHTML={{ __html: calculateAging(result) }} />
-                  <td className="py-4 px-6">
-                    <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                      <XCircle className="w-4 h-4 text-red-500" />
+                  <td className="py-4 px-6 text-sm text-center" dangerouslySetInnerHTML={{ __html: calculateAging(result) }} />
+                  <td className="py-4 px-6 text-center">
+                    <div className="flex justify-center">
+                      <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                        <XCircle className="w-4 h-4 text-red-500" />
+                      </div>
                     </div>
                   </td>
-                  <td className="py-4 px-6">
-                    <button 
-                      onClick={() => handleGeneratePDF(result)}
-                      disabled={generatingPdf[result.id]}
-                      className="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-full transition-colors duration-200"
-                      title="Download Report"
-                    >
-                      {generatingPdf[result.id] ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <FileText className="w-4 h-4" />
-                      )}
-                    </button>
+                  <td className="py-4 px-6 text-center">
+                    <div className="flex justify-center">
+                      <button 
+                        onClick={() => handleGeneratePDF(result)}
+                        disabled={generatingPdf[result.id]}
+                        className="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-full transition-colors duration-200"
+                        title="Download Report"
+                      >
+                        {generatingPdf[result.id] ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <FileText className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
                   </td>
-                  <td className="py-4 px-6">
+                  <td className="py-4 px-6 text-center">
                     <span className={`text-sm ${getRiskColor(result.riskLevel)}`}>{result.riskLevel}%</span>
                   </td>
-                  <td className="py-4 px-6">
-                    <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Review</span>
+                  <td className="py-4 px-6 text-center">
+                    <div className="flex justify-center">
+                      <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Review</span>
+                    </div>
                   </td>
-                  <td className="py-4 px-6">
-                    <button
-                      onClick={() => toggleTracking(result.name)}
-                      className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${
-                        tracking[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'
-                      }`}
-                    >
-                      <div
-                        className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
-                          tracking[result.name]?.isTracking ? 'translate-x-4' : 'translate-x-1'
+                  <td className="py-4 px-6 text-center">
+                    <div className="flex justify-center">
+                      <button
+                        onClick={() => toggleTracking(result.name)}
+                        className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${
+                          tracking[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'
                         }`}
-                      ></div>
-                    </button>
+                      >
+                        <div
+                          className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${
+                            tracking[result.name]?.isTracking ? 'translate-x-4' : 'translate-x-1'
+                          }`}
+                        ></div>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
