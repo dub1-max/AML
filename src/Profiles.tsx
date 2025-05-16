@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, XCircle, CheckCircle, FileText, Search } from 'lucide-react';
+import { Loader2, XCircle, CheckCircle, FileText } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './config';
@@ -30,11 +30,6 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
   const [isLoading, setIsLoading] = useState(initialLoading);
   const [error, setError] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
-  const [nameQuery, setNameQuery] = useState<string>('');
-  const [idQuery, setIdQuery] = useState<string>('');
-  const [appliedNameQuery, setAppliedNameQuery] = useState<string>('');
-  const [appliedIdQuery, setAppliedIdQuery] = useState<string>('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'custom'>('all');
 
   // Calculate aging with memoization
   const calculateAging = useCallback((result: AppSearchResult): string => {
@@ -118,42 +113,6 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
     }
   };
 
-  // Apply filters when search is applied
-  const applySearch = () => {
-    setAppliedNameQuery(nameQuery);
-    setAppliedIdQuery(idQuery);
-    setActiveFilter('custom');
-  };
-
-  // Reset filters
-  const resetFilters = () => {
-    setNameQuery('');
-    setIdQuery('');
-    setAppliedNameQuery('');
-    setAppliedIdQuery('');
-    setActiveFilter('all');
-  };
-
-  // Get filtered results
-  const getFilteredResults = () => {
-    if (activeFilter === 'all') return safeSearchResults;
-    
-    return safeSearchResults.filter(result => {
-      const matchesName = !appliedNameQuery || 
-          (result.name?.toLowerCase().includes(appliedNameQuery.toLowerCase()));
-      
-      const matchesId = !appliedIdQuery || 
-          (result.identifiers?.toLowerCase().includes(appliedIdQuery.toLowerCase()));
-      
-      return matchesName && matchesId;
-    });
-  };
-
-  // Get filtered results
-  const filteredResults = getFilteredResults();
-  const resultsCount = filteredResults.length;
-  const totalCount = safeSearchResults.length;
-
   // Show error state if there's an error
   if (error) {
     return (
@@ -168,71 +127,9 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <div className="flex items-center mb-4">
-          <button 
-            onClick={resetFilters}
-            className={`mr-2 px-6 py-2 rounded-full font-medium ${
-              activeFilter === 'all' 
-                ? 'bg-purple-700 text-white' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            All
-          </button>
-          
-          <div className="flex flex-1 items-center space-x-2">
-            <div className="relative flex-1">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search by name (min. 2 characters)"
-                value={nameQuery}
-                onChange={(e) => setNameQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
-              />
-            </div>
-            
-            <input
-              type="text"
-              placeholder="Search by ID"
-              value={idQuery}
-              onChange={(e) => setIdQuery(e.target.value)}
-              className="w-64 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
-            />
-            
-            <button 
-              onClick={applySearch}
-              disabled={nameQuery.length > 0 && nameQuery.length < 2}
-              className={`px-6 py-2 bg-purple-700 text-white font-semibold rounded-md hover:bg-purple-800 transition-colors ${
-                nameQuery.length > 0 && nameQuery.length < 2 ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              APPLY
-            </button>
-          </div>
-        </div>
-        
-        {/* Display search results count */}
-        <p className="text-sm text-gray-500 mb-4">
-          {activeFilter === 'custom' 
-            ? `Showing ${resultsCount} of ${totalCount} profiles` 
-            : `Total profiles: ${totalCount}`}
-        </p>
-      </div>
-      
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-        </div>
-      ) : filteredResults.length === 0 && activeFilter === 'custom' ? (
-        <div className="bg-blue-50 border border-blue-100 p-4 rounded-md">
-          <p className="text-center text-blue-700">No results match your search</p>
-          <p className="text-center text-sm text-blue-600 mt-2">
-            Try different search terms or click "All" to see all {totalCount} profiles.
-          </p>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -251,7 +148,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
               </tr>
             </thead>
             <tbody>
-              {filteredResults.map((result, index) => (
+              {safeSearchResults.map((result, index) => (
                 <tr key={`search-${index}`} className="border-t border-gray-100 hover:bg-gray-50">
                   <td className="py-4 px-6">
                     <div className="flex items-center space-x-3">
@@ -325,7 +222,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                   </td>
                 </tr>
               ))}
-              {filteredResults.length === 0 && !isLoading && activeFilter === 'all' && (
+              {safeSearchResults.length === 0 && !isLoading && (
                 <tr>
                   <td colSpan={9} className="py-4 px-6 text-center text-gray-500">
                     No results found
