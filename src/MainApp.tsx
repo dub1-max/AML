@@ -704,7 +704,7 @@ function MainApp(_props: MainAppProps) {
                             {showDashboard ? 'Activity Dashboard' : 
                              showIndividualOB ? 'Individual Onboarding' :
                              showCompanyOB ? 'Company Onboarding' :
-                             activeSection === 'activeTracking' ? 'Active Tracking' :
+                             activeSection === 'activeTracking' ? 'Screening' :
                             'Search'}
                         </h2>
                         <div className="flex items-center space-x-4">

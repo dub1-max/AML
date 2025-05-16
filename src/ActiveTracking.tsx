@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown } from 'lucide-react';
+import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown, Search } from 'lucide-react';
 import { SearchResult, Tracking } from './types';
 import { generateCustomerPDF } from './utils/pdfGenerator';
 
@@ -18,6 +18,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
     const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
     const [sortColumn, setSortColumn] = useState<SortableColumn>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+    const [searchQuery, setSearchQuery] = useState<string>('');
     
     console.log('🔶 ActiveTracking rendered with props:', { 
         trackedResultsLength: trackedResults?.length || 0,
@@ -102,10 +103,24 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
             : <ChevronDown className="w-4 h-4 inline-block ml-1" />;
     };
 
-    // Apply sorting to results
-    const getSortedResults = () => {
+    // Apply filtering to results
+    const getFilteredResults = () => {
+        if (!searchQuery.trim()) return safeTrackedResults;
+        
+        const query = searchQuery.toLowerCase();
+        return safeTrackedResults.filter(result => 
+            (result.name?.toLowerCase().includes(query)) || 
+            (result.identifiers?.toLowerCase().includes(query)) ||
+            (result.country?.toLowerCase().includes(query))
+        );
+    };
+
+    // First filter, then sort
+    const getFilteredAndSortedResults = () => {
+        const filteredResults = getFilteredResults();
+        
         // First sort by tracking status
-        const baseResults = [...safeTrackedResults].sort((a, b) => {
+        const baseResults = [...filteredResults].sort((a, b) => {
             const aIsTracking = tracking?.[a.name]?.isTracking ? 1 : 0;
             const bIsTracking = tracking?.[b.name]?.isTracking ? 1 : 0;
             return bIsTracking - aIsTracking;
@@ -159,18 +174,40 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
         }
     };
 
-    // Get sorted results
-    const sortedResults = getSortedResults();
+    // Get filtered and sorted results
+    const filteredAndSortedResults = getFilteredAndSortedResults();
+    const resultsCount = filteredAndSortedResults.length;
+    const totalCount = safeTrackedResults.length;
 
     return (
         <div className="p-6">
             <div className="mb-6 flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-semibold">Screening</h2>
-                    <p className="text-gray-600">Monitor and manage your tracked profiles</p>
+                    <div className="flex items-center space-x-2 mb-2">
+                        <div className="relative flex-1 min-w-[250px]">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Search by name, ID or country..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                >
+                                    <XCircle className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    
                     <p className="text-sm text-gray-500">
-                        Total tracked items: {safeTrackedResults.length} 
-                        
+                        {searchQuery ? `Showing ${resultsCount} of ${totalCount} tracked items` : `Total tracked items: ${totalCount}`}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
                         Last updated: {lastUpdated}
@@ -201,6 +238,13 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                     <p className="text-center text-yellow-700">No tracked persons found</p>
                     <p className="text-center text-sm text-yellow-600 mt-2">
                         There are {Object.keys(tracking || {}).length} tracking entries but no matching person records.
+                    </p>
+                </div>
+            ) : filteredAndSortedResults.length === 0 && searchQuery ? (
+                <div className="bg-blue-50 border border-blue-100 p-4 rounded-md">
+                    <p className="text-center text-blue-700">No results match your search</p>
+                    <p className="text-center text-sm text-blue-600 mt-2">
+                        Try a different search term or clear the search to see all {totalCount} tracked items.
                     </p>
                 </div>
             ) : (
@@ -238,7 +282,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                             </tr>
                         </thead>
                         <tbody>
-                            {sortedResults.map((result, index) => (
+                            {filteredAndSortedResults.map((result, index) => (
                                 <tr key={`tracked-${index}-${result.name}`} 
                                     className={`border-t border-gray-100 hover:bg-gray-50 ${
                                         tracking?.[result.name]?.isTracking 
