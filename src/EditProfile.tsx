@@ -211,13 +211,25 @@ function EditProfile() {
 
             if (response.ok) {
                 alert("Profile updated successfully!");
-                navigate('/mainapp', { 
-                    state: { 
-                        activeSection: 'activeTracking',
-                        refreshData: true,
-                        timestamp: Date.now()
-                    } 
+                // Construct a URL with query parameters instead of using state
+                // This avoids issues with React Router state management
+                const params = new URLSearchParams({
+                    section: 'activeTracking',
+                    refresh: 'true',
+                    t: Date.now().toString()
                 });
+                
+                // Use window.location for a clean navigation
+                window.location.href = `/mainapp?${params.toString()}`;
+                
+                // Alternative approach with React Router
+                // navigate('/mainapp', { 
+                //     state: { 
+                //         activeSection: 'activeTracking',
+                //         refreshData: true,
+                //         timestamp: Date.now()
+                //     } 
+                // });
             } else {
                 alert(data.message || 'Update failed');
             }

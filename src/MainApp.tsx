@@ -70,6 +70,9 @@ function MainApp(_props: MainAppProps) {
     // Add tracking cache
     const [trackingCache, setTrackingCache] = useState<TrackingCache | null>(null);
     
+    // Add last refresh timestamp to prevent multiple refreshes
+    const [lastRefreshTimestamp, setLastRefreshTimestamp] = useState<number>(0);
+    
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -81,11 +84,22 @@ function MainApp(_props: MainAppProps) {
 
     // Cache duration for tracking data (2 minutes)
     const TRACKING_CACHE_DURATION = 2 * 60 * 1000;
+    
+    // Minimum time between refreshes (3 seconds)
+    const REFRESH_COOLDOWN = 3000;
 
     const fetchTrackedData = useCallback(async () => {
         if (!user) return;
         
+        // Check if we're within the cooldown period
+        const now = Date.now();
+        if (now - lastRefreshTimestamp < REFRESH_COOLDOWN) {
+            console.log('🔍 Refresh cooldown active, skipping fetch');
+            return;
+        }
+        
         console.log('🔍 Starting fetchTrackedData');
+        setLastRefreshTimestamp(now);
 
         // Check cache first
         if (trackingCache && Date.now() - trackingCache.timestamp < TRACKING_CACHE_DURATION) {
@@ -621,7 +635,45 @@ function MainApp(_props: MainAppProps) {
 
     // Add code to handle the redirect from onboarding components
     useEffect(() => {
-        // Check for redirected state with activeSection
+        // First check for URL parameters (new approach)
+        const urlParams = new URLSearchParams(window.location.search);
+        const sectionParam = urlParams.get('section');
+        const refreshParam = urlParams.get('refresh') === 'true';
+        
+        if (sectionParam) {
+            console.log('📊 Handling navigation from URL parameters');
+            
+            // Determine if we should refresh data
+            const now = Date.now();
+            const shouldRefresh = refreshParam && (now - lastRefreshTimestamp > REFRESH_COOLDOWN);
+            
+            // Call handleTabChange with the refreshData flag
+            handleTabChange(sectionParam, shouldRefresh);
+            
+            // If refreshData flag is set, force a refresh of tracked data
+            if (shouldRefresh && sectionParam === 'activeTracking') {
+                console.log('📊 Refreshing tracked data after profile update (URL params)');
+                
+                // First invalidate cache to force fresh data fetch
+                setTrackingCache(null);
+                
+                // Then fetch data immediately
+                setIsLoading(true);
+                fetchTrackedData();
+                
+                // Also fetch pending approvals to ensure consistency
+                fetchPendingApprovals();
+                
+                // Update refresh timestamp
+                setLastRefreshTimestamp(now);
+            }
+            
+            // Clean up the URL to prevent future refreshes
+            window.history.replaceState({}, document.title, '/mainapp');
+            return; // Skip the rest of the effect if URL params were processed
+        }
+        
+        // Then check for redirected state with activeSection (old approach)
         const state = location.state as { 
             activeSection?: string;
             refreshData?: boolean;
@@ -630,7 +682,9 @@ function MainApp(_props: MainAppProps) {
         
         if (state.activeSection) {
             // Determine if we should refresh data based on the refreshData flag
-            const shouldRefresh = state.refreshData === true;
+            // and check if we're within the cooldown period
+            const now = Date.now();
+            const shouldRefresh = state.refreshData === true && (now - lastRefreshTimestamp > REFRESH_COOLDOWN);
             
             // Call handleTabChange with the refreshData flag
             handleTabChange(state.activeSection, shouldRefresh);
@@ -648,12 +702,15 @@ function MainApp(_props: MainAppProps) {
                 
                 // Also fetch pending approvals to ensure consistency
                 fetchPendingApprovals();
+                
+                // Update refresh timestamp
+                setLastRefreshTimestamp(now);
             }
             
             // Always clear the state to prevent re-triggering
             window.history.replaceState({}, document.title);
         }
-    }, [location, handleTabChange, fetchTrackedData, fetchPendingApprovals]);
+    }, [location, handleTabChange, fetchTrackedData, fetchPendingApprovals, lastRefreshTimestamp]);
 
     return (
         <div className="flex min-h-screen bg-gray-50">
