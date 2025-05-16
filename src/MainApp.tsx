@@ -252,7 +252,7 @@ function MainApp(_props: MainAppProps) {
         
         // Fetch fresh data when switching to active tracking
         if (section === 'activeTracking') {
-            console.log('🔄 Switching to Active Tracking tab - fetching fresh data');
+            console.log('🔄 Switching to Screening tab - fetching fresh data');
             // Force data refresh by invalidating cache
             setTrackingCache(null);
             // Fetch new data
@@ -649,7 +649,7 @@ function MainApp(_props: MainAppProps) {
                             }`}
                         >
                             <Shield className="w-5 h-5" />
-                            <span>Active Tracking</span>
+                            <span>Screening</span>
                         </button>
 
                         <button
@@ -661,7 +661,7 @@ function MainApp(_props: MainAppProps) {
                             }`}
                         >
                             <Users className="w-5 h-5" />
-                            <span>Direct Search</span>
+                            <span>Search Profiles</span>
                         </button>
 
                         {/* Deep Link Onboarding Button and Sub-Options */}
@@ -705,7 +705,7 @@ function MainApp(_props: MainAppProps) {
                              showIndividualOB ? 'Individual Onboarding' :
                              showCompanyOB ? 'Company Onboarding' :
                              activeSection === 'activeTracking' ? 'Active Tracking' :
-                            'Alerts'}
+                            'Search'}
                         </h2>
                         <div className="flex items-center space-x-4">
                             <div className="flex items-center space-x-2">

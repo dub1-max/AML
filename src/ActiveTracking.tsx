@@ -166,11 +166,11 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
         <div className="p-6">
             <div className="mb-6 flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-semibold">Active Tracking</h2>
+                    <h2 className="text-2xl font-semibold">Screening</h2>
                     <p className="text-gray-600">Monitor and manage your tracked profiles</p>
                     <p className="text-sm text-gray-500">
                         Total tracked items: {safeTrackedResults.length} 
-                        (Active: {safeTrackedResults.filter(r => tracking?.[r.name]?.isTracking).length})
+                        
                     </p>
                     <p className="text-xs text-gray-400 mt-1">
                         Last updated: {lastUpdated}
