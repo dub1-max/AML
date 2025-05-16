@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { getApiBaseUrl } from './config';
+import { getSortedCountries, statesByCountry } from './utils/countries';
 
 interface FormData {
   companyName: string;
@@ -61,6 +62,11 @@ function CompanyOB() {
       ...prevData,
       [name]: value,
     }));
+    
+    // Reset state when country changes
+    if (name === 'country') {
+      setFormData(prev => ({...prev, state: ''}));
+    }
   };
 
   const formatDate = (dateString: string): string | null => {
@@ -117,21 +123,13 @@ function CompanyOB() {
     }
   };
 
-  const countries = [
-    { code: "US", name: "United States" },
-    { code: "CA", name: "Canada" },
-    { code: "GB", name: "United Kingdom" },
-    { code: "IN", name: "India" },
-    { code: "AU", name: "Australia" },
-  ];
+  // Get sorted countries list
+  const countries = getSortedCountries();
+  
+  // Get states for selected country
+  const states = formData.country ? statesByCountry[formData.country] || [] : [];
 
-  const statesByCountry: { [key: string]: string[] } = {
-    US: ["Alabama", "Alaska", "Arizona", "Arkansas", "California"],
-    CA: ["Ontario", "Quebec", "British Columbia", "Alberta"],
-    GB: ["England", "Scotland", "Wales", "Northern Ireland"],
-    IN: ["Maharashtra", "Karnataka", "Delhi", "Tamil Nadu"],
-    AU: ["New South Wales", "Victoria", "Queensland"],
-  };
+  // Note: We're using the statesByCountry from the imported utils
 
   return (
     <div className="p-8 bg-gray-50">
@@ -338,16 +336,15 @@ function CompanyOB() {
             name="state"
             value={formData.state}
             onChange={handleChange}
-            disabled={!formData.country}
-            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            disabled={!formData.country || states.length === 0}
+            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             <option value="">Select State</option>
-            {formData.country &&
-              statesByCountry[formData.country]?.map((state) => (
-                <option key={state} value={state}>
-                  {state}
-                </option>
-              ))}
+            {states.map((state) => (
+              <option key={state} value={state}>
+                {state}
+              </option>
+            ))}
           </select>
         </div>
 

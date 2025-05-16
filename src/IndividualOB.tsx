@@ -3,6 +3,7 @@ import { Calendar } from 'lucide-react';
 import { useAuth } from './AuthContext'; // Import useAuth
 import { getApiBaseUrl } from './config';
 import { useNavigate } from 'react-router-dom';
+import { getSortedCountries, statesByCountry } from './utils/countries';
 
 function IndividualOB() {
     const API_BASE_URL = getApiBaseUrl();
@@ -32,6 +33,12 @@ function IndividualOB() {
     const [productOffered, setProductOffered] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [positionInCompany, setPositionInCompany] = useState('');
+
+    // Get sorted countries list
+    const countries = getSortedCountries();
+
+    // Get states for selected country
+    const states = countryOfResidence ? statesByCountry[countryOfResidence] || [] : [];
 
     const { user } = useAuth(); // Use useAuth to get the user
 
@@ -216,13 +223,11 @@ function IndividualOB() {
                             className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         >
                             <option value="">Select Nationality</option>
-                            {/* Example nationalities (add more as needed) */}
-                            <option value="us">United States</option>
-                            <option value="ca">Canada</option>
-                            <option value="gb">United Kingdom</option>
-                            <option value="fr">France</option>
-                            <option value="de">Germany</option>
-                            {/* Add more options here */}
+                            {countries.map((country) => (
+                                <option key={`nat-${country.code}`} value={country.code}>
+                                    {country.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -235,13 +240,11 @@ function IndividualOB() {
                             className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         >
                             <option value="">Select Country of Residence</option>
-                            {/* Example countries (add more as needed) */}
-                            <option value="us">United States</option>
-                            <option value="ca">Canada</option>
-                            <option value="gb">United Kingdom</option>
-                            <option value="fr">France</option>
-                            <option value="de">Germany</option>
-                            {/* Add more options here */}
+                            {countries.map((country) => (
+                                <option key={`res-${country.code}`} value={country.code}>
+                                    {country.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -279,14 +282,11 @@ function IndividualOB() {
                             className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
                             <option value="">Select Other Nationalities</option>
-                            {/* Example nationalities */}
-                            <option value="us">United States</option>
-                            <option value="ca">Canada</option>
-                            <option value="gb">United Kingdom</option>
-                            <option value="fr">France</option>
-                            <option value="de">Germany</option>
-
-                            {/* Add more options as necessary */}
+                            {countries.map((country) => (
+                                <option key={`other-${country.code}`} value={country.code}>
+                                    {country.name}
+                                </option>
+                            ))}
                         </select>
                     </div>
 
@@ -364,16 +364,15 @@ function IndividualOB() {
                             id="state"
                             value={state}
                             onChange={(e) => setState(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            disabled={!countryOfResidence || states.length === 0}
+                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
                             <option value="">Select State</option>
-                            {/* Add state options here */}
-                            <option value="AL">Alabama</option>
-                            <option value="AK">Alaska</option>
-                            <option value="AZ">Arizona</option>
-                            <option value="AR">Arkansas</option>
-                            {/* ... add all US states ... */}
-                            <option value="WY">Wyoming</option>
+                            {states.map((stateName) => (
+                                <option key={stateName} value={stateName}>
+                                    {stateName}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div>
