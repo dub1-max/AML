@@ -12,6 +12,7 @@ interface Customer {
     id: number;
     fullName?: string;
     companyName?: string;
+    name?: string; // Added for fallback
     email?: string;
     status: 'pending' | 'approved' | 'rejected';
     type: 'individual' | 'company';
@@ -32,6 +33,9 @@ function Insights(_props: InsightsProps) {
     // State for storing customer details
     const [individualCustomers, setIndividualCustomers] = useState<Customer[]>([]);
     const [companyCustomers, setCompanyCustomers] = useState<Customer[]>([]);
+    // State for selected customer to view details
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [showCustomerDetails, setShowCustomerDetails] = useState(false);
 
     // State for tracking which sections are expanded
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
@@ -78,9 +82,14 @@ function Insights(_props: InsightsProps) {
                 throw new Error(`HTTP error: ${individualResponse.status}`);
             }
             const individualData = await individualResponse.json();
+            console.log('Individual data:', individualData); // Debug log
+            
+            // Process individual data to ensure proper naming
             setIndividualCustomers(individualData.map((customer: any) => ({
                 ...customer,
-                type: 'individual'
+                type: 'individual',
+                // Ensure we have a name to display from whatever field is available
+                fullName: customer.fullName || customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Unknown'
             })));
 
             // Fetch Company Customers (for logged-in user)
@@ -97,9 +106,14 @@ function Insights(_props: InsightsProps) {
                 throw new Error(`HTTP error: ${companyResponse.status}`);
             }
             const companyData = await companyResponse.json();
+            console.log('Company data:', companyData); // Debug log
+            
+            // Process company data to ensure proper naming
             setCompanyCustomers(companyData.map((company: any) => ({
                 ...company,
-                type: 'company'
+                type: 'company',
+                // Ensure we have a name to display
+                companyName: company.companyName || company.name || 'Unknown Company'
             })));
 
             // Combine counts
@@ -136,13 +150,30 @@ function Insights(_props: InsightsProps) {
         }
     };
 
+    // View customer details
+    const handleViewCustomer = (customer: Customer) => {
+        setSelectedCustomer(customer);
+        setShowCustomerDetails(true);
+    };
+
+    // Close customer details modal
+    const closeCustomerDetails = () => {
+        setShowCustomerDetails(false);
+        setSelectedCustomer(null);
+    };
+
     // Get all customers
     const allCustomers = [...individualCustomers, ...companyCustomers];
 
     // Helper function to format date
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString();
+        if (!dateString) return 'N/A';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        } catch (e) {
+            return 'Invalid Date';
+        }
     };
 
     // Function to get customers by status
@@ -151,6 +182,15 @@ function Insights(_props: InsightsProps) {
             return allCustomers; // All customers for "onboarded" section
         }
         return allCustomers.filter(customer => customer.status === status);
+    };
+
+    // Get customer's name for display
+    const getCustomerName = (customer: Customer): string => {
+        if (customer.type === 'individual') {
+            return customer.fullName || customer.name || 'Individual Customer';
+        } else {
+            return customer.companyName || customer.name || 'Company';
+        }
     };
 
     // Render customer list for a given status
@@ -198,11 +238,11 @@ function Insights(_props: InsightsProps) {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm font-medium text-gray-900">
-                                        {customer.type === 'individual' ? customer.fullName : customer.companyName}
+                                        {getCustomerName(customer)}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-gray-500">{customer.email}</div>
+                                    <div className="text-sm text-gray-500">{customer.email || 'N/A'}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {formatDate(customer.createdAt)}
@@ -221,7 +261,7 @@ function Insights(_props: InsightsProps) {
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button 
                                         className="text-indigo-600 hover:text-indigo-900 flex items-center justify-end"
-                                        onClick={() => {/* View customer details */}}
+                                        onClick={() => handleViewCustomer(customer)}
                                     >
                                         <span>View</span>
                                         <ArrowRight className="h-4 w-4 ml-1" />
@@ -231,6 +271,116 @@ function Insights(_props: InsightsProps) {
                         ))}
                     </tbody>
                 </table>
+            </div>
+        );
+    };
+
+    // Customer details modal
+    const renderCustomerDetailsModal = () => {
+        if (!selectedCustomer || !showCustomerDetails) return null;
+
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">
+                                {selectedCustomer.type === 'individual' ? 'Individual Details' : 'Company Details'}
+                            </h3>
+                            <button 
+                                onClick={closeCustomerDetails}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        
+                        <div className="border-t border-gray-200 pt-4">
+                            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+                                {selectedCustomer.type === 'individual' ? (
+                                    // Individual fields
+                                    <>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Full Name</dt>
+                                            <dd className="mt-1 text-sm text-gray-900">{getCustomerName(selectedCustomer)}</dd>
+                                        </div>
+                                        {selectedCustomer.email && (
+                                            <div>
+                                                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                                                <dd className="mt-1 text-sm text-gray-900">{selectedCustomer.email}</dd>
+                                            </div>
+                                        )}
+                                        {/* Display other individual fields based on your data structure */}
+                                    </>
+                                ) : (
+                                    // Company fields
+                                    <>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Company Name</dt>
+                                            <dd className="mt-1 text-sm text-gray-900">{getCustomerName(selectedCustomer)}</dd>
+                                        </div>
+                                        {selectedCustomer.email && (
+                                            <div>
+                                                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                                                <dd className="mt-1 text-sm text-gray-900">{selectedCustomer.email}</dd>
+                                            </div>
+                                        )}
+                                        {/* Display other company fields based on your data structure */}
+                                    </>
+                                )}
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Status</dt>
+                                    <dd className="mt-1 text-sm">
+                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            ${selectedCustomer.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                                            selectedCustomer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                            'bg-red-100 text-red-800'}`}
+                                        >
+                                            {selectedCustomer.status.charAt(0).toUpperCase() + selectedCustomer.status.slice(1)}
+                                        </span>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt className="text-sm font-medium text-gray-500">Date Registered</dt>
+                                    <dd className="mt-1 text-sm text-gray-900">{formatDate(selectedCustomer.createdAt)}</dd>
+                                </div>
+                                
+                                {/* Display all available properties */}
+                                {Object.entries(selectedCustomer).map(([key, value]) => {
+                                    // Skip already displayed or internal properties
+                                    if (['id', 'type', 'fullName', 'companyName', 'name', 'email', 'status', 'createdAt', 'updatedAt'].includes(key)) {
+                                        return null;
+                                    }
+                                    
+                                    // Skip empty values or complex objects
+                                    if (value === null || value === undefined || typeof value === 'object') {
+                                        return null;
+                                    }
+                                    
+                                    // Format the key for display
+                                    const formattedKey = key.replace(/([A-Z])/g, ' $1')
+                                        .replace(/^./, str => str.toUpperCase());
+                                    
+                                    return (
+                                        <div key={key}>
+                                            <dt className="text-sm font-medium text-gray-500">{formattedKey}</dt>
+                                            <dd className="mt-1 text-sm text-gray-900">{value.toString()}</dd>
+                                        </div>
+                                    );
+                                })}
+                            </dl>
+                        </div>
+                        
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={closeCustomerDetails}
+                                className="px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     };
@@ -366,6 +516,9 @@ function Insights(_props: InsightsProps) {
             <div className="flex justify-end">
                 <button className="px-6 py-2 mt-4 bg-[#FFC727] text-black rounded-lg text-sm">+ Onboard New Profile</button>
             </div>
+
+            {/* Customer Details Modal */}
+            {renderCustomerDetailsModal()}
         </div>
     );
 }
