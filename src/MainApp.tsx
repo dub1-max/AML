@@ -18,6 +18,7 @@ import { getApiBaseUrl } from './config';
 import ActiveTracking from './ActiveTracking';
 import ErrorBoundary from './components/ErrorBoundary';
 import DebugLog, { addLog } from './components/DebugLog';
+import EditProfile from './EditProfile';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -939,10 +940,8 @@ function MainApp(_props: MainAppProps) {
                     </ErrorBoundary>
                 )}
             </div>
-            
         </div>
     );
-
 }
 
 export default MainApp;

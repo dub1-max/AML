@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown, Search } from 'lucide-react';
+import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown, Search, Edit } from 'lucide-react';
 import { SearchResult, Tracking } from './types';
 import { generateCustomerPDF } from './utils/pdfGenerator';
+import { useNavigate } from 'react-router-dom';
 
 interface ActiveTrackingProps {
     trackedResults: SearchResult[];
@@ -23,6 +24,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
     const [appliedNameQuery, setAppliedNameQuery] = useState<string>('');
     const [appliedIdQuery, setAppliedIdQuery] = useState<string>('');
     const [activeFilter, setActiveFilter] = useState<'all' | 'custom'>('all');
+    const navigate = useNavigate();
     
     // Minimum search term length
     const MIN_SEARCH_LENGTH = 2;
@@ -198,6 +200,11 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
             setGeneratingPdf(prev => ({ ...prev, [person.id]: false }));
             alert('Failed to generate PDF. Please try again.');
         }
+    };
+
+    // Handle navigating to edit profile page
+    const handleEditProfile = (result: SearchResult) => {
+        navigate(`/edit-profile/${result.id}`, { state: { profile: result } });
     };
 
     // Get filtered and sorted results
@@ -424,7 +431,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                         </div>
                                     </td>
                                     <td className="py-4 px-6 text-center">
-                                        <div className="flex justify-center">
+                                        <div className="flex justify-center items-center space-x-2">
                                             <button
                                                 onClick={() => onToggleTracking(result.name, !tracking?.[result.name]?.isTracking)}
                                                 className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${tracking?.[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'}`}
@@ -432,6 +439,14 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                                 <div
                                                     className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${tracking?.[result.name]?.isTracking ? 'translate-x-3' : 'translate-x-0'}`}
                                                 ></div>
+                                            </button>
+                                            
+                                            <button
+                                                onClick={() => handleEditProfile(result)}
+                                                className="ml-2 p-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full transition-colors duration-200"
+                                                title="Edit Profile"
+                                            >
+                                                <Edit className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>

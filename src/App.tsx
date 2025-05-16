@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import { AuthProvider, useAuth } from './AuthContext';
 import MainApp from './MainApp';
+import EditProfile from './EditProfile';
 
 interface ProtectedRouteProps {
     children: JSX.Element;
@@ -29,6 +30,7 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/mainapp" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+                    <Route path="/edit-profile/:id" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
                     <Route path="/" element={<Navigate to="/login" replace />} />
                 </Routes>
             </AuthProvider>
