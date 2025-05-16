@@ -252,7 +252,19 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                         </div>
                                     </td>
                                     <td className="py-4 px-6 text-sm">{result.name || 'Unknown'}</td>
-                                    <td className="py-4 px-6 text-sm">{result.country || 'Unknown'}</td>
+                                    <td className="py-4 px-6 text-sm">
+                                        {result.country && (
+                                            <div className="flex items-center">
+                                                <img 
+                                                    src={`https://flagcdn.com/w20/${result.country.toLowerCase()}.png`}
+                                                    alt={result.country}
+                                                    className="mr-2 h-3 rounded shadow-sm"
+                                                    title={result.country}
+                                                />
+                                                {result.country}
+                                            </div>
+                                        ) || 'Unknown'}
+                                    </td>
                                     <td className="py-4 px-6 text-sm">
                                         <span className={tracking?.[result.name]?.isTracking ? 'text-green-600' : 'text-red-600'}>
                                             {calculateAging(result)}

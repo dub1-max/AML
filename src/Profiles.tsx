@@ -157,7 +157,19 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                     </div>
                   </td>
                   <td className="py-4 px-6 text-sm">{result.name}</td>
-                  <td className="py-4 px-6 text-sm">{result.country}</td>
+                  <td className="py-4 px-6 text-sm">
+                    {result.country && (
+                      <div className="flex items-center">
+                        <img 
+                          src={`https://flagcdn.com/w20/${result.country.toLowerCase()}.png`}
+                          alt={result.country}
+                          className="mr-2 h-3 rounded shadow-sm"
+                          title={result.country}
+                        />
+                        {result.country}
+                      </div>
+                    ) || 'Unknown'}
+                  </td>
                   <td className="py-4 px-6 text-sm" dangerouslySetInnerHTML={{ __html: calculateAging(result) }} />
                   <td className="py-4 px-6">
                     <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
