@@ -90,7 +90,7 @@ function IndividualOB() {
         };
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/registerIndividual`, {
+            const response = await fetch(`${API_BASE_URL}/registerIndividual`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
