@@ -592,9 +592,9 @@ function EditProfile() {
                             <button 
                                 type="button" 
                                 onClick={() => {
-                                    // Navigate to insights using URL parameters instead of state
+                                    // Navigate to activeTracking using URL parameters instead of state
                                     const params = new URLSearchParams({
-                                        section: 'insights',
+                                        section: 'activeTracking',
                                         t: Date.now().toString()
                                     });
                                     
