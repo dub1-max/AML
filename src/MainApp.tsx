@@ -231,6 +231,24 @@ function MainApp(_props: MainAppProps) {
         }
     }, [tracking, trackedResults, trackingCache, navigate]);
 
+    // Add a function to handle tab changes
+    const handleTabChange = useCallback((section: string) => {
+        setActiveSection(section as any);
+        setShowCompanyOB(false);
+        setShowIndividualOB(false);
+        setShowDashboard(section === 'insights');
+        
+        // Fetch fresh data when switching to active tracking
+        if (section === 'activeTracking') {
+            console.log('🔄 Switching to Active Tracking tab - fetching fresh data');
+            // Force data refresh by invalidating cache
+            setTrackingCache(null);
+            // Fetch new data
+            setIsLoading(true);
+            fetchTrackedData();
+        }
+    }, [fetchTrackedData]);
+
     const handleSearch = useCallback(async () => {
         if ((!searchTerm && !searchId) || (searchTerm && searchTerm.length < MIN_SEARCH_LENGTH)) {
             setSearchResults([]);
@@ -340,10 +358,7 @@ function MainApp(_props: MainAppProps) {
                     <nav className="space-y-2">
                         <button
                             onClick={() => {
-                                setShowDashboard(true);
-                                setActiveSection('insights');
-                                setShowCompanyOB(false);
-                                setShowIndividualOB(false);
+                                handleTabChange('insights');
                             }}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
                                 activeSection === 'insights' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
@@ -355,10 +370,7 @@ function MainApp(_props: MainAppProps) {
 
                         <button
                             onClick={() => {
-                                setShowDashboard(false);
-                                setActiveSection('activeTracking');
-                                setShowCompanyOB(false);
-                                setShowIndividualOB(false);
+                                handleTabChange('activeTracking');
                             }}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
                                 activeSection === 'activeTracking' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
@@ -370,10 +382,7 @@ function MainApp(_props: MainAppProps) {
 
                         <button
                             onClick={() => {
-                                setShowDashboard(false);
-                                setActiveSection('customerProfiles');
-                                setShowCompanyOB(false);
-                                setShowIndividualOB(false);
+                                handleTabChange('customerProfiles');
                             }}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
                                 activeSection === 'customerProfiles' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
@@ -385,10 +394,7 @@ function MainApp(_props: MainAppProps) {
 
                         <button
                             onClick={() => {
-                                setShowDashboard(false);
-                                setActiveSection('profiles');
-                                setShowCompanyOB(false);
-                                setShowIndividualOB(false);
+                                handleTabChange('profiles');
                             }}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
                                 activeSection === 'profiles' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'

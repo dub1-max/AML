@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Loader2, XCircle, Download, CheckCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Loader2, XCircle, Download, CheckCircle, RefreshCw } from 'lucide-react';
 import { SearchResult, Tracking } from './types';
 
 interface ActiveTrackingProps {
@@ -10,6 +10,8 @@ interface ActiveTrackingProps {
 }
 
 function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking }: ActiveTrackingProps) {
+    const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
+    
     console.log('🔶 ActiveTracking rendered with props:', { 
         trackedResultsLength: trackedResults?.length || 0,
         trackingKeys: Object.keys(tracking || {}),
@@ -21,7 +23,12 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
         console.log('🔶 ActiveTracking mount/update effect');
         console.log('🔶 trackedResults details:', trackedResults);
         console.log('🔶 tracking details:', tracking);
-    }, [trackedResults, tracking]);
+        
+        // Update last updated timestamp when data changes
+        if (!isLoading && trackedResults) {
+            setLastUpdated(new Date().toLocaleTimeString());
+        }
+    }, [trackedResults, tracking, isLoading]);
 
     const getRiskColor = (percentage: number): string => {
         if (percentage >= 85) return 'text-red-600';
@@ -76,13 +83,32 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
 
     return (
         <div className="p-6">
-            <div className="mb-6">
-                <h2 className="text-2xl font-semibold">Active Tracking</h2>
-                <p className="text-gray-600">Monitor and manage your tracked profiles</p>
-                <p className="text-sm text-gray-500">
-                    Total tracked items: {safeTrackedResults.length} 
-                    (Active: {safeTrackedResults.filter(r => tracking?.[r.name]?.isTracking).length})
-                </p>
+            <div className="mb-6 flex justify-between items-center">
+                <div>
+                    <h2 className="text-2xl font-semibold">Active Tracking</h2>
+                    <p className="text-gray-600">Monitor and manage your tracked profiles</p>
+                    <p className="text-sm text-gray-500">
+                        Total tracked items: {safeTrackedResults.length} 
+                        (Active: {safeTrackedResults.filter(r => tracking?.[r.name]?.isTracking).length})
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                        Last updated: {lastUpdated}
+                    </p>
+                </div>
+                <div>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-md hover:bg-purple-200"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <RefreshCw className="w-4 h-4" />
+                        )}
+                        <span>{isLoading ? 'Loading...' : 'Refresh'}</span>
+                    </button>
+                </div>
             </div>
 
             {isLoading ? (
