@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { useAuth } from './AuthContext'; // Import useAuth
 import { getApiBaseUrl } from './config';
+import { useNavigate } from 'react-router-dom';
 
 function IndividualOB() {
     const API_BASE_URL = getApiBaseUrl();
+    const navigate = useNavigate();
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [residentStatus, setResidentStatus] = useState('');
@@ -93,8 +95,9 @@ function IndividualOB() {
             const data = await response.json();
 
             if (response.ok) {
-                alert(data.message);  // Success message
-                // Optionally reset the form here:
+                alert("Individual registration successful! Redirecting to Active Tracking.");
+                
+                // Reset all form fields
                 setFullName('');
                 setEmail('');
                 setResidentStatus('');
@@ -120,8 +123,9 @@ function IndividualOB() {
                 setProductOffered('');
                 setCompanyName('');
                 setPositionInCompany('');
-
-
+                
+                // Redirect to Active Tracking tab
+                navigate('/mainapp', { state: { activeSection: 'activeTracking' } });
             } else {
                 alert(data.message || 'Registration failed'); // Show server error message
             }

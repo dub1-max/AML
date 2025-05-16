@@ -2,13 +2,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Search, FileText, Shield, LogOut, Link, Users, File,
-    Plus, Loader2
+    Plus, Loader2, CheckCircle, XCircle, Eye
 } from 'lucide-react';
 import type { SearchResult, Tracking, TrackingItem } from './types';
 import { useAuth } from './AuthContext';
 import ActivityDashboard from './Insights';
 import Profiles from './Profiles';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import debounce from 'lodash/debounce';
 // Import the new components
 import IndividualOB from './IndividualOB';
@@ -17,7 +17,7 @@ import Insights from './Insights';
 import { getApiBaseUrl } from './config';
 import ActiveTracking from './ActiveTracking';
 import ErrorBoundary from './components/ErrorBoundary';
-import CustomerProfiles from './CustomerProfiles';
+import DebugLog, { addLog } from './components/DebugLog';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -47,10 +47,21 @@ function MainApp(_props: MainAppProps) {
     const [tracking, setTracking] = useState<Tracking>({});
     const [trackedResults, setTrackedResults] = useState<SearchResult[]>([]);
     const [showDashboard, setShowDashboard] = useState(true);
-    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking' | 'customerProfiles'>('insights');
+    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking'>('insights');
     const [deepLinkSubSection, setDeepLinkSubSection] = useState<'individual' | 'company' | null>(null);
     const [showIndividualOB, setShowIndividualOB] = useState(false);
     const [showCompanyOB, setShowCompanyOB] = useState(false);
+    
+    // Add state for pending approvals
+    const [pendingApprovals, setPendingApprovals] = useState<{
+        id: number, 
+        name: string, 
+        type: string, 
+        isMatched: boolean,
+        matches?: SearchResult[],
+        processedMatches?: {[matchId: number]: 'approved' | 'rejected'}, // Track which matches have been processed
+        status: string | null | undefined
+    }[]>([]);
     
     // Add search cache
     const [searchCache] = useState<SearchCache>({});
@@ -59,6 +70,7 @@ function MainApp(_props: MainAppProps) {
     const [trackingCache, setTrackingCache] = useState<TrackingCache | null>(null);
     
     const navigate = useNavigate();
+    const location = useLocation();
 
     // Cache duration in milliseconds (5 minutes)
     const CACHE_DURATION = 5 * 60 * 1000;
@@ -246,8 +258,244 @@ function MainApp(_props: MainAppProps) {
             // Fetch new data
             setIsLoading(true);
             fetchTrackedData();
+            // Fetch pending approvals
+            fetchPendingApprovals();
         }
     }, [fetchTrackedData]);
+
+    // Function to fetch pending approvals
+    const fetchPendingApprovals = async () => {
+        try {
+            // Fetch individuals from individualob table
+            const individualsResponse = await fetch(`${API_BASE_URL}/individualob`, { 
+                credentials: 'include' 
+            });
+            
+            // Fetch companies from companyob table
+            const companiesResponse = await fetch(`${API_BASE_URL}/companyob`, { 
+                credentials: 'include' 
+            });
+            
+            if (!individualsResponse.ok || !companiesResponse.ok) {
+                throw new Error('Failed to fetch onboarded customers');
+            }
+            
+            const individuals = await individualsResponse.json();
+            const companies = await companiesResponse.json();
+            
+            console.log('🔍 Fetched onboarded individuals:', individuals);
+            console.log('🔍 Fetched onboarded companies:', companies);
+            
+            // Filter out already approved, rejected, or processed customers
+            const pendingStatuses = ['pending', null, undefined, ''];
+            
+            const pendingIndividuals = individuals.filter((ind: any) => 
+                pendingStatuses.includes(ind.status)
+            );
+            const pendingCompanies = companies.filter((comp: any) => 
+                pendingStatuses.includes(comp.status)
+            );
+            
+            console.log('🔍 Filtered to pending individuals:', pendingIndividuals.length);
+            console.log('🔍 Filtered to pending companies:', pendingCompanies.length);
+            
+            // Create list of names to check for matches
+            const pendingList = [
+                ...pendingIndividuals.map((ind: any) => ({ 
+                    id: ind.id, 
+                    name: ind.full_name, 
+                    type: 'individual',
+                    isMatched: false,
+                    status: ind.status
+                })),
+                ...pendingCompanies.map((comp: any) => ({ 
+                    id: comp.id, 
+                    name: comp.company_name, 
+                    type: 'company',
+                    isMatched: false,
+                    status: comp.status
+                }))
+            ];
+            
+            // Check for matches against the persons table
+            if (pendingList.length > 0) {
+                const matchPromises = pendingList.map(async (item) => {
+                    try {
+                        const searchResponse = await fetch(
+                            `${API_BASE_URL}/persons/search?searchTerm=${encodeURIComponent(item.name)}`, 
+                            { credentials: 'include' }
+                        );
+                        
+                        if (!searchResponse.ok) {
+                            return item;
+                        }
+                        
+                        const searchResults = await searchResponse.json();
+                        const matches = searchResults.data || [];
+                        
+                        return {
+                            ...item,
+                            isMatched: matches.length > 0,
+                            matches: matches // Store the actual matches
+                        };
+                    } catch (error) {
+                        console.error(`Error checking matches for ${item.name}:`, error);
+                        return item;
+                    }
+                });
+                
+                const checkedList = await Promise.all(matchPromises);
+                
+                // Process customers with no matches - automatically add to tracking
+                const customersWithNoMatches = checkedList.filter(item => !item.isMatched);
+                console.log(`🔍 Found ${customersWithNoMatches.length} customers with no matches to auto-process`);
+                
+                for (const item of customersWithNoMatches) {
+                    try {
+                        console.log(`🔄 Auto-approving customer with no matches: ${item.name}`);
+                        
+                        // Call approve endpoint to add to tracking
+                        await fetch(`${API_BASE_URL}/customer/${item.type}/${item.id}/approve`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        console.log(`✅ Auto-approved ${item.type} ${item.name}`);
+                    } catch (error) {
+                        console.error(`Error auto-approving no-match customer ${item.name}:`, error);
+                    }
+                }
+                
+                // If we auto-approved any customers, refresh tracking data
+                if (customersWithNoMatches.length > 0) {
+                    fetchTrackedData();
+                }
+                
+                // Update the pending approvals list with only matched items that need approval
+                const filteredList = checkedList.filter(item => 
+                    item.isMatched && pendingStatuses.includes(item.status)
+                );
+                setPendingApprovals(filteredList);
+                console.log('🔍 Pending approvals with match status:', filteredList);
+            } else {
+                setPendingApprovals([]);
+            }
+            
+        } catch (error) {
+            console.error('Error fetching pending approvals:', error);
+            setPendingApprovals([]);
+        }
+    };
+    
+    // Handle approving or rejecting a specific match
+    const handleMatchApproval = async (
+        customerId: number, 
+        customerType: string, 
+        matchId: number, 
+        matchName: string,
+        action: 'approved' | 'rejected'
+    ) => {
+        try {
+            console.log(`🔄 ${action === 'approved' ? 'Approving' : 'Rejecting'} match ${matchName} (ID: ${matchId}) for ${customerType} (ID: ${customerId})`);
+            
+            // Find the customer in pending approvals
+            const updatedApprovals = [...pendingApprovals];
+            const customerIndex = updatedApprovals.findIndex(
+                item => item.id === customerId && item.type === customerType
+            );
+            
+            if (customerIndex === -1) return;
+            
+            // Initialize processedMatches object if it doesn't exist
+            if (!updatedApprovals[customerIndex].processedMatches) {
+                updatedApprovals[customerIndex].processedMatches = {};
+            }
+            
+            // Mark this match as processed
+            updatedApprovals[customerIndex].processedMatches![matchId] = action;
+            
+            // Update state immediately for responsive UI
+            setPendingApprovals(updatedApprovals);
+            
+            if (action === 'approved') {
+                // Add this match to tracking (use person from sanctioned list)
+                await fetch(`${API_BASE_URL}/tracking/${matchName}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ isTracking: true }),
+                    credentials: 'include',
+                });
+                
+                // Refresh tracking data
+                fetchTrackedData();
+                
+                // Mark the customer as approved in the database
+                await fetch(`${API_BASE_URL}/customer/${customerType}/${customerId}/approve`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                // Remove this customer from pending list immediately after approval
+                const filteredApprovals = pendingApprovals.filter(
+                    item => !(item.id === customerId && item.type === customerType)
+                );
+                setPendingApprovals(filteredApprovals);
+                
+                // Show success message
+                alert(`${matchName} has been approved and added to tracking`);
+                return;
+            } else if (action === 'rejected') {
+                // Simpler approach: When rejecting any match, mark it in the UI and call the backend
+                console.log(`Rejecting match ${matchName} for customer ID ${customerId}`);
+                addLog(`Rejecting match ${matchName} for customer ID ${customerId}`, 'info');
+                
+                try {
+                    // Make direct API call to reject the customer
+                    addLog(`Sending rejection request to ${API_BASE_URL}/customer/${customerType}/${customerId}/reject`, 'info');
+                    
+                    const response = await fetch(`${API_BASE_URL}/customer/${customerType}/${customerId}/reject`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const responseData = await response.json();
+                    console.log('Rejection response:', responseData);
+                    addLog(`Server response: ${JSON.stringify(responseData)}`, response.ok ? 'success' : 'error');
+                    
+                    if (!response.ok) {
+                        throw new Error(responseData.message || `Server error: ${response.status}`);
+                    }
+                    
+                    // Remove this customer from the pending approvals list
+                    setPendingApprovals(prevApprovals => prevApprovals.filter(
+                        item => !(item.id === customerId && item.type === customerType)
+                    ));
+                    
+                    addLog(`Successfully removed customer ${customerId} from approvals list`, 'success');
+                    
+                    // Show success message
+                    alert(`Customer has been rejected successfully`);
+                } catch (error) {
+                    console.error('Error during rejection:', error);
+                    addLog(`Rejection error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+                    alert(`Failed to reject: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+            
+        } catch (error) {
+            console.error(`Error processing match with action '${action}':`, error);
+            alert(`Failed to process match. Please try again.`);
+        }
+    };
 
     const handleSearch = useCallback(async () => {
         if ((!searchTerm && !searchId) || (searchTerm && searchTerm.length < MIN_SEARCH_LENGTH)) {
@@ -348,6 +596,16 @@ function MainApp(_props: MainAppProps) {
         setActiveSection('deepLink'); // Add this to ensure correct sidebar highlighting
     }
 
+    // Add code to handle the redirect from onboarding components
+    useEffect(() => {
+        // Check for redirected state with activeSection
+        const state = location.state as { activeSection?: string } || {};
+        if (state.activeSection) {
+            handleTabChange(state.activeSection);
+            // Clear the state to prevent re-triggering on page refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location, handleTabChange]);
 
     return (
         <div className="flex min-h-screen bg-gray-50">
@@ -378,18 +636,6 @@ function MainApp(_props: MainAppProps) {
                         >
                             <Shield className="w-5 h-5" />
                             <span>Active Tracking</span>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                handleTabChange('customerProfiles');
-                            }}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
-                                activeSection === 'customerProfiles' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
-                            }`}
-                        >
-                            <Users className="w-5 h-5" />
-                            <span>Customer Profiles</span>
                         </button>
 
                         <button
@@ -445,7 +691,6 @@ function MainApp(_props: MainAppProps) {
                              showIndividualOB ? 'Individual Onboarding' :
                              showCompanyOB ? 'Company Onboarding' :
                              activeSection === 'activeTracking' ? 'Active Tracking' :
-                             activeSection === 'customerProfiles' ? 'Customer Profiles' :
                             'Alerts'}
                         </h2>
                         <div className="flex items-center space-x-4">
@@ -472,7 +717,7 @@ function MainApp(_props: MainAppProps) {
                     </div>
 
                     {!showDashboard && !showIndividualOB && !showCompanyOB && 
-                     activeSection !== 'activeTracking' && activeSection !== 'customerProfiles' && (
+                     activeSection !== 'activeTracking' && (
                         <div className="px-6 py-3 flex items-center space-x-4 border-t border-gray-200">
                             <div className="flex space-x-2">
                                 <button className="px-4 py-1 rounded-full bg-[#4A1D96] text-white text-sm">
@@ -541,16 +786,135 @@ function MainApp(_props: MainAppProps) {
                     </ErrorBoundary>
                 ) : activeSection === 'activeTracking' ? (
                     <ErrorBoundary>
-                        <ActiveTracking
-                            trackedResults={Array.isArray(trackedResults) ? trackedResults : []}
-                            tracking={tracking || {}}
-                            isLoading={isLoading}
-                            onToggleTracking={updateTracking}
-                        />
-                    </ErrorBoundary>
-                ) : activeSection === 'customerProfiles' ? (
-                    <ErrorBoundary>
-                        <CustomerProfiles />
+                        <div>
+                            {/* Pending approvals section */}
+                            {pendingApprovals.filter(item => item.isMatched).length > 0 && (
+                                <div className="p-6 border-b border-gray-200">
+                                    <h3 className="text-lg font-semibold mb-4">Customers Requiring Approval</h3>
+                                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
+                                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {pendingApprovals.filter(item => item.isMatched).map((item) => (
+                                                    <React.Fragment key={`${item.type}-${item.id}`}>
+                                                        <tr>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                {item.type === 'individual' ? 'Individual' : 'Company'}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                                    Potential Match Found
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <div className="text-sm text-gray-900">
+                                                                    {item.matches && item.matches.length > 0 && (
+                                                                        <details className="cursor-pointer">
+                                                                            <summary className="flex items-center">
+                                                                                <span className="font-semibold">{item.matches.length} potential {item.matches.length === 1 ? 'match' : 'matches'}</span>
+                                                                                <Eye className="h-4 w-4 ml-2 text-purple-500" />
+                                                                            </summary>
+                                                                            <div className="mt-3 p-4 bg-gray-50 rounded-md border border-gray-200">
+                                                                                <h4 className="font-medium text-gray-700 mb-2">Match Details:</h4>
+                                                                                <ul className="space-y-2">
+                                                                                    {item.matches.map((match, index) => (
+                                                                                        <li key={`match-${match.id}-${index}`} className={`p-2 border-b border-gray-200 last:border-0 ${
+                                                                                            item.processedMatches?.[match.id] === 'approved' ? 'bg-green-50' :
+                                                                                            item.processedMatches?.[match.id] === 'rejected' ? 'bg-red-50' : ''
+                                                                                        }`}>
+                                                                                            <div className="flex justify-between">
+                                                                                                <span className="font-medium">{match.name}</span>
+                                                                                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                                                                                    match.riskLevel >= 85 ? 'bg-red-100 text-red-800' :
+                                                                                                    match.riskLevel >= 65 ? 'bg-yellow-100 text-yellow-800' :
+                                                                                                    'bg-green-100 text-green-800'
+                                                                                                }`}>
+                                                                                                    Risk: {match.riskLevel}%
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <div className="mt-1 text-sm text-gray-600">
+                                                                                                <div><span className="font-medium">Type:</span> {match.type}</div>
+                                                                                                <div><span className="font-medium">Country:</span> {match.country}</div>
+                                                                                                <div><span className="font-medium">ID:</span> {match.identifiers}</div>
+                                                                                            </div>
+                                                                                            
+                                                                                            {/* Match approval/rejection buttons */}
+                                                                                            {!item.processedMatches?.[match.id] ? (
+                                                                                                <div className="mt-2 flex justify-end space-x-2">
+                                                                                                    <button 
+                                                                                                        onClick={() => handleMatchApproval(item.id, item.type, match.id, match.name, 'approved')}
+                                                                                                        className="px-3 py-1 bg-green-100 text-green-800 rounded-md text-xs flex items-center hover:bg-green-200"
+                                                                                                    >
+                                                                                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                                                                                        Approve Match
+                                                                                                    </button>
+                                                                                                    <button 
+                                                                                                        onClick={() => handleMatchApproval(item.id, item.type, match.id, match.name, 'rejected')}
+                                                                                                        className="px-3 py-1 bg-red-100 text-red-800 rounded-md text-xs flex items-center hover:bg-red-200"
+                                                                                                    >
+                                                                                                        <XCircle className="w-3 h-3 mr-1" />
+                                                                                                        Reject Match
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <div className="mt-2 text-sm italic">
+                                                                                                    {item.processedMatches[match.id] === 'approved' ? (
+                                                                                                        <span className="text-green-600">✓ Approved - Added to tracking</span>
+                                                                                                    ) : (
+                                                                                                        <span className="text-red-600">✗ Rejected</span>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        </details>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                                <button 
+                                                                    onClick={() => handleMatchApproval(item.id, item.type, item.id, item.name, 'approved')}
+                                                                    className="text-green-600 hover:text-green-900 mr-4"
+                                                                >
+                                                                    <CheckCircle className="inline w-5 h-5 mr-1" />
+                                                                    Approve
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleMatchApproval(item.id, item.type, item.id, item.name, 'rejected')}
+                                                                    className="text-red-600 hover:text-red-900"
+                                                                >
+                                                                    <XCircle className="inline w-5 h-5 mr-1" />
+                                                                    Reject
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    </React.Fragment>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Main active tracking component */}
+                            <ActiveTracking
+                                trackedResults={trackedResults}
+                                tracking={tracking}
+                                isLoading={isLoading}
+                                onToggleTracking={updateTracking}
+                            />
+                        </div>
                     </ErrorBoundary>
                 ) : (
                     <ErrorBoundary>
@@ -561,6 +925,7 @@ function MainApp(_props: MainAppProps) {
                     </ErrorBoundary>
                 )}
             </div>
+            
         </div>
     );
 

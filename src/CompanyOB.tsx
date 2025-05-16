@@ -104,8 +104,8 @@ function CompanyOB() {
         throw new Error(data.message || "Something went wrong");
       }
 
-      alert("Company registration successful!");
-      navigate("/mainapp"); // Example navigation after successful submission
+      alert("Company registration successful! Redirecting to Active Tracking.");
+      navigate("/mainapp", { state: { activeSection: 'activeTracking' } });
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message || "An unexpected error occurred");
