@@ -18,7 +18,11 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
     const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
     const [sortColumn, setSortColumn] = useState<SortableColumn>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [nameQuery, setNameQuery] = useState<string>('');
+    const [idQuery, setIdQuery] = useState<string>('');
+    const [appliedNameQuery, setAppliedNameQuery] = useState<string>('');
+    const [appliedIdQuery, setAppliedIdQuery] = useState<string>('');
+    const [activeFilter, setActiveFilter] = useState<'all' | 'custom'>('all');
     
     console.log('🔶 ActiveTracking rendered with props:', { 
         trackedResultsLength: trackedResults?.length || 0,
@@ -103,16 +107,35 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
             : <ChevronDown className="w-4 h-4 inline-block ml-1" />;
     };
 
+    // Apply filters when search is applied
+    const applySearch = () => {
+        setAppliedNameQuery(nameQuery);
+        setAppliedIdQuery(idQuery);
+        setActiveFilter('custom');
+    };
+
+    // Reset filters
+    const resetFilters = () => {
+        setNameQuery('');
+        setIdQuery('');
+        setAppliedNameQuery('');
+        setAppliedIdQuery('');
+        setActiveFilter('all');
+    };
+
     // Apply filtering to results
     const getFilteredResults = () => {
-        if (!searchQuery.trim()) return safeTrackedResults;
+        if (activeFilter === 'all') return safeTrackedResults;
         
-        const query = searchQuery.toLowerCase();
-        return safeTrackedResults.filter(result => 
-            (result.name?.toLowerCase().includes(query)) || 
-            (result.identifiers?.toLowerCase().includes(query)) ||
-            (result.country?.toLowerCase().includes(query))
-        );
+        return safeTrackedResults.filter(result => {
+            const matchesName = !appliedNameQuery || 
+                (result.name?.toLowerCase().includes(appliedNameQuery.toLowerCase()));
+            
+            const matchesId = !appliedIdQuery || 
+                (result.identifiers?.toLowerCase().includes(appliedIdQuery.toLowerCase()));
+            
+            return matchesName && matchesId;
+        });
     };
 
     // First filter, then sort
@@ -181,51 +204,78 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
 
     return (
         <div className="p-6">
-            <div className="mb-6 flex justify-between items-center">
-                <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                        <div className="relative flex-1 min-w-[250px]">
+            <div className="mb-6">
+                <div className="flex items-center mb-4">
+                    <button 
+                        onClick={resetFilters}
+                        className={`mr-2 px-6 py-2 rounded-full font-medium ${
+                            activeFilter === 'all' 
+                                ? 'bg-purple-700 text-white' 
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                    >
+                        All
+                    </button>
+                    
+                    <div className="flex flex-1 items-center space-x-2">
+                        <div className="relative flex-1">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <Search className="h-4 w-4 text-gray-400" />
                             </div>
                             <input
                                 type="text"
-                                placeholder="Search by name, ID or country..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                placeholder="Search by name (min. 2 characters)"
+                                value={nameQuery}
+                                onChange={(e) => setNameQuery(e.target.value)}
+                                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
                             />
-                            {searchQuery && (
-                                <button 
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                >
-                                    <XCircle className="h-4 w-4 text-gray-400 hover:text-gray-600" />
-                                </button>
-                            )}
                         </div>
+                        
+                        <input
+                            type="text"
+                            placeholder="Search by ID"
+                            value={idQuery}
+                            onChange={(e) => setIdQuery(e.target.value)}
+                            className="w-64 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        />
+                        
+                        <button 
+                            onClick={applySearch}
+                            disabled={nameQuery.length > 0 && nameQuery.length < 2}
+                            className={`px-6 py-2 bg-purple-700 text-white font-semibold rounded-md hover:bg-purple-800 transition-colors ${
+                                nameQuery.length > 0 && nameQuery.length < 2 ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                        >
+                            APPLY
+                        </button>
                     </div>
-                    
-                    <p className="text-sm text-gray-500">
-                        {searchQuery ? `Showing ${resultsCount} of ${totalCount} tracked items` : `Total tracked items: ${totalCount}`}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                        Last updated: {lastUpdated}
-                    </p>
                 </div>
-                <div>
-                    <button 
-                        onClick={() => window.location.reload()}
-                        className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-md hover:bg-purple-200"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <RefreshCw className="w-4 h-4" />
-                        )}
-                        <span>{isLoading ? 'Loading...' : 'Refresh'}</span>
-                    </button>
+                
+                <div className="flex justify-between items-center">
+                    <div>
+                        <p className="text-sm text-gray-500">
+                            {activeFilter === 'custom' 
+                                ? `Showing ${resultsCount} of ${totalCount} tracked items` 
+                                : `Total tracked items: ${totalCount}`}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                            Last updated: {lastUpdated}
+                        </p>
+                    </div>
+                    <div>
+                        <button 
+                            onClick={() => window.location.reload()}
+                            className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-md hover:bg-purple-200"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <RefreshCw className="w-4 h-4" />
+                            )}
+                            <span>{isLoading ? 'Loading...' : 'Refresh'}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -240,11 +290,11 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                         There are {Object.keys(tracking || {}).length} tracking entries but no matching person records.
                     </p>
                 </div>
-            ) : filteredAndSortedResults.length === 0 && searchQuery ? (
+            ) : filteredAndSortedResults.length === 0 && activeFilter === 'custom' ? (
                 <div className="bg-blue-50 border border-blue-100 p-4 rounded-md">
                     <p className="text-center text-blue-700">No results match your search</p>
                     <p className="text-center text-sm text-blue-600 mt-2">
-                        Try a different search term or clear the search to see all {totalCount} tracked items.
+                        Try different search terms or click "All" to see all {totalCount} tracked items.
                     </p>
                 </div>
             ) : (
