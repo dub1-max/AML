@@ -24,6 +24,9 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
     const [appliedIdQuery, setAppliedIdQuery] = useState<string>('');
     const [activeFilter, setActiveFilter] = useState<'all' | 'custom'>('all');
     
+    // Minimum search term length
+    const MIN_SEARCH_LENGTH = 2;
+    
     console.log('🔶 ActiveTracking rendered with props:', { 
         trackedResultsLength: trackedResults?.length || 0,
         trackingKeys: Object.keys(tracking || {}),
@@ -205,45 +208,43 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
     return (
         <div className="p-6">
             <div className="mb-6">
-                <div className="flex items-center mb-4">
-                    <button 
-                        onClick={resetFilters}
-                        className={`mr-2 px-6 py-2 rounded-full font-medium ${
-                            activeFilter === 'all' 
-                                ? 'bg-purple-700 text-white' 
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                    >
-                        All
-                    </button>
-                    
-                    <div className="flex flex-1 items-center space-x-2">
-                        <div className="relative flex-1">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Search className="h-4 w-4 text-gray-400" />
-                            </div>
+                <div className="flex items-center space-x-3 mb-4">
+                    <div className="flex-1">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <input
                                 type="text"
-                                placeholder="Search by name (min. 2 characters)"
                                 value={nameQuery}
-                                onChange={(e) => setNameQuery(e.target.value)}
-                                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setNameQuery(value);
+                                    if (value.length < MIN_SEARCH_LENGTH) {
+                                        // Clear results only if using auto-search
+                                    }
+                                }}
+                                placeholder={`Search by name (min. ${MIN_SEARCH_LENGTH} characters)`}
+                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
-                        
+                    </div>
+
+                    <div className="flex space-x-3">
                         <input
                             type="text"
-                            placeholder="Search by ID"
                             value={idQuery}
-                            onChange={(e) => setIdQuery(e.target.value)}
-                            className="w-64 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                            onChange={(e) => {
+                                setIdQuery(e.target.value);
+                            }}
+                            placeholder="Search by ID"
+                            className="px-4 py-2 rounded-lg border border-gray-200 text-sm"
                         />
-                        
-                        <button 
+                        <button
                             onClick={applySearch}
-                            disabled={nameQuery.length > 0 && nameQuery.length < 2}
-                            className={`px-6 py-2 bg-purple-700 text-white font-semibold rounded-md hover:bg-purple-800 transition-colors ${
-                                nameQuery.length > 0 && nameQuery.length < 2 ? 'opacity-50 cursor-not-allowed' : ''
+                            disabled={nameQuery.length > 0 && nameQuery.length < MIN_SEARCH_LENGTH}
+                            className={`px-6 py-2 bg-[#4A1D96] text-white rounded-lg text-sm ${
+                                nameQuery.length > 0 && nameQuery.length < MIN_SEARCH_LENGTH 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : ''
                             }`}
                         >
                             APPLY
@@ -262,10 +263,18 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                             Last updated: {lastUpdated}
                         </p>
                     </div>
-                    <div>
+                    <div className="flex space-x-3">
+                        {activeFilter === 'custom' && (
+                            <button 
+                                onClick={resetFilters}
+                                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-100"
+                            >
+                                Clear Filter
+                            </button>
+                        )}
                         <button 
                             onClick={() => window.location.reload()}
-                            className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-md hover:bg-purple-200"
+                            className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200"
                             disabled={isLoading}
                         >
                             {isLoading ? (
@@ -294,7 +303,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                 <div className="bg-blue-50 border border-blue-100 p-4 rounded-md">
                     <p className="text-center text-blue-700">No results match your search</p>
                     <p className="text-center text-sm text-blue-600 mt-2">
-                        Try different search terms or click "All" to see all {totalCount} tracked items.
+                        Try different search terms or click "Clear Filter" to see all {totalCount} tracked items.
                     </p>
                 </div>
             ) : (
