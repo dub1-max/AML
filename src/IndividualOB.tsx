@@ -131,13 +131,15 @@ function IndividualOB() {
                 setCompanyName('');
                 setPositionInCompany('');
                 
-                // Redirect to Active Tracking tab
-                navigate('/mainapp', { 
-                    state: { 
-                        activeSection: 'activeTracking',
-                        refreshData: false 
-                    } 
+                // Redirect to Active Tracking tab using URL parameters instead of state
+                const params = new URLSearchParams({
+                    section: 'activeTracking',
+                    refresh: 'true',
+                    t: Date.now().toString()
                 });
+                
+                // Use window.location for a clean navigation
+                window.location.href = `/mainapp?${params.toString()}`;
             } else {
                 alert(data.message || 'Registration failed'); // Show server error message
             }

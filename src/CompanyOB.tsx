@@ -111,12 +111,16 @@ function CompanyOB() {
       }
 
       alert("Company registration successful! Redirecting to Active Tracking.");
-      navigate("/mainapp", { 
-        state: { 
-          activeSection: 'activeTracking',
-          refreshData: false 
-        } 
+      
+      // Redirect to Active Tracking tab using URL parameters instead of state
+      const params = new URLSearchParams({
+        section: 'activeTracking',
+        refresh: 'true',
+        t: Date.now().toString()
       });
+      
+      // Use window.location for a clean navigation
+      window.location.href = `/mainapp?${params.toString()}`;
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message || "An unexpected error occurred");
