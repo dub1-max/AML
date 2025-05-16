@@ -429,6 +429,20 @@ function MainApp(_props: MainAppProps) {
                     credentials: 'include',
                 });
                 
+                // Also mark the sanctioned person as matched so we know it was blacklisted
+                await fetch(`${API_BASE_URL}/mark-matched/${matchId}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ dataset: 'matched' })
+                }).catch(error => {
+                    // Log error but continue with approval process
+                    console.error("Error marking as matched:", error);
+                    addLog(`Failed to mark ${matchName} as matched: ${error}`, 'error');
+                });
+                
                 // Refresh tracking data
                 fetchTrackedData();
                 

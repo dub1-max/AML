@@ -10,6 +10,7 @@ export interface SearchResult {
   sanctions: string[];
   dataset: string;
   lastUpdated?: string;
+  isBlacklisted?: boolean; // Indicates if this person was matched with a sanctioned entity
 }
 
 export interface TrackingItem {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, XCircle, Download, CheckCircle, RefreshCw } from 'lucide-react';
+import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown } from 'lucide-react';
 import { SearchResult, Tracking } from './types';
+import { generateCustomerPDF } from './utils/pdfGenerator';
 
 interface ActiveTrackingProps {
     trackedResults: SearchResult[];
@@ -9,8 +10,14 @@ interface ActiveTrackingProps {
     onToggleTracking: (name: string, newTrackingStatus: boolean) => Promise<void>;
 }
 
+type SortableColumn = 'type' | 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status';
+type SortDirection = 'asc' | 'desc';
+
 function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking }: ActiveTrackingProps) {
     const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
+    const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
+    const [sortColumn, setSortColumn] = useState<SortableColumn>('name');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
     
     console.log('🔶 ActiveTracking rendered with props:', { 
         trackedResultsLength: trackedResults?.length || 0,
@@ -74,12 +81,88 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
         console.log('🔶 No tracked results and not loading');
     }
 
-    // Sort results to show active tracking first
-    const sortedResults = [...safeTrackedResults].sort((a, b) => {
-        const aIsTracking = tracking?.[a.name]?.isTracking ? 1 : 0;
-        const bIsTracking = tracking?.[b.name]?.isTracking ? 1 : 0;
-        return bIsTracking - aIsTracking;
-    });
+    // Sort function for column headers
+    const handleSort = (column: SortableColumn) => {
+        if (sortColumn === column) {
+            // Toggle direction if same column
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+        } else {
+            // Set new column and default to ascending
+            setSortColumn(column);
+            setSortDirection('asc');
+        }
+    };
+
+    // Render sort indicator
+    const renderSortIndicator = (column: SortableColumn) => {
+        if (sortColumn !== column) return null;
+        
+        return sortDirection === 'asc' 
+            ? <ChevronUp className="w-4 h-4 inline-block ml-1" /> 
+            : <ChevronDown className="w-4 h-4 inline-block ml-1" />;
+    };
+
+    // Apply sorting to results
+    const getSortedResults = () => {
+        // First sort by tracking status
+        const baseResults = [...safeTrackedResults].sort((a, b) => {
+            const aIsTracking = tracking?.[a.name]?.isTracking ? 1 : 0;
+            const bIsTracking = tracking?.[b.name]?.isTracking ? 1 : 0;
+            return bIsTracking - aIsTracking;
+        });
+        
+        // Then apply column-specific sorting
+        return baseResults.sort((a, b) => {
+            const multiplier = sortDirection === 'asc' ? 1 : -1;
+            
+            switch (sortColumn) {
+                case 'type':
+                    return multiplier * (a.type || '').localeCompare(b.type || '');
+                case 'identifiers':
+                    return multiplier * (a.identifiers || '').localeCompare(b.identifiers || '');
+                case 'name':
+                    return multiplier * (a.name || '').localeCompare(b.name || '');
+                case 'country':
+                    return multiplier * (a.country || '').localeCompare(b.country || '');
+                case 'aging':
+                    const aAging = calculateAging(a).replace('D', '');
+                    const bAging = calculateAging(b).replace('D', '');
+                    return multiplier * (parseInt(aAging) || 0) - (parseInt(bAging) || 0);
+                case 'blacklist':
+                    const aBlacklist = a.dataset === 'onboarded' ? 0 : 1;
+                    const bBlacklist = b.dataset === 'onboarded' ? 0 : 1;
+                    return multiplier * (aBlacklist - bBlacklist);
+                case 'risk':
+                    return multiplier * ((a.riskLevel || 0) - (b.riskLevel || 0));
+                case 'status':
+                    const aStatus = tracking?.[a.name]?.isTracking ? 1 : 0;
+                    const bStatus = tracking?.[b.name]?.isTracking ? 1 : 0;
+                    return multiplier * (aStatus - bStatus);
+                default:
+                    return 0;
+            }
+        });
+    };
+
+    const handleGeneratePDF = async (person: SearchResult) => {
+        try {
+            // Set PDF generation status for this person
+            setGeneratingPdf(prev => ({ ...prev, [person.id]: true }));
+            
+            // Generate the PDF
+            await generateCustomerPDF(person);
+            
+            // Reset PDF generation status
+            setGeneratingPdf(prev => ({ ...prev, [person.id]: false }));
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            setGeneratingPdf(prev => ({ ...prev, [person.id]: false }));
+            alert('Failed to generate PDF. Please try again.');
+        }
+    };
+
+    // Get sorted results
+    const sortedResults = getSortedResults();
 
     return (
         <div className="p-6">
@@ -127,16 +210,36 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                     <table className="w-full">
                         <thead>
                             <tr className="text-left text-sm text-gray-500">
-                                <th className="pb-4 px-6 whitespace-nowrap">TYPE</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">CUSTOMER</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">FULL NAME</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">NATIONALITY</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">AGING</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">NAME SCREENING</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">DOCUMENTATION</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">RISK RATING</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">STATUS</th>
-                                <th className="pb-4 px-6 whitespace-nowrap">TRACKING</th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('type')}>
+                                    TYPE {renderSortIndicator('type')}
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('identifiers')}>
+                                    CUSTOMER {renderSortIndicator('identifiers')}
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('name')}>
+                                    FULL NAME {renderSortIndicator('name')}
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('country')}>
+                                    NATIONALITY {renderSortIndicator('country')}
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('aging')}>
+                                    AGING {renderSortIndicator('aging')}
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('blacklist')}>
+                                    BLACKLIST STATUS {renderSortIndicator('blacklist')}
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap">
+                                    DOCUMENTATION
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('risk')}>
+                                    RISK RATING {renderSortIndicator('risk')}
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('status')}>
+                                    STATUS {renderSortIndicator('status')}
+                                </th>
+                                <th className="pb-4 px-6 whitespace-nowrap">
+                                    TRACKING
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -164,12 +267,36 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                         </span>
                                     </td>
                                     <td className="py-4 px-6">
-                                        <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                                            <XCircle className="w-4 h-4 text-red-500" />
-                                        </div>
+                                        {/* Blacklist status based on dataset */}
+                                        {result.dataset === 'onboarded' ? (
+                                            <div className="flex items-center">
+                                                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                                </div>
+                                                <span className="ml-2 text-xs text-green-600">Not Blacklisted</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center">
+                                                <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
+                                                    <XCircle className="w-4 h-4 text-red-500" />
+                                                </div>
+                                                <span className="ml-2 text-xs text-red-600">Blacklisted</span>
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="py-4 px-6">
-                                        <div className="w-6 h-6 rounded-full bg-gray-100"></div>
+                                        <button 
+                                            onClick={() => handleGeneratePDF(result)}
+                                            disabled={generatingPdf[result.id]}
+                                            className="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-full transition-colors duration-200"
+                                            title="Download Report"
+                                        >
+                                            {generatingPdf[result.id] ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <FileText className="w-4 h-4" />
+                                            )}
+                                        </button>
                                     </td>
                                     <td className="py-4 px-6">
                                         <span className={`text-sm ${getRiskColor(result.riskLevel || 0)}`}>{result.riskLevel || 0}%</span>
