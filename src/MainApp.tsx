@@ -644,10 +644,19 @@ function MainApp(_props: MainAppProps) {
                 
                 // Also fetch pending approvals to ensure consistency
                 fetchPendingApprovals();
+                
+                // Clear the state IMMEDIATELY to prevent infinite refreshing
+                window.history.replaceState(
+                    { 
+                        ...state,
+                        refreshData: false  // Set to false instead of removing completely
+                    }, 
+                    document.title
+                );
+            } else {
+                // Clear the state for other navigations
+                window.history.replaceState({}, document.title);
             }
-            
-            // Clear the state to prevent re-triggering on page refresh
-            window.history.replaceState({}, document.title);
         }
     }, [location, handleTabChange, fetchTrackedData, fetchPendingApprovals]);
 
