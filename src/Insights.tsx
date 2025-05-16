@@ -12,6 +12,7 @@ interface Customer {
     id: number;
     fullName?: string;
     companyName?: string;
+    company_name?: string; // Added for snake_case field handling
     name?: string; // Added for fallback
     full_name?: string; // Added for snake_case field handling
     email?: string;
@@ -118,8 +119,8 @@ function Insights(_props: InsightsProps) {
             setCompanyCustomers(companyData.map((company: any) => ({
                 ...company,
                 type: 'company',
-                // Ensure we have a name to display
-                companyName: company.companyName || company.name || 'Unknown Company'
+                // Ensure we have a name to display by checking both camelCase and snake_case versions
+                companyName: company.companyName || company.company_name || company.name || 'Unknown Company'
             })));
 
             // Combine counts
@@ -190,13 +191,14 @@ function Insights(_props: InsightsProps) {
         return allCustomers.filter(customer => customer.status === status);
     };
 
-        // Get customer's name for display
+    // Get customer's name for display
     const getCustomerName = (customer: Customer): string => {
         if (customer.type === 'individual') {
             // Check for both camelCase and snake_case versions of name fields
             return customer.fullName || customer.name || customer.full_name || 'Individual Customer';
         } else {
-            return customer.companyName || customer.name || 'Company';
+            // Add company_name to the fallback chain for companies
+            return customer.companyName || customer.company_name || customer.name || 'Company';
         }
     };
 
