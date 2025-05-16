@@ -591,7 +591,16 @@ function EditProfile() {
                             </button>
                             <button 
                                 type="button" 
-                                onClick={() => navigate('/mainapp', { state: { activeSection: 'insights' } })}
+                                onClick={() => {
+                                    // Navigate to insights using URL parameters instead of state
+                                    const params = new URLSearchParams({
+                                        section: 'insights',
+                                        t: Date.now().toString()
+                                    });
+                                    
+                                    // Use window.location for a clean navigation
+                                    window.location.href = `/mainapp?${params.toString()}`;
+                                }}
                                 className="mt-4 px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
                             >
                                 CANCEL
