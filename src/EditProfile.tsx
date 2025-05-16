@@ -211,7 +211,13 @@ function EditProfile() {
 
             if (response.ok) {
                 alert("Profile updated successfully!");
-                navigate('/mainapp', { state: { activeSection: 'activeTracking' } });
+                navigate('/mainapp', { 
+                    state: { 
+                        activeSection: 'activeTracking',
+                        refreshData: true,
+                        timestamp: Date.now()
+                    } 
+                });
             } else {
                 alert(data.message || 'Update failed');
             }

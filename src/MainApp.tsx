@@ -195,6 +195,14 @@ function MainApp(_props: MainAppProps) {
     // Update tracking with optimistic updates
     const updateTracking = useCallback(async (name: string, newTrackingStatus: boolean) => {
         try {
+            // Special case for refreshing data without changing tracking status
+            if (name === '__refresh__') {
+                console.log('🔄 Refreshing data via special refresh command');
+                setTrackingCache(null); // Invalidate cache
+                await fetchTrackedData(); // Fetch fresh data
+                return;
+            }
+
             // Optimistically update UI
             const updatedTracking = { ...tracking };
             updatedTracking[name] = {
@@ -614,13 +622,34 @@ function MainApp(_props: MainAppProps) {
     // Add code to handle the redirect from onboarding components
     useEffect(() => {
         // Check for redirected state with activeSection
-        const state = location.state as { activeSection?: string } || {};
+        const state = location.state as { 
+            activeSection?: string;
+            refreshData?: boolean;
+            timestamp?: number;
+        } || {};
+        
         if (state.activeSection) {
             handleTabChange(state.activeSection);
+            
+            // If refreshData flag is set, force a refresh of tracked data
+            if (state.refreshData && state.activeSection === 'activeTracking') {
+                console.log('📊 Refreshing tracked data after profile update');
+                
+                // First invalidate cache to force fresh data fetch
+                setTrackingCache(null);
+                
+                // Then fetch data immediately
+                setIsLoading(true);
+                fetchTrackedData();
+                
+                // Also fetch pending approvals to ensure consistency
+                fetchPendingApprovals();
+            }
+            
             // Clear the state to prevent re-triggering on page refresh
             window.history.replaceState({}, document.title);
         }
-    }, [location, handleTabChange]);
+    }, [location, handleTabChange, fetchTrackedData, fetchPendingApprovals]);
 
     return (
         <div className="flex min-h-screen bg-gray-50">

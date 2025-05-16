@@ -212,6 +212,22 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
     const resultsCount = filteredAndSortedResults.length;
     const totalCount = safeTrackedResults.length;
 
+    // Function to handle manual refresh
+    const handleManualRefresh = async () => {
+        if (isLoading) return;
+        
+        // We can't directly set isLoading since it's a prop, so we use the callback instead
+        setLastUpdated(new Date().toLocaleTimeString());
+        
+        try {
+            // Use the onToggleTracking callback to trigger a refresh in the parent component
+            await onToggleTracking('__refresh__', false); // Use a special value to trigger refresh without actual changes
+            console.log('🔄 Manual refresh completed');
+        } catch (error) {
+            console.error('Error during manual refresh:', error);
+        }
+    };
+
     return (
         <div className="p-6">
             <div className="mb-6">
@@ -280,7 +296,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                             </button>
                         )}
                         <button 
-                            onClick={() => window.location.reload()}
+                            onClick={handleManualRefresh}
                             className="flex items-center space-x-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200"
                             disabled={isLoading}
                         >
