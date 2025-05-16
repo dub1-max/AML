@@ -188,120 +188,8 @@ function MainApp(_props: MainAppProps) {
         }
     }, [user, navigate]);
 
-    // Refresh tracking data periodically
-    useEffect(() => {
-        console.log('Fetching tracked data...');
-        fetchTrackedData();
-        
-        // Set up periodic refresh every 2 minutes
-        const refreshInterval = setInterval(fetchTrackedData, TRACKING_CACHE_DURATION);
-        
-        return () => clearInterval(refreshInterval);
-    }, [fetchTrackedData]);
-
-    // Add debug logging for render
-    console.log('MainApp render state:', {
-        activeSection,
-        trackedResults,
-        tracking,
-        isLoading
-    });
-
-    // Update tracking with optimistic updates
-    const updateTracking = useCallback(async (name: string, newTrackingStatus: boolean) => {
-        try {
-            // Special case for refreshing data without changing tracking status
-            if (name === '__refresh__') {
-                console.log('🔄 Refreshing data via special refresh command');
-                setTrackingCache(null); // Invalidate cache
-                await fetchTrackedData(); // Fetch fresh data
-                return;
-            }
-
-            // Optimistically update UI
-            const updatedTracking = { ...tracking };
-            updatedTracking[name] = {
-                ...updatedTracking[name],
-                isTracking: newTrackingStatus,
-                startDate: newTrackingStatus ? new Date().toISOString() : undefined,
-                stopDate: !newTrackingStatus ? new Date().toISOString() : undefined
-            };
-            setTracking(updatedTracking);
-
-            // Update tracked results immediately
-            const updatedResults = trackedResults.filter(result => 
-                updatedTracking[result.name]?.isTracking
-            );
-            setTrackedResults(updatedResults);
-
-            // Make API call
-            const response = await fetch(`${API_BASE_URL}/tracking/${name}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isTracking: newTrackingStatus }),
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    navigate('/login');
-                    return;
-                }
-                throw new Error(`Server error: ${response.status}`);
-            }
-
-            // Update cache
-            if (trackingCache) {
-                setTrackingCache({
-                    ...trackingCache,
-                    data: updatedTracking,
-                    persons: updatedResults,
-                    timestamp: Date.now()
-                });
-            }
-
-        } catch (error) {
-            console.error('Error updating tracking:', error);
-            // Revert optimistic update on error
-            await fetchTrackedData();
-        }
-    }, [tracking, trackedResults, trackingCache, navigate]);
-
-    // Add a function to handle tab changes
-    const handleTabChange = useCallback((section: string, shouldRefreshData: boolean = true) => {
-        console.log(`🔄 Tab change request to: ${section}, refresh: ${shouldRefreshData}`);
-        
-        // Always update the UI state regardless of refresh status
-        setActiveSection(section as any);
-        setShowCompanyOB(false);
-        setShowIndividualOB(false);
-        setShowDashboard(section === 'insights');
-        
-        // Fetch fresh data when switching to active tracking, but only if shouldRefreshData is true
-        if (section === 'activeTracking' && shouldRefreshData) {
-            console.log('🔄 Switching to Screening tab - fetching fresh data');
-            // Check if we're within the cooldown period
-            const now = Date.now();
-            if (now - lastRefreshTimestamp < REFRESH_COOLDOWN) {
-                console.log('🔄 Refresh cooldown active, skipping data refresh');
-                return;
-            }
-            
-            // Update refresh timestamp
-            setLastRefreshTimestamp(now);
-            
-            // Force data refresh by invalidating cache
-            setTrackingCache(null);
-            // Fetch new data
-            setIsLoading(true);
-            fetchTrackedData();
-            // Fetch pending approvals
-            fetchPendingApprovals();
-        }
-    }, [fetchTrackedData, lastRefreshTimestamp]);
-
     // Function to fetch pending approvals
-    const fetchPendingApprovals = async () => {
+    const fetchPendingApprovals = useCallback(async () => {
         try {
             // Fetch individuals from individualob table
             const individualsResponse = await fetch(`${API_BASE_URL}/individualob`, { 
@@ -324,6 +212,7 @@ function MainApp(_props: MainAppProps) {
             console.log('🔍 Fetched onboarded companies:', companies);
             
             // Filter out already approved, rejected, or processed customers
+            // Consider both 'pending' and null/undefined/empty string as pending status
             const pendingStatuses = ['pending', null, undefined, ''];
             
             const pendingIndividuals = individuals.filter((ind: any) => 
@@ -425,8 +314,126 @@ function MainApp(_props: MainAppProps) {
             console.error('Error fetching pending approvals:', error);
             setPendingApprovals([]);
         }
-    };
-    
+    }, [API_BASE_URL, fetchTrackedData]);
+
+    // Refresh tracking data periodically
+    useEffect(() => {
+        console.log('Fetching tracked data...');
+        fetchTrackedData();
+        
+        // Also fetch pending approvals on initial load
+        fetchPendingApprovals();
+        
+        // Set up periodic refresh every 2 minutes
+        const refreshInterval = setInterval(() => {
+            fetchTrackedData();
+            fetchPendingApprovals(); // Also periodically refresh pending approvals
+        }, TRACKING_CACHE_DURATION);
+        
+        return () => clearInterval(refreshInterval);
+    }, [fetchTrackedData, fetchPendingApprovals]);
+
+    // Add debug logging for render
+    console.log('MainApp render state:', {
+        activeSection,
+        trackedResults,
+        tracking,
+        isLoading
+    });
+
+    // Update tracking with optimistic updates
+    const updateTracking = useCallback(async (name: string, newTrackingStatus: boolean) => {
+        try {
+            // Special case for refreshing data without changing tracking status
+            if (name === '__refresh__') {
+                console.log('🔄 Refreshing data via special refresh command');
+                setTrackingCache(null); // Invalidate cache
+                await fetchTrackedData(); // Fetch fresh data
+                return;
+            }
+
+            // Optimistically update UI
+            const updatedTracking = { ...tracking };
+            updatedTracking[name] = {
+                ...updatedTracking[name],
+                isTracking: newTrackingStatus,
+                startDate: newTrackingStatus ? new Date().toISOString() : undefined,
+                stopDate: !newTrackingStatus ? new Date().toISOString() : undefined
+            };
+            setTracking(updatedTracking);
+
+            // Update tracked results immediately
+            const updatedResults = trackedResults.filter(result => 
+                updatedTracking[result.name]?.isTracking
+            );
+            setTrackedResults(updatedResults);
+
+            // Make API call
+            const response = await fetch(`${API_BASE_URL}/tracking/${name}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isTracking: newTrackingStatus }),
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    navigate('/login');
+                    return;
+                }
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            // Update cache
+            if (trackingCache) {
+                setTrackingCache({
+                    ...trackingCache,
+                    data: updatedTracking,
+                    persons: updatedResults,
+                    timestamp: Date.now()
+                });
+            }
+
+        } catch (error) {
+            console.error('Error updating tracking:', error);
+            // Revert optimistic update on error
+            await fetchTrackedData();
+        }
+    }, [tracking, trackedResults, trackingCache, navigate]);
+
+    // Add a function to handle tab changes
+    const handleTabChange = useCallback((section: string, shouldRefreshData: boolean = true) => {
+        console.log(`🔄 Tab change request to: ${section}, refresh: ${shouldRefreshData}`);
+        
+        // Always update the UI state regardless of refresh status
+        setActiveSection(section as any);
+        setShowCompanyOB(false);
+        setShowIndividualOB(false);
+        setShowDashboard(section === 'insights');
+        
+        // Fetch fresh data when switching to active tracking, but only if shouldRefreshData is true
+        if (section === 'activeTracking' && shouldRefreshData) {
+            console.log('🔄 Switching to Screening tab - fetching fresh data');
+            // Check if we're within the cooldown period
+            const now = Date.now();
+            if (now - lastRefreshTimestamp < REFRESH_COOLDOWN) {
+                console.log('🔄 Refresh cooldown active, skipping data refresh');
+                return;
+            }
+            
+            // Update refresh timestamp
+            setLastRefreshTimestamp(now);
+            
+            // Force data refresh by invalidating cache
+            setTrackingCache(null);
+            // Fetch new data
+            setIsLoading(true);
+            fetchTrackedData();
+            // Fetch pending approvals
+            fetchPendingApprovals();
+        }
+    }, [fetchTrackedData, lastRefreshTimestamp, fetchPendingApprovals]);
+
     // Handle approving or rejecting a specific match
     const handleMatchApproval = async (
         customerId: number, 
