@@ -143,367 +143,351 @@ function IndividualOB() {
     };
 
     return (
-        <div className="p-6 bg-white rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold mb-4 text-gray-900">Register Profile</h1>
-            <p className="text-gray-700 mb-6">Complete the form below to register individual profile.</p>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-8 bg-gray-50">
+            <h1 className="text-3xl font-bold mb-6">Register Individual Profile</h1>
+            <p className="mb-8 text-gray-600">Complete the form below to register individual profile.</p>
+            
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white p-6 rounded-2xl shadow-lg">
                 {/* Personal Information */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">FULL NAME</label>
-                        <input
-                            type="text"
-                            id="fullName"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            placeholder="Enter full name"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">EMAIL</label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Enter email"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="residentStatus" className="block text-sm font-medium text-gray-700">RESIDENT STATUS</label>
-                        <select
-                            id="residentStatus"
-                            value={residentStatus}
-                            onChange={(e) => setResidentStatus(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="">Select Resident Status</option>
-                            <option value="citizen">Citizen</option>
-                            <option value="resident">Resident</option>
-                            <option value="non-resident">Non-Resident</option>
-                        </select>
-                    </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">FULL NAME</label>
+                    <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Enter full name"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">EMAIL</label>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Enter email"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">RESIDENT STATUS</label>
+                    <select
+                        value={residentStatus}
+                        onChange={(e) => setResidentStatus(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                        <option value="">Select Resident Status</option>
+                        <option value="citizen">Citizen</option>
+                        <option value="resident">Resident</option>
+                        <option value="non-resident">Non-Resident</option>
+                    </select>
+                </div>
 
-                    <div>
-                        <label htmlFor="gender" className="block text-sm font-medium text-gray-700">GENDER</label>
-                        <select
-                            id="gender"
-                            value={gender}
-                            onChange={(e) => setGender(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="">Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">GENDER</label>
+                    <select
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">DATE OF BIRTH</label>
+                    <div className="relative">
+                        <input
+                            type="date"
+                            value={dateOfBirth}
+                            onChange={(e) => setDateOfBirth(e.target.value)}
+                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10"
+                        />
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     </div>
-                    <div>
-                        <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">DATE OF BIRTH</label>
-                        <div className="relative">
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">NATIONALITY</label>
+                    <select
+                        value={nationality}
+                        onChange={(e) => setNationality(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                        <option value="">Select Nationality</option>
+                        {countries.map((country) => (
+                            <option key={`nat-${country.code}`} value={country.code}>
+                                {country.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">COUNTRY OF RESIDENCE</label>
+                    <select
+                        value={countryOfResidence}
+                        onChange={(e) => setCountryOfResidence(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                        <option value="">Select Country of Residence</option>
+                        {countries.map((country) => (
+                            <option key={`res-${country.code}`} value={country.code}>
+                                {country.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">DO YOU HAVE OTHER NATIONALITIES?</label>
+                    <div className="mt-1 flex space-x-4">
+                        <label className="inline-flex items-center">
                             <input
-                                type="date"
-                                id="dateOfBirth"
-                                value={dateOfBirth}
-                                onChange={(e) => setDateOfBirth(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10" // Added padding for icon
+                                type="radio"
+                                value="yes"
+                                checked={otherNationalities === true}
+                                onChange={() => setOtherNationalities(true)}
+                                className="form-radio h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
                             />
-                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="nationality" className="block text-sm font-medium text-gray-700">NATIONALITY</label>
-                        <select
-                            id="nationality"
-                            value={nationality}
-                            onChange={(e) => setNationality(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="">Select Nationality</option>
-                            {countries.map((country) => (
-                                <option key={`nat-${country.code}`} value={country.code}>
-                                    {country.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label htmlFor="countryOfResidence" className="block text-sm font-medium text-gray-700">COUNTRY OF RESIDENCE</label>
-                        <select
-                            id="countryOfResidence"
-                            value={countryOfResidence}
-                            onChange={(e) => setCountryOfResidence(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="">Select Country of Residence</option>
-                            {countries.map((country) => (
-                                <option key={`res-${country.code}`} value={country.code}>
-                                    {country.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">DO YOU HAVE OTHER NATIONALITIES?</label>
-                        <div className="mt-1 flex space-x-4">
-                            <label className="inline-flex items-center">
-                                <input
-                                    type="radio"
-                                    value="yes"
-                                    checked={otherNationalities === true}
-                                    onChange={() => setOtherNationalities(true)}
-                                    className="form-radio h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                                />
-                                <span className="ml-2">Yes</span>
-                            </label>
-                            <label className="inline-flex items-center">
-                                <input
-                                    type="radio"
-                                    value="no"
-                                    checked={otherNationalities === false}
-                                    onChange={() => setOtherNationalities(false)}
-                                    className="form-radio h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
-                                />
-                                <span className="ml-2">No</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="specifiedOtherNationalities" className="block text-sm font-medium text-gray-700">SPECIFY OTHER NATIONALITIES (IF APPLICABLE)</label>
-                        <select
-                            id="specifiedOtherNationalities"
-                            value={specifiedOtherNationalities}
-                            onChange={(e) => setSpecifiedOtherNationalities(e.target.value)}
-                            disabled={!otherNationalities}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        >
-                            <option value="">Select Other Nationalities</option>
-                            {countries.map((country) => (
-                                <option key={`other-${country.code}`} value={country.code}>
-                                    {country.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label htmlFor="nationalIdNumber" className="block text-sm font-medium text-gray-700">NATIONAL ID NUMBER</label>
-                        <input
-                            type="text"
-                            id="nationalIdNumber"
-                            value={nationalIdNumber}
-                            onChange={(e) => setNationalIdNumber(e.target.value)}
-                            placeholder="Enter National ID Number"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="nationalIdExpiry" className="block text-sm font-medium text-gray-700">NATIONAL ID EXPIRY</label>
-                        <div className="relative">
+                            <span className="ml-2">Yes</span>
+                        </label>
+                        <label className="inline-flex items-center">
                             <input
-                                type="date"
-                                id="nationalIdExpiry"
-                                value={nationalIdExpiry}
-                                onChange={(e) => setNationalIdExpiry(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10" // Added padding for icon
+                                type="radio"
+                                value="no"
+                                checked={otherNationalities === false}
+                                onChange={() => setOtherNationalities(false)}
+                                className="form-radio h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
                             />
-                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        </div>
+                            <span className="ml-2">No</span>
+                        </label>
                     </div>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">SPECIFY OTHER NATIONALITIES (IF APPLICABLE)</label>
+                    <select
+                        value={specifiedOtherNationalities}
+                        onChange={(e) => setSpecifiedOtherNationalities(e.target.value)}
+                        disabled={!otherNationalities}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                        <option value="">Select Other Nationalities</option>
+                        {countries.map((country) => (
+                            <option key={`other-${country.code}`} value={country.code}>
+                                {country.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
 
-                    <div>
-                        <label htmlFor="passportNumber" className="block text-sm font-medium text-gray-700">PASSPORT NUMBER</label>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">NATIONAL ID NUMBER</label>
+                    <input
+                        type="text"
+                        value={nationalIdNumber}
+                        onChange={(e) => setNationalIdNumber(e.target.value)}
+                        placeholder="Enter National ID Number"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">NATIONAL ID EXPIRY</label>
+                    <div className="relative">
                         <input
-                            type="text"
-                            id="passportNumber"
-                            value={passportNumber}
-                            onChange={(e) => setPassportNumber(e.target.value)}
-                            placeholder="Enter Passport Number"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            type="date"
+                            value={nationalIdExpiry}
+                            onChange={(e) => setNationalIdExpiry(e.target.value)}
+                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10"
                         />
-                    </div>
-
-                    <div>
-                        <label htmlFor="passportExpiry" className="block text-sm font-medium text-gray-700">PASSPORT EXPIRY</label>
-                        <div className="relative">
-                            <input
-                                type="date"
-                                id="passportExpiry"
-                                value={passportExpiry}
-                                onChange={(e) => setPassportExpiry(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10" // Added padding for icon
-
-                            />
-                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        </div>
-
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     </div>
                 </div>
 
-                {/* Contact Information */}
-                <h2 className="text-xl font-semibold mt-6 mb-4 text-gray-900">Contact Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label htmlFor="address" className="block text-sm font-medium text-gray-700">ADDRESS</label>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">PASSPORT NUMBER</label>
+                    <input
+                        type="text"
+                        value={passportNumber}
+                        onChange={(e) => setPassportNumber(e.target.value)}
+                        placeholder="Enter Passport Number"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">PASSPORT EXPIRY</label>
+                    <div className="relative">
                         <input
-                            type="text"
-                            id="address"
-                            value={address}
-                            onChange={(e) => setAddress(e.target.value)}
-                            placeholder="Enter address"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:sm:text-sm"
+                            type="date"
+                            value={passportExpiry}
+                            onChange={(e) => setPassportExpiry(e.target.value)}
+                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm pr-10"
                         />
-                    </div>
-                    <div>
-                        <label htmlFor="state" className="block text-sm font-medium text-gray-700">STATE</label>
-                        <select
-                            id="state"
-                            value={state}
-                            onChange={(e) => setState(e.target.value)}
-                            disabled={!countryOfResidence || states.length === 0}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        >
-                            <option value="">Select State</option>
-                            {states.map((stateName) => (
-                                <option key={stateName} value={stateName}>
-                                    {stateName}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="city" className="block text-sm font-medium text-gray-700">CITY</label>
-                        <input type="text" id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Enter city" className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-                    </div>
-                    <div>
-                        <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700">ZIP CODE/POSTAL CODE</label>
-                        <input
-                            type="text"
-                            id="zipCode"
-                            value={zipCode}
-                            onChange={(e) => setZipCode(e.target.value)}
-                            placeholder="Enter zip code"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="dialingCode" className="block text-sm font-medium text-gray-700">DIALING CODE</label>
-                        <input
-                            type="text"
-                            id="dialingCode"
-                            value={dialingCode}
-                            onChange={(e) => setDialingCode(e.target.value)}
-                            placeholder="e.g., +1"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700">CONTACT NUMBER</label>
-                        <input
-                            type="tel"
-                            id="contactNumber"
-                            value={contactNumber}
-                            onChange={(e) => setContactNumber(e.target.value)}
-                            placeholder="Enter phone number"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     </div>
                 </div>
 
-                {/* Profile Information */}
-                <h2 className="text-xl font-semibold mt-6 mb-4 text-gray-900">Profile Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label htmlFor="workType" className="block text-sm font-medium text-gray-700">WORK TYPE</label>
-                        <select
-                            id="workType"
-                            value={workType}
-                            onChange={(e) => setWorkType(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="">Select Work Type</option>
-                            <option value="employee">Employee</option>
-                            <option value="contractor">Contractor</option>
-                            <option value="freelancer">Freelancer</option>
-                            <option value="business_owner">Business Owner</option>
-                            {/* Add more options as needed */}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="industry" className="block text-sm font-medium text-gray-700">INDUSTRY</label>
-                        <select
-                            id="industry"
-                            value={industry}
-                            onChange={(e) => setIndustry(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="">Select Industry</option>
-                            <option value="finance">Finance</option>
-                            <option value="technology">Technology</option>
-                            <option value="healthcare">Healthcare</option>
-                            <option value="education">Education</option>
-                            <option value="retail">Retail</option>
-                            {/* Add more industry options here */}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="productTypeOffered" className="block text-sm font-medium text-gray-700">PRODUCT TYPE OFFERED TO CUSTOMER</label>
-                        <select
-                            id="productTypeOffered"
-                            value={productTypeOffered}
-                            onChange={(e) => setProductTypeOffered(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        >
-                            <option value="">Select Product Type</option>
-                            <option value="goods">Physical Goods</option>
-                            <option value="services">Services</option>
-                            <option value="digital">Digital Products</option>
-                            {/* Add more product type options */}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="productOffered" className="block text-sm font-medium text-gray-700">PRODUCT OFFERED</label>
-                        <input
-                            type="text"
-                            id="productOffered"
-                            value={productOffered}
-                            onChange={(e) => setProductOffered(e.target.value)}
-                            placeholder="Enter Product Offered"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">COMPANY NAME</label>
-                        <input
-                            type="text"
-                            id="companyName"
-                            value={companyName}
-                            onChange={(e) => setCompanyName(e.target.value)}
-                            placeholder="Enter Company Name"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="positionInCompany" className="block text-sm font-medium text-gray-700">POSITION IN COMPANY</label>
-                        <input
-                            type="text"
-                            id="positionInCompany"
-                            value={positionInCompany}
-                            onChange={(e) => setPositionInCompany(e.target.value)}
-                            placeholder="Enter Position in Company"
-                            className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        />
-                    </div>
+                {/* Contact Information - Section Header */}
+                <div className="md:col-span-3 mt-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Contact Information</h2>
                 </div>
 
-                <button type="submit" className="mt-4 px-6 py-2 bg-[#4A1D96] text-white rounded-lg hover:bg-[#3c177d] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50">
-                    REGISTER
-                </button>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">ADDRESS</label>
+                    <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Enter address"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">STATE</label>
+                    <select
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        disabled={!countryOfResidence || states.length === 0}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                        <option value="">Select State</option>
+                        {states.map((stateName) => (
+                            <option key={stateName} value={stateName}>
+                                {stateName}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">CITY</label>
+                    <input 
+                        type="text" 
+                        value={city} 
+                        onChange={(e) => setCity(e.target.value)} 
+                        placeholder="Enter city" 
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">ZIP CODE/POSTAL CODE</label>
+                    <input
+                        type="text"
+                        value={zipCode}
+                        onChange={(e) => setZipCode(e.target.value)}
+                        placeholder="Enter zip code"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">DIALING CODE</label>
+                    <input
+                        type="text"
+                        value={dialingCode}
+                        onChange={(e) => setDialingCode(e.target.value)}
+                        placeholder="e.g., +1"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">CONTACT NUMBER</label>
+                    <input
+                        type="tel"
+                        value={contactNumber}
+                        onChange={(e) => setContactNumber(e.target.value)}
+                        placeholder="Enter phone number"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+
+                {/* Profile Information - Section Header */}
+                <div className="md:col-span-3 mt-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">WORK TYPE</label>
+                    <select
+                        value={workType}
+                        onChange={(e) => setWorkType(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                        <option value="">Select Work Type</option>
+                        <option value="employee">Employee</option>
+                        <option value="contractor">Contractor</option>
+                        <option value="freelancer">Freelancer</option>
+                        <option value="business_owner">Business Owner</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">INDUSTRY</label>
+                    <select
+                        value={industry}
+                        onChange={(e) => setIndustry(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                        <option value="">Select Industry</option>
+                        <option value="finance">Finance</option>
+                        <option value="technology">Technology</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="education">Education</option>
+                        <option value="retail">Retail</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">PRODUCT TYPE OFFERED TO CUSTOMER</label>
+                    <select
+                        value={productTypeOffered}
+                        onChange={(e) => setProductTypeOffered(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    >
+                        <option value="">Select Product Type</option>
+                        <option value="goods">Physical Goods</option>
+                        <option value="services">Services</option>
+                        <option value="digital">Digital Products</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">PRODUCT OFFERED</label>
+                    <input
+                        type="text"
+                        value={productOffered}
+                        onChange={(e) => setProductOffered(e.target.value)}
+                        placeholder="Enter Product Offered"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">COMPANY NAME</label>
+                    <input
+                        type="text"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="Enter Company Name"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">POSITION IN COMPANY</label>
+                    <input
+                        type="text"
+                        value={positionInCompany}
+                        onChange={(e) => setPositionInCompany(e.target.value)}
+                        placeholder="Enter Position in Company"
+                        className="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+
+                {/* Submit Button */}
+                <div className="md:col-span-3">
+                    <button 
+                        type="submit" 
+                        className="mt-4 px-6 py-2 bg-[#4A1D96] text-white rounded-lg hover:bg-[#3c177d] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                    >
+                        REGISTER
+                    </button>
+                </div>
             </form>
         </div>
     );
