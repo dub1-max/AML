@@ -268,6 +268,9 @@ function MainApp(_props: MainAppProps) {
 
     // Add a function to handle tab changes
     const handleTabChange = useCallback((section: string, shouldRefreshData: boolean = true) => {
+        console.log(`🔄 Tab change request to: ${section}, refresh: ${shouldRefreshData}`);
+        
+        // Always update the UI state regardless of refresh status
         setActiveSection(section as any);
         setShowCompanyOB(false);
         setShowIndividualOB(false);
@@ -276,6 +279,16 @@ function MainApp(_props: MainAppProps) {
         // Fetch fresh data when switching to active tracking, but only if shouldRefreshData is true
         if (section === 'activeTracking' && shouldRefreshData) {
             console.log('🔄 Switching to Screening tab - fetching fresh data');
+            // Check if we're within the cooldown period
+            const now = Date.now();
+            if (now - lastRefreshTimestamp < REFRESH_COOLDOWN) {
+                console.log('🔄 Refresh cooldown active, skipping data refresh');
+                return;
+            }
+            
+            // Update refresh timestamp
+            setLastRefreshTimestamp(now);
+            
             // Force data refresh by invalidating cache
             setTrackingCache(null);
             // Fetch new data
@@ -284,7 +297,7 @@ function MainApp(_props: MainAppProps) {
             // Fetch pending approvals
             fetchPendingApprovals();
         }
-    }, [fetchTrackedData]);
+    }, [fetchTrackedData, lastRefreshTimestamp]);
 
     // Function to fetch pending approvals
     const fetchPendingApprovals = async () => {
@@ -604,14 +617,12 @@ function MainApp(_props: MainAppProps) {
 
     const handleDeepLinkClick = () => {
         if (activeSection === 'deepLink') {
-            setActiveSection('insights'); // Or any other default section
+            handleSidebarNavigation('insights');
             setDeepLinkSubSection(null);
-            setShowCompanyOB(false);
-            setShowIndividualOB(false)
         } else {
-            setActiveSection('deepLink');
+            handleSidebarNavigation('deepLink');
             setDeepLinkSubSection('individual'); // Set a default sub-section
-            setShowIndividualOB(true); //show by default
+            setShowIndividualOB(true); // show by default
             setShowCompanyOB(false);
         }
     };
@@ -622,7 +633,6 @@ function MainApp(_props: MainAppProps) {
         setShowCompanyOB(false);
         setShowDashboard(false); // Add this to hide dashboard
         setActiveSection('deepLink'); // Add this to ensure correct sidebar highlighting
-
     }
 
     const handleCompanyOBClick = () => {
@@ -632,6 +642,19 @@ function MainApp(_props: MainAppProps) {
         setShowDashboard(false); // Add this to hide dashboard
         setActiveSection('deepLink'); // Add this to ensure correct sidebar highlighting
     }
+
+    // Handle general navigation through sidebar
+    const handleSidebarNavigation = useCallback((section: string) => {
+        console.log(`Navigation via sidebar to: ${section}`);
+        
+        // Don't force a refresh when it's just a normal tab switch
+        // This separates navigation from data refreshing
+        const shouldRefresh = false;
+        handleTabChange(section, shouldRefresh);
+        
+        // Also update the URL without triggering a page reload
+        window.history.pushState({}, document.title, '/mainapp');
+    }, [handleTabChange]);
 
     // Add code to handle the redirect from onboarding components
     useEffect(() => {
@@ -720,9 +743,7 @@ function MainApp(_props: MainAppProps) {
                     <h1 className="text-2xl font-bold mb-8">AML Checker</h1>
                     <nav className="space-y-2">
                         <button
-                            onClick={() => {
-                                handleTabChange('insights');
-                            }}
+                            onClick={() => handleSidebarNavigation('insights')}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
                                 activeSection === 'insights' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
                             }`}
@@ -732,9 +753,7 @@ function MainApp(_props: MainAppProps) {
                         </button>
 
                         <button
-                            onClick={() => {
-                                handleTabChange('activeTracking');
-                            }}
+                            onClick={() => handleSidebarNavigation('activeTracking')}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
                                 activeSection === 'activeTracking' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
                             }`}
@@ -744,9 +763,7 @@ function MainApp(_props: MainAppProps) {
                         </button>
 
                         <button
-                            onClick={() => {
-                                handleTabChange('profiles');
-                            }}
+                            onClick={() => handleSidebarNavigation('profiles')}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
                                 activeSection === 'profiles' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
                             }`}
