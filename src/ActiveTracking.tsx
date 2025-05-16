@@ -208,10 +208,10 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                     <table className="w-full">
                         <thead>
                             <tr className="text-left text-sm text-gray-500">
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('identifiers')}>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('identifiers')}>
                                     CUSTOMER {renderSortIndicator('identifiers')}
                                 </th>
-                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => handleSort('name')}>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('name')}>
                                     FULL NAME {renderSortIndicator('name')}
                                 </th>
                                 <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('country')}>
@@ -245,13 +245,13 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                             ? 'bg-white' 
                                             : 'bg-gray-50'
                                     }`}>
-                                    <td className="py-4 px-6 text-center">
-                                        <div className="flex items-center space-x-3 justify-center">
+                                    <td className="py-4 px-6">
+                                        <div className="flex items-center space-x-3">
                                             <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(result.name || 'Unknown')}`} alt={result.name || 'Unknown'} className="w-8 h-8 rounded-full" />
                                             <span className="text-sm">{result.identifiers || 'N/A'}</span>
                                         </div>
                                     </td>
-                                    <td className="py-4 px-6 text-sm">{result.name || 'Unknown'}</td>
+                                    <td className="py-4 px-6 text-sm text-center">{result.name || 'Unknown'}</td>
                                     <td className="py-4 px-6 text-sm text-center">
                                         {result.country && result.country !== 'Unknown' && result.country !== 'N/A' ? (
                                             <div className="flex items-center justify-center">

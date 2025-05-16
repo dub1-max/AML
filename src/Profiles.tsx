@@ -136,8 +136,8 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
           <table className="w-full">
             <thead>
               <tr className="text-left text-sm text-gray-500">
-                <th className="pb-4 px-6 whitespace-nowrap text-center">CUSTOMER</th>
-                <th className="pb-4 px-6 whitespace-nowrap">FULL NAME</th>
+                <th className="pb-4 px-6 whitespace-nowrap">CUSTOMER</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">FULL NAME</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">NATIONALITY</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">AGING</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">NAME SCREENING</th>
@@ -150,13 +150,13 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
             <tbody>
               {safeSearchResults.map((result, index) => (
                 <tr key={`search-${index}`} className="border-t border-gray-100 hover:bg-gray-50">
-                  <td className="py-4 px-6 text-center">
-                    <div className="flex items-center space-x-3 justify-center">
+                  <td className="py-4 px-6">
+                    <div className="flex items-center space-x-3">
                       <img src={`https://ui-avatars.com/api/?name=${result.name}`} alt={result.name} className="w-8 h-8 rounded-full" />
                       <span className="text-sm">{result.identifiers}</span>
                     </div>
                   </td>
-                  <td className="py-4 px-6 text-sm">{result.name}</td>
+                  <td className="py-4 px-6 text-sm text-center">{result.name}</td>
                   <td className="py-4 px-6 text-sm text-center">
                     {result.country && result.country !== 'Unknown' && result.country !== 'N/A' ? (
                       <div className="flex items-center justify-center">
