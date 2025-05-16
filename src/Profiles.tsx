@@ -158,7 +158,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                   </td>
                   <td className="py-4 px-6 text-sm">{result.name}</td>
                   <td className="py-4 px-6 text-sm">
-                    {result.country && (
+                    {result.country && result.country !== 'Unknown' && result.country !== 'N/A' ? (
                       <div className="flex items-center">
                         <img 
                           src={`https://flagcdn.com/w20/${result.country.toLowerCase()}.png`}
@@ -168,7 +168,9 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                         />
                         {result.country}
                       </div>
-                    ) || 'Unknown'}
+                    ) : (
+                      "-"
+                    )}
                   </td>
                   <td className="py-4 px-6 text-sm" dangerouslySetInnerHTML={{ __html: calculateAging(result) }} />
                   <td className="py-4 px-6">

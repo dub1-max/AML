@@ -253,7 +253,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                     </td>
                                     <td className="py-4 px-6 text-sm">{result.name || 'Unknown'}</td>
                                     <td className="py-4 px-6 text-sm">
-                                        {result.country && (
+                                        {result.country && result.country !== 'Unknown' && result.country !== 'N/A' ? (
                                             <div className="flex items-center">
                                                 <img 
                                                     src={`https://flagcdn.com/w20/${result.country.toLowerCase()}.png`}
@@ -263,7 +263,9 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                                 />
                                                 {result.country}
                                             </div>
-                                        ) || 'Unknown'}
+                                        ) : (
+                                            "-"
+                                        )}
                                     </td>
                                     <td className="py-4 px-6 text-sm">
                                         <span className={tracking?.[result.name]?.isTracking ? 'text-green-600' : 'text-red-600'}>
