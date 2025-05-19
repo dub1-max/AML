@@ -1,14 +1,12 @@
 export const FRONTEND_URLS = [
     
-    'http://137.184.150.6:5173',
-    
+    'http://137.184.150.6:5173'
     
 ];
 
 export const API_BASE_URLS = [
     
-    'http://137.184.150.6/api',
-    
+    'http://137.184.150.6/api'
 ];
 
 // Function to get the appropriate API URL based on the environment

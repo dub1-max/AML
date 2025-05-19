@@ -10,6 +10,7 @@ import MainApp from './MainApp';
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const EditProfile = lazy(() => import('./EditProfile'));
+const Credits = lazy(() => import('./pages/Credits'));
 
 // Loading component with minimal footprint
 const LoadingSpinner = () => (
@@ -66,6 +67,7 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/mainapp" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
                         <Route path="/edit-profile/:id" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+                        <Route path="/credits" element={<ProtectedRoute><Credits /></ProtectedRoute>} />
                         <Route path="/" element={<Navigate to="/login" replace />} />
                     </Routes>
                 </Suspense>

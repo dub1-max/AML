@@ -37,13 +37,23 @@ export interface DailyData { // No changes needed here
 }
 
 export interface User {
-  id: number; // Corrected to number
+  id: number;
   email: string;
   name: string;
-  role: 'admin' | 'user'; // Good
+  role: 'admin' | 'user';
+  credits: number;
 }
 
-export interface AuthState {  //No change
+export interface CreditTransaction {
+  id: number;
+  user_id: number;
+  amount: number;
+  transaction_type: 'purchase' | 'usage';
+  description: string;
+  created_at: string;
+}
+
+export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
 }
