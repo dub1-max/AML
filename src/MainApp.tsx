@@ -18,6 +18,7 @@ import ActiveTracking from './ActiveTracking';
 import ErrorBoundary from './components/ErrorBoundary';
 import DebugLog, { addLog } from './components/DebugLog';
 import EditProfile from './EditProfile';
+import Layout from './components/Layout';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -804,125 +805,17 @@ function MainApp(_props: MainAppProps) {
     };
 
     return (
-        <div className="flex min-h-screen overflow-hidden bg-gray-50">
-            {/* Sidebar */}
-            <div className="w-64 bg-[#4A1D96] text-white flex flex-col min-h-screen">
-                <div className="p-6 flex flex-col flex-grow relative">
-                    <h1 className="text-2xl font-bold mb-6">AML Checker</h1>
-                    
-                    <nav className="space-y-2 mb-24">
-                        <button
-                            onClick={() => handleSidebarNavigation('insights')}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
-                                activeSection === 'insights' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
-                            }`}
-                        >
-                            <FileText className="w-5 h-5" />
-                            <span>Insights</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleSidebarNavigation('activeTracking')}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
-                                activeSection === 'activeTracking' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
-                            }`}
-                        >
-                            <Shield className="w-5 h-5" />
-                            <span>Screening</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleSidebarNavigation('profiles')}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
-                                activeSection === 'profiles' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
-                            }`}
-                        >
-                            <Users className="w-5 h-5" />
-                            <span>Search Profiles</span>
-                        </button>
-
-                        {/* Deep Link Onboarding Button and Sub-Options */}
-                        <button
-                            onClick={handleDeepLinkClick}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'deepLink'
-                                ? 'bg-[#5D2BA8] text-white'
-                                : 'hover:bg-[#5D2BA8]'
-                                }`}
-                        >
-                            <Link className="w-5 h-5" />
-                            <span>Deep Link Onboarding</span>
-                        </button>
-                        {activeSection === 'deepLink' && (
-                            <div className="ml-8">
-                                <button
-                                    onClick={handleIndividualOBClick}
-                                    className={`block w-full p-2 text-left text-gray-300 hover:bg-[#5D2BA8] rounded ${deepLinkSubSection === 'individual' ? 'bg-[#5D2BA8]' : ''}`}
-                                >
-                                    Individual Onboarding
-                                </button>
-                                <button
-                                    onClick={handleCompanyOBClick}
-                                    className={`block w-full p-2 text-left text-gray-300 hover:bg-[#5D2BA8] rounded ${deepLinkSubSection === 'company' ? 'bg-[#5D2BA8]' : ''}`}
-
-                                >
-                                    Company Onboarding
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Credits Management */}
-                        <button
-                            onClick={handleCreditsClick}
-                            className="flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 hover:bg-[#5D2BA8]"
-                        >
-                            <CreditCard className="w-5 h-5" />
-                            <span>Manage Credits</span>
-                        </button>
-                    </nav>
-                    
-                    {/* User profile and credits display - fixed at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 pt-3">
-                        {/* Profile info */}
-                        <div className="px-2 py-3 bg-[#5D2BA8] rounded-lg">
-                            <div className="flex items-center mb-3">
-                                <img
-                                    src={`https://ui-avatars.com/api/?name=${user?.name}`}
-                                    alt={user?.name || 'User'}
-                                    className="w-8 h-8 rounded-full mr-2"
-                                />
-                                <span className="text-sm font-medium text-white">
-                                    {user?.name || 'User'}
-                                </span>
-                            </div>
-                            
-                            <div className="flex items-center bg-[#4A1D96] p-2 rounded-md">
-                                <CreditCard className="w-4 h-4 text-purple-300 mr-2" />
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-purple-300">Credits</span>
-                                    <span className="text-md font-bold text-white">
-                                        {loadingCredits ? "..." : credits}
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            {/* Sign Out Button */}
-                            <button
-                                onClick={async () => {
-                                    await logout();
-                                    navigate('/login');
-                                }}
-                                className="flex items-center space-x-3 w-full p-2 mt-3 rounded-lg text-gray-300 hover:bg-[#4A1D96] text-sm"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                <span>Sign Out</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="flex-1 overflow-x-auto overflow-y-auto">
+        <Layout 
+            activeSection={activeSection}
+            deepLinkSubSection={deepLinkSubSection}
+            credits={credits}
+            loadingCredits={loadingCredits}
+            handleSidebarNavigation={handleSidebarNavigation}
+            handleDeepLinkClick={handleDeepLinkClick}
+            handleIndividualOBClick={handleIndividualOBClick}
+            handleCompanyOBClick={handleCompanyOBClick}
+        >
+            <div className="flex-1">
                 <header className="bg-white border-b border-gray-200">
                     <div className="flex justify-between items-center px-6 py-4">
                         <h2 className="text-xl font-semibold">
@@ -989,7 +882,6 @@ function MainApp(_props: MainAppProps) {
                     )}
                 </header>
 
-                {/* Conditionally render components with ErrorBoundary */}
                 {showDashboard ? (
                     <ErrorBoundary>
                         <Insights />
@@ -1136,14 +1028,45 @@ function MainApp(_props: MainAppProps) {
                     </ErrorBoundary>
                 ) : (
                     <ErrorBoundary>
-                        <Profiles
-                            searchResults={searchResults || []}
-                            isLoading={isLoading}
-                        />
+                        <div className="p-6">
+                            {/* Loading indicator and search results */}
+                            {isLoading && (
+                                <div className="flex items-center text-purple-700 mb-6">
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    <span>Searching...</span>
+                                </div>
+                            )}
+                            
+                            {/* Search guidance */}
+                            {!isLoading && searchTerm.length < MIN_SEARCH_LENGTH && searchResults.length === 0 && (
+                                <div className="text-center p-12">
+                                    <p className="text-gray-500 mb-4">
+                                        Enter at least {MIN_SEARCH_LENGTH} characters to search for profiles
+                                    </p>
+                                </div>
+                            )}
+                            
+                            {/* No results message */}
+                            {!isLoading && searchTerm.length >= MIN_SEARCH_LENGTH && searchResults.length === 0 && (
+                                <div className="text-center p-12">
+                                    <p className="text-gray-500 mb-4">
+                                        No results found for "{searchTerm}"
+                                    </p>
+                                </div>
+                            )}
+                            
+                                                         {/* Search Results */}
+                             {searchResults.length > 0 && (
+                                 <Profiles 
+                                     searchResults={searchResults} 
+                                     isLoading={false}
+                                 />
+                             )}
+                        </div>
                     </ErrorBoundary>
                 )}
             </div>
-        </div>
+        </Layout>
     );
 }
 
