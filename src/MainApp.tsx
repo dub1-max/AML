@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Search, FileText, Shield, LogOut, Link, Users, File,
-    Plus, Loader2, CheckCircle, XCircle, Eye
+    Plus, Loader2, CheckCircle, XCircle, Eye, CreditCard
 } from 'lucide-react';
 import type { SearchResult, Tracking, TrackingItem } from './types';
 import { useAuth } from './AuthContext';
@@ -72,6 +72,10 @@ function MainApp(_props: MainAppProps) {
     
     // Add last refresh timestamp to prevent multiple refreshes
     const [lastRefreshTimestamp, setLastRefreshTimestamp] = useState<number>(0);
+    
+    // Add state for user credits
+    const [credits, setCredits] = useState<number>(0);
+    const [loadingCredits, setLoadingCredits] = useState<boolean>(false);
     
     const navigate = useNavigate();
     const location = useLocation();
@@ -742,6 +746,39 @@ function MainApp(_props: MainAppProps) {
         }
     }, [location, handleTabChange, fetchTrackedData, fetchPendingApprovals, lastRefreshTimestamp]);
 
+    // Function to fetch user credits
+    const fetchUserCredits = useCallback(async () => {
+        if (!user) return;
+        
+        setLoadingCredits(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/credits`, { 
+                credentials: 'include' 
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch credits');
+            }
+            
+            const data = await response.json();
+            setCredits(data.credits || 0);
+        } catch (error) {
+            console.error('Error fetching credits:', error);
+        } finally {
+            setLoadingCredits(false);
+        }
+    }, [user]);
+
+    // Add credits fetch to initial loading
+    useEffect(() => {
+        fetchUserCredits();
+    }, [fetchUserCredits]);
+
+    // Add credits button navigation handler
+    const handleCreditsClick = () => {
+        navigate('/credits');
+    };
+
     return (
         <div className="flex min-h-screen bg-gray-50">
             {/* Sidebar */}
@@ -807,6 +844,15 @@ function MainApp(_props: MainAppProps) {
                                 </button>
                             </div>
                         )}
+
+                        {/* Add Credits button to sidebar */}
+                        <button
+                            onClick={handleCreditsClick}
+                            className="flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 hover:bg-[#5D2BA8]"
+                        >
+                            <CreditCard className="w-5 h-5" />
+                            <span>Manage Credits</span>
+                        </button>
                     </nav>
                 </div>
             </div>
@@ -823,6 +869,22 @@ function MainApp(_props: MainAppProps) {
                             'Search'}
                         </h2>
                         <div className="flex items-center space-x-4">
+                            {/* Credits display */}
+                            <div 
+                                className="flex items-center px-3 py-2 bg-purple-100 rounded-lg cursor-pointer hover:bg-purple-200"
+                                onClick={handleCreditsClick}
+                            >
+                                <CreditCard className="w-5 h-5 text-purple-600 mr-2" />
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-purple-600 font-semibold">Credits</span>
+                                    {loadingCredits ? (
+                                        <span className="text-sm font-bold">...</span>
+                                    ) : (
+                                        <span className="text-sm font-bold">{credits}</span>
+                                    )}
+                                </div>
+                            </div>
+                            
                             <div className="flex items-center space-x-2">
                                 <img
                                     src={`https://ui-avatars.com/api/?name=${user?.name}`}
