@@ -61,52 +61,60 @@ const Credits: React.FC<CreditsProps> = () => {
             credits={credits}
             loadingCredits={loadingCredits}
         >
-            <div className="p-8">
-                <h1 className="text-2xl font-bold mb-6">Manage Credits</h1>
-                
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                    <div className="flex items-center mb-4">
-                        <CreditCard className="w-6 h-6 mr-3 text-purple-600" />
-                        <h2 className="text-xl font-semibold">Current Balance</h2>
-                    </div>
+            <div className="bg-gray-50 min-h-screen">
+                <div className="max-w-4xl mx-auto pt-8 pb-12 px-6">
+                    <header className="mb-8">
+                        <h1 className="text-2xl font-bold text-gray-800">Manage Credits</h1>
+                    </header>
                     
-                    {loadingCredits ? (
-                        <div className="flex items-center mt-4">
-                            <Loader2 className="w-5 h-5 animate-spin mr-2 text-purple-600" />
-                            <span>Loading credits...</span>
+                    <div className="grid gap-8 md:grid-cols-2">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center mb-6">
+                                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                                    <CreditCard className="w-6 h-6 text-purple-600" />
+                                </div>
+                                <h2 className="text-xl font-semibold text-gray-800">Current Balance</h2>
+                            </div>
+                            
+                            {loadingCredits ? (
+                                <div className="flex items-center mt-4">
+                                    <Loader2 className="w-5 h-5 animate-spin mr-2 text-purple-600" />
+                                    <span className="text-gray-600">Loading credits...</span>
+                                </div>
+                            ) : (
+                                <div className="mt-4">
+                                    <div className="text-4xl font-bold text-purple-700">{credits}</div>
+                                    <p className="text-gray-500 mt-1">Available credits</p>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="mt-2">
-                            <div className="text-4xl font-bold text-purple-700">{credits}</div>
-                            <p className="text-gray-500 mt-1">Available credits</p>
+                        
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-6">Purchase Credits</h2>
+                            
+                            <div className="mb-6">
+                                <label htmlFor="creditAmount" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Amount
+                                </label>
+                                <input
+                                    type="number"
+                                    id="creditAmount"
+                                    value={purchaseAmount}
+                                    onChange={(e) => setPurchaseAmount(Number(e.target.value))}
+                                    min="10"
+                                    step="10"
+                                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+                                />
+                            </div>
+                            
+                            <button
+                                onClick={handlePurchase}
+                                className="w-full bg-purple-600 text-white py-3 px-4 rounded-md hover:bg-purple-700 transition-colors shadow-sm font-medium"
+                            >
+                                Purchase Credits
+                            </button>
                         </div>
-                    )}
-                </div>
-                
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h2 className="text-xl font-semibold mb-4">Purchase Credits</h2>
-                    
-                    <div className="mb-4">
-                        <label htmlFor="creditAmount" className="block text-sm font-medium text-gray-700 mb-2">
-                            Amount
-                        </label>
-                        <input
-                            type="number"
-                            id="creditAmount"
-                            value={purchaseAmount}
-                            onChange={(e) => setPurchaseAmount(Number(e.target.value))}
-                            min="10"
-                            step="10"
-                            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
                     </div>
-                    
-                    <button
-                        onClick={handlePurchase}
-                        className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition duration-200"
-                    >
-                        Purchase Credits
-                    </button>
                 </div>
             </div>
         </Layout>
