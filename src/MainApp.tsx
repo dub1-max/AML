@@ -10,7 +10,6 @@ import ActivityDashboard from './Insights';
 import Profiles from './Profiles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import debounce from 'lodash/debounce';
-// Import the new components
 import IndividualOB from './IndividualOB';
 import CompanyOB from './CompanyOB';
 import Insights from './Insights';
