@@ -57,7 +57,7 @@ const Credits: React.FC<CreditsProps> = () => {
 
     return (
         <Layout
-            activeSection={undefined}
+            activeSection="credits"
             credits={credits}
             loadingCredits={loadingCredits}
         >

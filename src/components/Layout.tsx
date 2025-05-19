@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Search, FileText, Shield, LogOut, Link, Users, CreditCard, ChevronDown
 } from 'lucide-react';
@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
     children: React.ReactNode;
-    activeSection?: 'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking';
+    activeSection?: 'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking' | 'credits';
     deepLinkSubSection?: 'individual' | 'company' | null;
     credits?: number;
     loadingCredits?: boolean;
@@ -30,6 +30,8 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    // Local state to handle dropdown when handleDeepLinkClick is not provided
+    const [isDeepLinkOpen, setIsDeepLinkOpen] = useState(activeSection === 'deepLink');
 
     // Default handlers if not provided
     const defaultNavHandler = (section: string) => {
@@ -39,6 +41,7 @@ const Layout: React.FC<LayoutProps> = ({
 
     const defaultDeepLinkHandler = () => {
         console.log('Deep link clicked');
+        setIsDeepLinkOpen(!isDeepLinkOpen);
     };
 
     const defaultIndividualHandler = () => {
@@ -54,6 +57,9 @@ const Layout: React.FC<LayoutProps> = ({
     const deepLinkHandler = handleDeepLinkClick || defaultDeepLinkHandler;
     const individualHandler = handleIndividualOBClick || defaultIndividualHandler;
     const companyHandler = handleCompanyOBClick || defaultCompanyHandler;
+
+    // Dropdown is expanded either through parent state or local state
+    const isDropdownOpen = activeSection === 'deepLink' || isDeepLinkOpen;
 
     const handleCreditsClick = () => {
         navigate('/credits');
@@ -101,11 +107,10 @@ const Layout: React.FC<LayoutProps> = ({
                         <div className="relative">
                             <button
                                 onClick={deepLinkHandler}
-                                className={`flex items-center justify-between w-full p-3 rounded-lg text-gray-300 ${activeSection === 'deepLink'
-                                    ? 'bg-[#5D2BA8] text-white'
-                                    : 'hover:bg-[#5D2BA8]'
-                                    }`}
-                                aria-expanded={activeSection === 'deepLink'}
+                                className={`flex items-center justify-between w-full p-3 rounded-lg text-gray-300 ${
+                                    isDropdownOpen ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                                }`}
+                                aria-expanded={isDropdownOpen}
                                 aria-controls="deeplink-submenu"
                             >
                                 <div className="flex items-center space-x-3">
@@ -114,7 +119,7 @@ const Layout: React.FC<LayoutProps> = ({
                                 </div>
                                 <ChevronDown 
                                     className={`w-4 h-4 transition-transform duration-200 ${
-                                        activeSection === 'deepLink' ? 'transform rotate-180' : ''
+                                        isDropdownOpen ? 'transform rotate-180' : ''
                                     }`} 
                                 />
                             </button>
@@ -123,7 +128,7 @@ const Layout: React.FC<LayoutProps> = ({
                             <div 
                                 id="deeplink-submenu"
                                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                                    activeSection === 'deepLink' ? 'max-h-24 mt-1 opacity-100' : 'max-h-0 opacity-0'
+                                    isDropdownOpen ? 'max-h-24 mt-1 opacity-100' : 'max-h-0 opacity-0'
                                 }`}
                             >
                                 <div className="py-1 pl-4 pr-2 bg-[#421C87] rounded-lg">
@@ -154,7 +159,9 @@ const Layout: React.FC<LayoutProps> = ({
                         {/* Credits Management */}
                         <button
                             onClick={handleCreditsClick}
-                            className="flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 hover:bg-[#5D2BA8]"
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
+                                activeSection === 'credits' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                            }`}
                         >
                             <CreditCard className="w-5 h-5" />
                             <span>Manage Credits</span>
