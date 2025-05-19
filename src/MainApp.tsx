@@ -757,13 +757,21 @@ function MainApp(_props: MainAppProps) {
             });
             
             if (!response.ok) {
-                throw new Error('Failed to fetch credits');
+                throw new Error(`Failed to fetch credits: ${response.status}`);
             }
             
             const data = await response.json();
-            setCredits(data.credits || 0);
+            console.log('Credits data received:', data); // Debug log
+            
+            if (typeof data.credits === 'number') {
+                setCredits(data.credits);
+            } else {
+                console.error('Invalid credits data received:', data);
+                setCredits(0);
+            }
         } catch (error) {
             console.error('Error fetching credits:', error);
+            setCredits(0);
         } finally {
             setLoadingCredits(false);
         }
@@ -783,32 +791,8 @@ function MainApp(_props: MainAppProps) {
         <div className="flex min-h-screen bg-gray-50">
             {/* Sidebar */}
             <div className="w-64 bg-[#4A1D96] text-white">
-                <div className="p-6">
+                <div className="p-6 flex flex-col h-full">
                     <h1 className="text-2xl font-bold mb-6">AML Checker</h1>
-                    
-                    {/* User profile and credits display */}
-                    <div className="mb-8 px-2 py-3 bg-[#5D2BA8] rounded-lg">
-                        <div className="flex items-center mb-3">
-                            <img
-                                src={`https://ui-avatars.com/api/?name=${user?.name}`}
-                                alt={user?.name || 'User'}
-                                className="w-8 h-8 rounded-full mr-2"
-                            />
-                            <span className="text-sm font-medium text-white">
-                                {user?.name || 'User'}
-                            </span>
-                        </div>
-                        
-                        <div className="flex items-center bg-[#4A1D96] p-2 rounded-md">
-                            <CreditCard className="w-4 h-4 text-purple-300 mr-2" />
-                            <div className="flex flex-col">
-                                <span className="text-xs text-purple-300">Credits</span>
-                                <span className="text-md font-bold text-white">
-                                    {loadingCredits ? "..." : credits}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
                     
                     <nav className="space-y-2">
                         <button
@@ -878,19 +862,46 @@ function MainApp(_props: MainAppProps) {
                             <CreditCard className="w-5 h-5" />
                             <span>Manage Credits</span>
                         </button>
-                        
-                        {/* Sign Out Button */}
-                        <button
-                            onClick={async () => {
-                                await logout();
-                                navigate('/login');
-                            }}
-                            className="flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 hover:bg-[#5D2BA8] mt-6"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            <span>Sign Out</span>
-                        </button>
                     </nav>
+                    
+                    {/* User profile and credits display - moved to bottom */}
+                    <div className="mt-auto pt-6">
+                        {/* Profile info */}
+                        <div className="px-2 py-3 bg-[#5D2BA8] rounded-lg">
+                            <div className="flex items-center mb-3">
+                                <img
+                                    src={`https://ui-avatars.com/api/?name=${user?.name}`}
+                                    alt={user?.name || 'User'}
+                                    className="w-8 h-8 rounded-full mr-2"
+                                />
+                                <span className="text-sm font-medium text-white">
+                                    {user?.name || 'User'}
+                                </span>
+                            </div>
+                            
+                            <div className="flex items-center bg-[#4A1D96] p-2 rounded-md">
+                                <CreditCard className="w-4 h-4 text-purple-300 mr-2" />
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-purple-300">Credits</span>
+                                    <span className="text-md font-bold text-white">
+                                        {loadingCredits ? "..." : credits}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {/* Sign Out Button */}
+                            <button
+                                onClick={async () => {
+                                    await logout();
+                                    navigate('/login');
+                                }}
+                                className="flex items-center space-x-3 w-full p-2 mt-3 rounded-lg text-gray-300 hover:bg-[#4A1D96] text-sm"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
