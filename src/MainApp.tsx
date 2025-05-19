@@ -784,7 +784,32 @@ function MainApp(_props: MainAppProps) {
             {/* Sidebar */}
             <div className="w-64 bg-[#4A1D96] text-white">
                 <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-8">AML Checker</h1>
+                    <h1 className="text-2xl font-bold mb-6">AML Checker</h1>
+                    
+                    {/* User profile and credits display */}
+                    <div className="mb-8 px-2 py-3 bg-[#5D2BA8] rounded-lg">
+                        <div className="flex items-center mb-3">
+                            <img
+                                src={`https://ui-avatars.com/api/?name=${user?.name}`}
+                                alt={user?.name || 'User'}
+                                className="w-8 h-8 rounded-full mr-2"
+                            />
+                            <span className="text-sm font-medium text-white">
+                                {user?.name || 'User'}
+                            </span>
+                        </div>
+                        
+                        <div className="flex items-center bg-[#4A1D96] p-2 rounded-md">
+                            <CreditCard className="w-4 h-4 text-purple-300 mr-2" />
+                            <div className="flex flex-col">
+                                <span className="text-xs text-purple-300">Credits</span>
+                                <span className="text-md font-bold text-white">
+                                    {loadingCredits ? "..." : credits}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <nav className="space-y-2">
                         <button
                             onClick={() => handleSidebarNavigation('insights')}
@@ -845,13 +870,25 @@ function MainApp(_props: MainAppProps) {
                             </div>
                         )}
 
-                        {/* Add Credits button to sidebar */}
+                        {/* Credits Management */}
                         <button
                             onClick={handleCreditsClick}
                             className="flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 hover:bg-[#5D2BA8]"
                         >
                             <CreditCard className="w-5 h-5" />
                             <span>Manage Credits</span>
+                        </button>
+                        
+                        {/* Sign Out Button */}
+                        <button
+                            onClick={async () => {
+                                await logout();
+                                navigate('/login');
+                            }}
+                            className="flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 hover:bg-[#5D2BA8] mt-6"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            <span>Sign Out</span>
                         </button>
                     </nav>
                 </div>
@@ -868,43 +905,6 @@ function MainApp(_props: MainAppProps) {
                              activeSection === 'activeTracking' ? 'Screening' :
                             'Search'}
                         </h2>
-                        <div className="flex items-center space-x-4">
-                            {/* Credits display */}
-                            <div 
-                                className="flex items-center px-3 py-2 bg-purple-100 rounded-lg cursor-pointer hover:bg-purple-200"
-                                onClick={handleCreditsClick}
-                            >
-                                <CreditCard className="w-5 h-5 text-purple-600 mr-2" />
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-purple-600 font-semibold">Credits</span>
-                                    {loadingCredits ? (
-                                        <span className="text-sm font-bold">...</span>
-                                    ) : (
-                                        <span className="text-sm font-bold">{credits}</span>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2">
-                                <img
-                                    src={`https://ui-avatars.com/api/?name=${user?.name}`}
-                                    alt={user?.name || 'User'}
-                                    className="w-8 h-8 rounded-full"
-                                />
-                                <span className="text-sm font-medium">
-                                    {user?.name || 'User'}
-                                </span>
-                                <button
-                                    onClick={async () => {
-                                        await logout();
-                                        navigate('/login');
-                                    }}
-                                    className="ml-4 text-gray-600 hover:text-gray-800"
-                                >
-                                    <LogOut className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
                     {!showDashboard && !showIndividualOB && !showCompanyOB && 
