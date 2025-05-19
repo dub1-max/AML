@@ -751,6 +751,7 @@ function MainApp(_props: MainAppProps) {
         
         setLoadingCredits(true);
         try {
+            console.log('Fetching credits for user:', user.id);
             const response = await fetch(`${API_BASE_URL}/credits`, { 
                 credentials: 'include' 
             });
@@ -766,7 +767,9 @@ function MainApp(_props: MainAppProps) {
                 setCredits(data.credits);
             } else {
                 console.error('Invalid credits data received:', data);
-                setCredits(0);
+                // If server returns non-numeric value, try to parse it or default to 0
+                const parsedCredits = parseInt(data.credits);
+                setCredits(isNaN(parsedCredits) ? 0 : parsedCredits);
             }
         } catch (error) {
             console.error('Error fetching credits:', error);
@@ -774,12 +777,26 @@ function MainApp(_props: MainAppProps) {
         } finally {
             setLoadingCredits(false);
         }
-    }, [user]);
+    }, [user, API_BASE_URL]);
 
-    // Add credits fetch to initial loading
+    // Add credits fetch to initial loading and when active section changes
     useEffect(() => {
         fetchUserCredits();
-    }, [fetchUserCredits]);
+        
+        // Also fetch credits when switching views
+        const refreshInterval = setInterval(() => {
+            fetchUserCredits();
+        }, 30000); // Refresh every 30 seconds
+        
+        return () => clearInterval(refreshInterval);
+    }, [fetchUserCredits, activeSection]);
+    
+    // Also refetch credits after handling profile approvals or rejections
+    useEffect(() => {
+        if (pendingApprovals.length > 0) {
+            fetchUserCredits();
+        }
+    }, [pendingApprovals, fetchUserCredits]);
 
     // Add credits button navigation handler
     const handleCreditsClick = () => {
@@ -787,13 +804,13 @@ function MainApp(_props: MainAppProps) {
     };
 
     return (
-        <div className="flex min-h-screen bg-gray-50">
+        <div className="flex min-h-screen overflow-hidden bg-gray-50">
             {/* Sidebar */}
-            <div className="w-64 bg-[#4A1D96] text-white">
-                <div className="p-6 flex flex-col h-full">
+            <div className="w-64 bg-[#4A1D96] text-white flex flex-col min-h-screen">
+                <div className="p-6 flex flex-col flex-grow relative">
                     <h1 className="text-2xl font-bold mb-6">AML Checker</h1>
                     
-                    <nav className="space-y-2">
+                    <nav className="space-y-2 mb-24">
                         <button
                             onClick={() => handleSidebarNavigation('insights')}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
@@ -863,8 +880,8 @@ function MainApp(_props: MainAppProps) {
                         </button>
                     </nav>
                     
-                    {/* User profile and credits display - moved to bottom */}
-                    <div className="mt-auto pt-6">
+                    {/* User profile and credits display - fixed at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 pt-3">
                         {/* Profile info */}
                         <div className="px-2 py-3 bg-[#5D2BA8] rounded-lg">
                             <div className="flex items-center mb-3">
@@ -905,7 +922,7 @@ function MainApp(_props: MainAppProps) {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1">
+            <div className="flex-1 overflow-x-auto overflow-y-auto">
                 <header className="bg-white border-b border-gray-200">
                     <div className="flex justify-between items-center px-6 py-4">
                         <h2 className="text-xl font-semibold">
