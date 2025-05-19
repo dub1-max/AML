@@ -20,7 +20,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DebugLog, { addLog } from './components/DebugLog';
 import EditProfile from './EditProfile';
 
-
 const API_BASE_URL = getApiBaseUrl();
 
 // Cache interface
