@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown, Search, Edit } from 'lucide-react';
+import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown, Search, Edit, AlertCircle } from 'lucide-react';
 import { SearchResult, Tracking } from './types';
 import { generateCustomerPDF } from './utils/pdfGenerator';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,47 @@ interface ActiveTrackingProps {
 
 type SortableColumn = 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status';
 type SortDirection = 'asc' | 'desc';
+
+// Add confirmation dialog component
+const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, name }: {
+    isOpen: boolean,
+    onConfirm: () => void,
+    onCancel: () => void,
+    name: string
+}) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
+                <div className="flex items-center mb-4 text-amber-600">
+                    <AlertCircle className="w-6 h-6 mr-2" />
+                    <h3 className="text-lg font-semibold">Confirm Tracking</h3>
+                </div>
+                <p className="mb-4">
+                    This action will deduct <span className="font-bold">1 credit</span> from your account to start tracking <span className="font-bold">{name}</span>.
+                </p>
+                <p className="mb-6 text-sm text-gray-600">
+                    You won't be charged again when pausing or resuming tracking for this profile.
+                </p>
+                <div className="flex justify-end space-x-3">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking }: ActiveTrackingProps) {
     const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
@@ -226,6 +267,49 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
         } catch (error) {
             console.error('Error during manual refresh:', error);
         }
+    };
+
+    // Add state for confirmation dialog
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        name: string;
+        pendingStatus: boolean;
+    }>({
+        isOpen: false,
+        name: '',
+        pendingStatus: false
+    });
+
+    // Handle toggle tracking with confirmation dialog
+    const handleToggleTracking = async (name: string, newStatus: boolean) => {
+        // If turning off tracking, no need for confirmation
+        if (!newStatus) {
+            await onToggleTracking(name, newStatus);
+            return;
+        }
+
+        // If turning on tracking, show confirmation dialog
+        setConfirmDialog({
+            isOpen: true,
+            name,
+            pendingStatus: newStatus
+        });
+    };
+
+    // Handle confirm tracking from dialog
+    const handleConfirmTracking = async () => {
+        const { name, pendingStatus } = confirmDialog;
+        
+        // Close dialog first
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        
+        // Then apply tracking change
+        await onToggleTracking(name, pendingStatus);
+    };
+
+    // Handle cancel from dialog
+    const handleCancelTracking = () => {
+        setConfirmDialog({ isOpen: false, name: '', pendingStatus: false });
     };
 
     return (
@@ -449,7 +533,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                     <td className="py-4 px-6 text-center">
                                         <div className="flex justify-center items-center space-x-2">
                                             <button
-                                                onClick={() => onToggleTracking(result.name, !tracking?.[result.name]?.isTracking)}
+                                                onClick={() => handleToggleTracking(result.name, !tracking?.[result.name]?.isTracking)}
                                                 className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${tracking?.[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'}`}
                                             >
                                                 <div
@@ -472,6 +556,14 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                     </table>
                 </div>
             )}
+
+            {/* Add the confirmation dialog */}
+            <ConfirmationDialog 
+                isOpen={confirmDialog.isOpen}
+                onConfirm={handleConfirmTracking}
+                onCancel={handleCancelTracking}
+                name={confirmDialog.name}
+            />
         </div>
     );
 }

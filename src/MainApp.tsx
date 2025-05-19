@@ -816,9 +816,9 @@ function MainApp(_props: MainAppProps) {
             handleCompanyOBClick={handleCompanyOBClick}
         >
             <div className="flex-1">
-                <header className="bg-white border-b border-gray-100 shadow-sm">
+                <header className="bg-white border-b border-gray-200">
                     <div className="flex justify-between items-center px-6 py-4">
-                        <h2 className="text-xl font-semibold text-gray-800">
+                        <h2 className="text-xl font-semibold">
                             {showDashboard ? 'Activity Dashboard' : 
                              showIndividualOB ? 'Individual Onboarding' :
                              showCompanyOB ? 'Company Onboarding' :
@@ -829,11 +829,12 @@ function MainApp(_props: MainAppProps) {
 
                     {!showDashboard && !showIndividualOB && !showCompanyOB && 
                      activeSection !== 'activeTracking' && (
-                        <div className="px-6 py-3 flex items-center space-x-4 border-t border-gray-100">
+                        <div className="px-6 py-3 flex items-center space-x-4 border-t border-gray-200">
                             <div className="flex space-x-2">
-                                <button className="px-4 py-1 rounded-full bg-purple-600 text-white text-sm shadow-sm hover:bg-purple-700 transition-colors">
+                                <button className="px-4 py-1 rounded-full bg-[#4A1D96] text-white text-sm">
                                     All
                                 </button>
+
                             </div>
 
                             <div className="flex-1">
@@ -850,7 +851,7 @@ function MainApp(_props: MainAppProps) {
                                             }
                                         }}
                                         placeholder={`Search by name (min. ${MIN_SEARCH_LENGTH} characters)`}
-                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+                                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     />
                                 </div>
                             </div>
@@ -863,12 +864,12 @@ function MainApp(_props: MainAppProps) {
                                         setSearchId(e.target.value);
                                     }}
                                     placeholder="Search by ID"
-                                    className="px-4 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+                                    className="px-4 py-2 rounded-lg border border-gray-200 text-sm"
                                 />
                                 <button
                                     onClick={() => handleSearch()}
                                     disabled={searchTerm.length > 0 && searchTerm.length < MIN_SEARCH_LENGTH}
-                                    className={`px-6 py-2 bg-purple-600 text-white rounded-lg text-sm shadow-sm hover:bg-purple-700 transition-colors ${
+                                    className={`px-6 py-2 bg-[#4A1D96] text-white rounded-lg text-sm ${
                                         searchTerm.length > 0 && searchTerm.length < MIN_SEARCH_LENGTH 
                                         ? 'opacity-50 cursor-not-allowed' 
                                         : ''
@@ -881,7 +882,6 @@ function MainApp(_props: MainAppProps) {
                     )}
                 </header>
 
-                <div className="bg-gray-50 min-h-screen">
                 {showDashboard ? (
                     <ErrorBoundary>
                         <Insights />
@@ -896,14 +896,12 @@ function MainApp(_props: MainAppProps) {
                     </ErrorBoundary>
                 ) : activeSection === 'activeTracking' ? (
                     <ErrorBoundary>
-                        <div className="p-6">
+                        <div>
                             {/* Pending approvals section */}
                             {pendingApprovals.filter(item => item.isMatched).length > 0 && (
-                                <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                                    <div className="px-6 py-4 border-b border-gray-100">
-                                        <h3 className="text-lg font-semibold text-gray-800">Customers Requiring Approval</h3>
-                                    </div>
-                                    <div className="overflow-hidden">
+                                <div className="p-6 border-b border-gray-200">
+                                    <h3 className="text-lg font-semibold mb-4">Customers Requiring Approval</h3>
+                                    <div className="bg-white rounded-lg shadow overflow-hidden">
                                         <table className="min-w-full divide-y divide-gray-200">
                                             <thead className="bg-gray-50">
                                                 <tr>
@@ -917,7 +915,7 @@ function MainApp(_props: MainAppProps) {
                                             <tbody className="bg-white divide-y divide-gray-200">
                                                 {pendingApprovals.filter(item => item.isMatched).map((item) => (
                                                     <React.Fragment key={`${item.type}-${item.id}`}>
-                                                        <tr className="hover:bg-gray-50">
+                                                        <tr>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                                 {item.type === 'individual' ? 'Individual' : 'Company'}
@@ -1020,32 +1018,12 @@ function MainApp(_props: MainAppProps) {
                             )}
                             
                             {/* Main active tracking component */}
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                                <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-                                    <h3 className="text-lg font-semibold text-gray-800">Active Screening</h3>
-                                    
-                                    {isLoading ? (
-                                        <div className="flex items-center text-purple-600">
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            <span>Refreshing data...</span>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={fetchTrackedData}
-                                            className="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
-                                        >
-                                            Refresh Results
-                                        </button>
-                                    )}
-                                </div>
-                                
-                                <ActiveTracking
-                                    trackedResults={trackedResults}
-                                    tracking={tracking}
-                                    isLoading={isLoading}
-                                    onToggleTracking={updateTracking}
-                                />
-                            </div>
+                            <ActiveTracking
+                                trackedResults={trackedResults}
+                                tracking={tracking}
+                                isLoading={isLoading}
+                                onToggleTracking={updateTracking}
+                            />
                         </div>
                     </ErrorBoundary>
                 ) : (
@@ -1061,7 +1039,7 @@ function MainApp(_props: MainAppProps) {
                             
                             {/* Search guidance */}
                             {!isLoading && searchTerm.length < MIN_SEARCH_LENGTH && searchResults.length === 0 && (
-                                <div className="text-center p-12 bg-white rounded-lg shadow-sm border border-gray-100">
+                                <div className="text-center p-12">
                                     <p className="text-gray-500 mb-4">
                                         Enter at least {MIN_SEARCH_LENGTH} characters to search for profiles
                                     </p>
@@ -1070,26 +1048,23 @@ function MainApp(_props: MainAppProps) {
                             
                             {/* No results message */}
                             {!isLoading && searchTerm.length >= MIN_SEARCH_LENGTH && searchResults.length === 0 && (
-                                <div className="text-center p-12 bg-white rounded-lg shadow-sm border border-gray-100">
+                                <div className="text-center p-12">
                                     <p className="text-gray-500 mb-4">
                                         No results found for "{searchTerm}"
                                     </p>
                                 </div>
                             )}
                             
-                            {/* Search Results */}
-                            {searchResults.length > 0 && (
-                                <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                                    <Profiles 
-                                        searchResults={searchResults} 
-                                        isLoading={false}
-                                    />
-                                </div>
-                            )}
+                                                         {/* Search Results */}
+                             {searchResults.length > 0 && (
+                                 <Profiles 
+                                     searchResults={searchResults} 
+                                     isLoading={false}
+                                 />
+                             )}
                         </div>
                     </ErrorBoundary>
                 )}
-                </div>
             </div>
         </Layout>
     );

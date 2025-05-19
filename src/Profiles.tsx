@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, XCircle, CheckCircle, FileText } from 'lucide-react';
+import { Loader2, XCircle, CheckCircle, FileText, AlertCircle } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './config';
@@ -19,6 +19,47 @@ interface ProfilesProps {
   isLoading: boolean;            // Initial loading state from parent
 }
 
+// Add confirmation dialog component
+const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, name }: {
+  isOpen: boolean,
+  onConfirm: () => void,
+  onCancel: () => void,
+  name: string
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
+        <div className="flex items-center mb-4 text-amber-600">
+          <AlertCircle className="w-6 h-6 mr-2" />
+          <h3 className="text-lg font-semibold">Confirm Tracking</h3>
+        </div>
+        <p className="mb-4">
+          This action will deduct <span className="font-bold">1 credit</span> from your account to start tracking <span className="font-bold">{name}</span>.
+        </p>
+        <p className="mb-6 text-sm text-gray-600">
+          You won't be charged again when pausing or resuming tracking for this profile.
+        </p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function Profiles({ searchResults = [], isLoading: initialLoading = false }: ProfilesProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -30,6 +71,17 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
   const [isLoading, setIsLoading] = useState(initialLoading);
   const [error, setError] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
+
+  // Add state for confirmation dialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    name: string;
+    currentStatus: boolean;
+  }>({
+    isOpen: false,
+    name: '',
+    currentStatus: false
+  });
 
   // Calculate aging with memoization
   const calculateAging = useCallback((result: AppSearchResult): string => {
@@ -63,6 +115,36 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
     return 'text-green-600';
   };
 
+  // Modified to show confirmation dialog
+  const handleToggleTracking = (name: string) => {
+    const currentTrackingStatus = tracking[name]?.isTracking ?? false;
+    
+    // If turning off tracking, no need for confirmation
+    if (currentTrackingStatus) {
+      toggleTracking(name);
+      return;
+    }
+    
+    // If turning on tracking, show confirmation dialog
+    setConfirmDialog({
+      isOpen: true,
+      name,
+      currentStatus: currentTrackingStatus
+    });
+  };
+
+  // Confirm tracking change from dialog
+  const handleConfirmTracking = () => {
+    const { name } = confirmDialog;
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+    toggleTracking(name);
+  };
+
+  // Cancel tracking change
+  const handleCancelTracking = () => {
+    setConfirmDialog({ isOpen: false, name: '', currentStatus: false });
+  };
+
   const toggleTracking = async (name: string) => {
     try {
       const currentTrackingStatus = tracking[name]?.isTracking ?? false;
@@ -78,6 +160,17 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
           navigate('/login');
           return;
         }
+        
+        // Handle insufficient credits error
+        if (response.status === 402) {
+          const data = await response.json();
+          if (data.needCredits) {
+            alert('You do not have enough credits to track this profile. Please purchase more credits.');
+            navigate('/credits');
+            return;
+          }
+        }
+        
         throw new Error('Failed to update tracking');
       }
 
@@ -207,7 +300,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                   <td className="py-4 px-6 text-center">
                     <div className="flex justify-center">
                       <button
-                        onClick={() => toggleTracking(result.name)}
+                        onClick={() => handleToggleTracking(result.name)}
                         className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${
                           tracking[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'
                         }`}
@@ -233,6 +326,14 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
           </table>
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        onConfirm={handleConfirmTracking}
+        onCancel={handleCancelTracking}
+        name={confirmDialog.name}
+      />
     </div>
   );
 }
