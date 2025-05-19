@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    Search, FileText, Shield, LogOut, Link, Users, CreditCard
+    Search, FileText, Shield, LogOut, Link, Users, CreditCard, ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -98,32 +98,58 @@ const Layout: React.FC<LayoutProps> = ({
                         </button>
 
                         {/* Deep Link Onboarding Button and Sub-Options */}
-                        <button
-                            onClick={deepLinkHandler}
-                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${activeSection === 'deepLink'
-                                ? 'bg-[#5D2BA8] text-white'
-                                : 'hover:bg-[#5D2BA8]'
+                        <div className="relative">
+                            <button
+                                onClick={deepLinkHandler}
+                                className={`flex items-center justify-between w-full p-3 rounded-lg text-gray-300 ${activeSection === 'deepLink'
+                                    ? 'bg-[#5D2BA8] text-white'
+                                    : 'hover:bg-[#5D2BA8]'
+                                    }`}
+                                aria-expanded={activeSection === 'deepLink'}
+                                aria-controls="deeplink-submenu"
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <Link className="w-5 h-5" />
+                                    <span>Deep Link Onboarding</span>
+                                </div>
+                                <ChevronDown 
+                                    className={`w-4 h-4 transition-transform duration-200 ${
+                                        activeSection === 'deepLink' ? 'transform rotate-180' : ''
+                                    }`} 
+                                />
+                            </button>
+                            
+                            {/* Submenu with transition */}
+                            <div 
+                                id="deeplink-submenu"
+                                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                                    activeSection === 'deepLink' ? 'max-h-24 mt-1 opacity-100' : 'max-h-0 opacity-0'
                                 }`}
-                        >
-                            <Link className="w-5 h-5" />
-                            <span>Deep Link Onboarding</span>
-                        </button>
-                        {activeSection === 'deepLink' && (
-                            <div className="ml-8">
-                                <button
-                                    onClick={individualHandler}
-                                    className={`block w-full p-2 text-left text-gray-300 hover:bg-[#5D2BA8] rounded ${deepLinkSubSection === 'individual' ? 'bg-[#5D2BA8]' : ''}`}
-                                >
-                                    Individual Onboarding
-                                </button>
-                                <button
-                                    onClick={companyHandler}
-                                    className={`block w-full p-2 text-left text-gray-300 hover:bg-[#5D2BA8] rounded ${deepLinkSubSection === 'company' ? 'bg-[#5D2BA8]' : ''}`}
-                                >
-                                    Company Onboarding
-                                </button>
+                            >
+                                <div className="py-1 pl-4 pr-2 bg-[#421C87] rounded-lg">
+                                    <button
+                                        onClick={individualHandler}
+                                        className={`flex items-center w-full py-2 px-3 text-left text-gray-300 rounded transition-colors duration-150 ${
+                                            deepLinkSubSection === 'individual' 
+                                                ? 'bg-[#5D2BA8] text-white' 
+                                                : 'hover:bg-[#5D2BA8] hover:text-white'
+                                        }`}
+                                    >
+                                        <span className="text-sm">Individual Onboarding</span>
+                                    </button>
+                                    <button
+                                        onClick={companyHandler}
+                                        className={`flex items-center w-full py-2 px-3 text-left text-gray-300 rounded transition-colors duration-150 ${
+                                            deepLinkSubSection === 'company' 
+                                                ? 'bg-[#5D2BA8] text-white' 
+                                                : 'hover:bg-[#5D2BA8] hover:text-white'
+                                        }`}
+                                    >
+                                        <span className="text-sm">Company Onboarding</span>
+                                    </button>
+                                </div>
                             </div>
-                        )}
+                        </div>
 
                         {/* Credits Management */}
                         <button
