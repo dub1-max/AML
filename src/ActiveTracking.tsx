@@ -11,7 +11,7 @@ interface ActiveTrackingProps {
     onToggleTracking: (name: string, newTrackingStatus: boolean) => Promise<void>;
 }
 
-type SortableColumn = 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status';
+type SortableColumn = 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status' | 'dataset';
 type SortDirection = 'asc' | 'desc';
 
 // Add confirmation dialog component
@@ -220,6 +220,10 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                     const aStatus = tracking?.[a.name]?.isTracking ? 1 : 0;
                     const bStatus = tracking?.[b.name]?.isTracking ? 1 : 0;
                     return multiplier * (aStatus - bStatus);
+                case 'dataset':
+                    const aDataset = a.dataset || '';
+                    const bDataset = b.dataset || '';
+                    return multiplier * aDataset.localeCompare(bDataset);
                 default:
                     return 0;
             }
@@ -442,6 +446,9 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                 <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('blacklist')}>
                                     BLACKLIST STATUS {renderSortIndicator('blacklist')}
                                 </th>
+                                <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('dataset')}>
+                                    SOURCE CATEGORY {renderSortIndicator('dataset')}
+                                </th>
                                 <th className="pb-4 px-6 whitespace-nowrap text-center">
                                     DOCUMENTATION
                                 </th>
@@ -508,25 +515,37 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                                 <span className="ml-2 text-xs text-red-600">Blacklisted</span>
                                             </div>
                                         )}
-                                        <div className="mt-1 text-xs text-center">
-                                            {result.dataset ? (
-                                                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                                                    {result.dataset === 'onboarded' 
-                                                        ? 'Onboarded' 
-                                                        : result.dataset.includes('peps') 
-                                                            ? 'PEP' 
-                                                            : result.dataset.includes('terrorists') 
-                                                                ? 'Terrorist' 
-                                                                : result.dataset.includes('sanctions') 
-                                                                    ? 'Sanctions' 
-                                                                    : result.dataset.includes('debarment') 
-                                                                        ? 'Debarred' 
-                                                                        : result.dataset}
-                                                </span>
-                                            ) : (
-                                                <span>-</span>
-                                            )}
-                                        </div>
+                                    </td>
+                                    <td className="py-4 px-6 text-center">
+                                        {result.dataset ? (
+                                            <span className={`px-2 py-1 text-xs rounded-full ${
+                                                result.dataset === 'onboarded' 
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : result.dataset.includes('peps')
+                                                        ? 'bg-yellow-100 text-yellow-700'
+                                                        : result.dataset.includes('terrorists')
+                                                            ? 'bg-red-100 text-red-700'
+                                                            : result.dataset.includes('sanctions')
+                                                                ? 'bg-orange-100 text-orange-700'
+                                                                : result.dataset.includes('debarment')
+                                                                    ? 'bg-purple-100 text-purple-700'
+                                                                    : 'bg-blue-100 text-blue-700'
+                                            }`}>
+                                                {result.dataset === 'onboarded' 
+                                                    ? 'Onboarded' 
+                                                    : result.dataset.includes('peps') 
+                                                        ? 'PEP' 
+                                                        : result.dataset.includes('terrorists') 
+                                                            ? 'Terrorist' 
+                                                            : result.dataset.includes('sanctions') 
+                                                                ? 'Sanctions' 
+                                                                : result.dataset.includes('debarment') 
+                                                                    ? 'Debarred' 
+                                                                    : result.dataset}
+                                            </span>
+                                        ) : (
+                                            <span>-</span>
+                                        )}
                                     </td>
                                     <td className="py-4 px-6 text-center">
                                         <div className="flex justify-center">

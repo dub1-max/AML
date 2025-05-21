@@ -243,6 +243,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                 <th className="pb-4 px-6 whitespace-nowrap text-center">NATIONALITY</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">AGING</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">NAME SCREENING</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">SOURCE CATEGORY</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">DOCUMENTATION</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">RISK RATING</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">STATUS</th>
@@ -281,25 +282,37 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                         <XCircle className="w-4 h-4 text-red-500" />
                       </div>
                     </div>
-                    <div className="mt-1 text-xs text-center">
-                      {result.dataset ? (
-                        <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                          {result.dataset === 'onboarded' 
-                            ? 'Onboarded' 
-                            : result.dataset.includes('peps') 
-                              ? 'PEP' 
-                              : result.dataset.includes('terrorists') 
-                                ? 'Terrorist' 
-                                : result.dataset.includes('sanctions') 
-                                  ? 'Sanctions' 
-                                  : result.dataset.includes('debarment') 
-                                    ? 'Debarred' 
-                                    : result.dataset}
-                        </span>
-                      ) : (
-                        <span>-</span>
-                      )}
-                    </div>
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    {result.dataset ? (
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        result.dataset === 'onboarded' 
+                          ? 'bg-green-100 text-green-700'
+                          : result.dataset.includes('peps')
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : result.dataset.includes('terrorists')
+                              ? 'bg-red-100 text-red-700'
+                              : result.dataset.includes('sanctions')
+                                ? 'bg-orange-100 text-orange-700'
+                                : result.dataset.includes('debarment')
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {result.dataset === 'onboarded' 
+                          ? 'Onboarded' 
+                          : result.dataset.includes('peps') 
+                            ? 'PEP' 
+                            : result.dataset.includes('terrorists') 
+                              ? 'Terrorist' 
+                              : result.dataset.includes('sanctions') 
+                                ? 'Sanctions' 
+                                : result.dataset.includes('debarment') 
+                                  ? 'Debarred' 
+                                  : result.dataset}
+                      </span>
+                    ) : (
+                      <span>-</span>
+                    )}
                   </td>
                   <td className="py-4 px-6 text-center">
                     <div className="flex justify-center">
