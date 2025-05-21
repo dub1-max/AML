@@ -1,9 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Shield, Eye, Database } from 'lucide-react';
+import { ArrowRight, Shield, Eye, Database, BookOpen } from 'lucide-react';
 
 const KycBox: React.FC = () => {
   const navigate = useNavigate();
+
+  const openDocSite = () => {
+    window.open('/kycbox/index.html', '_blank');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-8">
@@ -11,12 +15,21 @@ const KycBox: React.FC = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <div className="text-2xl font-bold text-purple-800">KYCBOX</div>
-          <button
-            onClick={() => navigate('/login')}
-            className="flex items-center font-medium text-purple-700 hover:text-purple-900 transition-colors"
-          >
-            Log In <ArrowRight className="ml-2 h-4 w-4" />
-          </button>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={openDocSite}
+              className="flex items-center font-medium text-purple-600 hover:text-purple-800 transition-colors"
+            >
+              <BookOpen className="mr-2 h-4 w-4" />
+              Documentation
+            </button>
+            <button
+              onClick={() => navigate('/login')}
+              className="flex items-center font-medium text-purple-700 hover:text-purple-900 transition-colors"
+            >
+              Log In <ArrowRight className="ml-2 h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -28,13 +41,20 @@ const KycBox: React.FC = () => {
         <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
           Advanced anti-money laundering screening with real-time watchlist monitoring and risk assessment
         </p>
-        <div className="mt-10">
+        <div className="mt-10 flex justify-center space-x-4">
           <button
             onClick={() => navigate('/login')}
             className="inline-flex items-center px-6 py-3 border border-transparent text-lg font-medium rounded-md shadow-sm text-white bg-purple-700 hover:bg-purple-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
           >
             Get Started
             <ArrowRight className="ml-2 h-5 w-5" />
+          </button>
+          <button
+            onClick={openDocSite}
+            className="inline-flex items-center px-6 py-3 border border-purple-600 text-lg font-medium rounded-md shadow-sm text-purple-700 bg-white hover:bg-purple-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+          >
+            Learn More
+            <BookOpen className="ml-2 h-5 w-5" />
           </button>
         </div>
       </div>

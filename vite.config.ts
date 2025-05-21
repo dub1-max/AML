@@ -44,5 +44,8 @@ export default defineConfig({
     fs: {
       strict: true,
     }
-  }
+  },
+
+  // Configure public directory
+  publicDir: 'public'
 });
