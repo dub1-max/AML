@@ -11,6 +11,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const EditProfile = lazy(() => import('./EditProfile'));
 const Credits = lazy(() => import('./pages/Credits'));
+const KycBox = lazy(() => import('./pages/KycBox'));
 
 // Loading component with minimal footprint
 const LoadingSpinner = () => (
@@ -68,7 +69,8 @@ function App() {
                         <Route path="/mainapp" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
                         <Route path="/edit-profile/:id" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
                         <Route path="/credits" element={<ProtectedRoute><Credits /></ProtectedRoute>} />
-                        <Route path="/" element={<Navigate to="/login" replace />} />
+                        <Route path="/kycbox" element={<KycBox />} />
+                        <Route path="/" element={<Navigate to="/kycbox" replace />} />
                     </Routes>
                 </Suspense>
             </AuthProvider>

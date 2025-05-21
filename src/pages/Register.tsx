@@ -137,12 +137,20 @@ export default function Register() {
                         </div>
 
                         <div className="mt-6">
-                            <Link
-                                to="/login"
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-[#4A1D96] bg-white border-purple-600 hover:bg-gray-50"
-                            >
-                                Sign in
-                            </Link>
+                            <div className="flex space-x-2">
+                                <Link
+                                    to="/login"
+                                    className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-[#4A1D96] bg-white border-purple-600 hover:bg-gray-50"
+                                >
+                                    Sign in
+                                </Link>
+                                <Link
+                                    to="/kycbox"
+                                    className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200"
+                                >
+                                    Back to KYCBOX
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
