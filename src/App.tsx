@@ -11,7 +11,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const EditProfile = lazy(() => import('./EditProfile'));
 const Credits = lazy(() => import('./pages/Credits'));
-const KycBox = lazy(() => import('./pages/KycBox'));
+// KycBox component removed in favor of static KYCSync page
 
 // Loading component with minimal footprint
 const LoadingSpinner = () => (
@@ -69,8 +69,7 @@ function App() {
                         <Route path="/mainapp" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
                         <Route path="/edit-profile/:id" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
                         <Route path="/credits" element={<ProtectedRoute><Credits /></ProtectedRoute>} />
-                        <Route path="/kycbox" element={<KycBox />} />
-                        <Route path="/" element={<Navigate to="/kycbox" replace />} />
+                        <Route path="/" element={<Navigate to="/kycbox/index.html" replace />} />
                     </Routes>
                 </Suspense>
             </AuthProvider>
