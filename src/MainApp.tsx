@@ -772,18 +772,32 @@ function MainApp(_props: MainAppProps) {
         // Then check for redirected state with activeSection (old approach)
         const state = location.state as { 
             activeSection?: string;
+            deepLinkSubSection?: 'individual' | 'company';
             refreshData?: boolean;
             timestamp?: number;
         } || {};
         
         if (state.activeSection) {
+            console.log('📊 Handling navigation with state:', state);
+            
             // Determine if we should refresh data based on the refreshData flag
             // and check if we're within the cooldown period
             const now = Date.now();
             const shouldRefresh = state.refreshData === true && (now - lastRefreshTimestamp > REFRESH_COOLDOWN);
             
-            // Call handleTabChange with the refreshData flag
-            handleTabChange(state.activeSection, shouldRefresh);
+            // Handle Deep Link Onboarding special case
+            if (state.activeSection === 'deepLink') {
+                setActiveSection('deepLink');
+                // Set deepLinkSubSection if provided, otherwise default to 'individual'
+                const subSection = state.deepLinkSubSection || 'individual';
+                setDeepLinkSubSection(subSection);
+                setShowIndividualOB(subSection === 'individual');
+                setShowCompanyOB(subSection === 'company');
+                setShowDashboard(false);
+            } else {
+                // Call handleTabChange with the refreshData flag for other sections
+                handleTabChange(state.activeSection, shouldRefresh);
+            }
             
             // If refreshData flag is set, force a refresh of tracked data
             if (shouldRefresh && state.activeSection === 'activeTracking') {

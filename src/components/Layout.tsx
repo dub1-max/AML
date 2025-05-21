@@ -73,7 +73,19 @@ const Layout: React.FC<LayoutProps> = ({
 
     const defaultDeepLinkHandler = () => {
         console.log('Deep link clicked');
-        setIsDeepLinkOpen(!isDeepLinkOpen);
+        
+        // If on credits page, navigate back to mainapp with deepLink as the active section
+        if (location.pathname === '/credits') {
+            navigate('/mainapp', { 
+                state: { 
+                    activeSection: 'deepLink',
+                    deepLinkSubSection: 'individual' 
+                }
+            });
+        } else {
+            // Toggle dropdown state when already in mainapp
+            setIsDeepLinkOpen(!isDeepLinkOpen);
+        }
     };
 
     const defaultIndividualHandler = () => {
