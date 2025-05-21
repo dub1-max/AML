@@ -7,12 +7,15 @@ export default defineConfig({
   plugins: [
     react(),
     {
-      name: 'redirect-kycbox',
+      name: 'redirect-root-to-index',
       configureServer(server) {
-        // Redirect /kycbox/index.html to root
+        // Redirect root to /index.html
         server.middlewares.use((req, res, next) => {
-          if (req.url === '/kycbox/index.html') {
-            res.writeHead(301, { Location: '/' });
+          if (req.url === '/' || req.url === '') {
+            res.writeHead(301, { Location: '/index.html' });
+            res.end();
+          } else if (req.url === '/kycbox/index.html') {
+            res.writeHead(301, { Location: '/index.html' });
             res.end();
           } else {
             next();

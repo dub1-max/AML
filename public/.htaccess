@@ -1,5 +1,8 @@
-# Redirect /kycbox/index.html to root URL
-RedirectMatch 301 ^/kycbox/index\.html$ /
+# Redirect root URL to index.html
+RedirectMatch 301 ^/$ /index.html
+
+# Redirect /kycbox/index.html to index.html
+RedirectMatch 301 ^/kycbox/index\.html$ /index.html
 
 # Rewrite rules for SPA
 <IfModule mod_rewrite.c>
@@ -10,7 +13,8 @@ RedirectMatch 301 ^/kycbox/index\.html$ /
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   
-  # For all other routes, serve the index.html
+  # For all other routes (not index.html), serve the index.html
+  RewriteCond %{REQUEST_URI} !^/index\.html$
   RewriteRule ^ index.html [QSA,L]
 </IfModule>
 

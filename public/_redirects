@@ -1,5 +1,8 @@
-# Redirect /kycbox/index.html to the root URL
-/kycbox/index.html    /    301
+# Redirect root URL to index.html
+/    /index.html    301
 
-# Single-page application redirect to index.html
+# Redirect /kycbox/index.html to index.html
+/kycbox/index.html    /index.html    301
+
+# Single-page application redirect for other routes
 /*    /index.html    200 
