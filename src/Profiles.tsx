@@ -173,12 +173,14 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false, curre
     
     // Call the page change handler
     onPageChange(newPage);
-    
-    // Hide loading after a short delay to ensure UI updates
-    setTimeout(() => {
-      setPageLoading(false);
-    }, 500);
   };
+  
+  // Watch for searchResults changes to detect when new page data arrives
+  useEffect(() => {
+    if (pageLoading) {
+      setPageLoading(false);
+    }
+  }, [searchResults]);
 
   const toggleTracking = async (name: string) => {
     try {
