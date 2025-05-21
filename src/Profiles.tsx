@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, XCircle, CheckCircle, FileText, AlertCircle } from 'lucide-react';
+import { Loader2, XCircle, CheckCircle, FileText, AlertCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './config';
@@ -75,6 +75,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false, curre
   const [isLoading, setIsLoading] = useState(initialLoading);
   const [error, setError] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
+  const [pageLoading, setPageLoading] = useState(false); // Loading state for pagination
 
   // Add state for confirmation dialog
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -158,6 +159,27 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false, curre
     setConfirmDialog({ isOpen: false, name: '', currentStatus: false });
   };
 
+  // Handle page change with loading state and scroll to top
+  const changePage = (newPage: number) => {
+    if (!onPageChange || newPage < 1 || newPage > (totalPages || 1) || newPage === currentPage) {
+      return;
+    }
+    
+    // Show loading state
+    setPageLoading(true);
+    
+    // Scroll to top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Call the page change handler
+    onPageChange(newPage);
+    
+    // Hide loading after a short delay to ensure UI updates
+    setTimeout(() => {
+      setPageLoading(false);
+    }, 500);
+  };
+
   const toggleTracking = async (name: string) => {
     try {
       const currentTrackingStatus = tracking[name]?.isTracking ?? false;
@@ -239,7 +261,15 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false, curre
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto relative">
+            {pageLoading && (
+              <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
+                <div className="flex flex-col items-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                  <p className="mt-2 text-sm text-purple-700 font-medium">Loading results...</p>
+                </div>
+              </div>
+            )}
             <table className="w-full">
               <thead>
                 <tr className="text-left text-sm text-gray-500">
@@ -378,51 +408,85 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false, curre
               <div className="text-sm text-gray-500">
                 Showing page {currentPage} of {totalPages} ({totalResults} total results)
               </div>
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2">
+                {/* First page button */}
                 <button
-                  onClick={() => onPageChange(1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    currentPage === 1
+                  onClick={() => changePage(1)}
+                  disabled={currentPage === 1 || pageLoading}
+                  className={`p-2 rounded-md ${
+                    currentPage === 1 || pageLoading
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   }`}
+                  aria-label="First page"
                 >
-                  First
+                  <ChevronsLeft className="w-4 h-4" />
                 </button>
+                
+                {/* Previous page button */}
                 <button
-                  onClick={() => onPageChange(currentPage! - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    currentPage === 1
+                  onClick={() => changePage(currentPage! - 1)}
+                  disabled={currentPage === 1 || pageLoading}
+                  className={`p-2 rounded-md ${
+                    currentPage === 1 || pageLoading
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   }`}
+                  aria-label="Previous page"
                 >
-                  Previous
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
+                
+                {/* Page selector */}
+                <div className="flex items-center px-2">
+                  <select
+                    value={currentPage}
+                    onChange={(e) => changePage(Number(e.target.value))}
+                    disabled={pageLoading}
+                    className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
+                  >
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <option key={page} value={page}>
+                        {page}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Next page button */}
                 <button
-                  onClick={() => onPageChange(currentPage! + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    currentPage === totalPages
+                  onClick={() => changePage(currentPage! + 1)}
+                  disabled={currentPage === totalPages || pageLoading}
+                  className={`p-2 rounded-md ${
+                    currentPage === totalPages || pageLoading
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   }`}
+                  aria-label="Next page"
                 >
-                  Next
+                  <ChevronRight className="w-4 h-4" />
                 </button>
+                
+                {/* Last page button */}
                 <button
-                  onClick={() => onPageChange(totalPages!)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-md text-sm ${
-                    currentPage === totalPages
+                  onClick={() => changePage(totalPages!)}
+                  disabled={currentPage === totalPages || pageLoading}
+                  className={`p-2 rounded-md ${
+                    currentPage === totalPages || pageLoading
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   }`}
+                  aria-label="Last page"
                 >
-                  Last
+                  <ChevronsRight className="w-4 h-4" />
                 </button>
+                
+                {/* Loading indicator */}
+                {pageLoading && (
+                  <span className="ml-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                  </span>
+                )}
               </div>
             </div>
           )}
