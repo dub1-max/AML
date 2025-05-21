@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search, FileText, Shield, LogOut, Link, Users, CreditCard, ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -30,22 +30,45 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    
     // Local state to handle dropdown when handleDeepLinkClick is not provided
     const [isDeepLinkOpen, setIsDeepLinkOpen] = useState(activeSection === 'deepLink');
     // Store last known credit value to prevent flashing "..." when switching tabs
     const [lastKnownCredit, setLastKnownCredit] = useState(credits);
+    // Store the last active section before navigating away
+    const [previousSection, setPreviousSection] = useState<string | null>(null);
 
     // Update lastKnownCredit whenever credits changes and is not in loading state
-    React.useEffect(() => {
+    useEffect(() => {
         if (!loadingCredits && typeof credits === 'number') {
             setLastKnownCredit(credits);
         }
     }, [credits, loadingCredits]);
+    
+    // Keep track of the current section to restore it when returning from credits
+    useEffect(() => {
+        if (activeSection !== 'credits' && activeSection !== previousSection) {
+            setPreviousSection(activeSection);
+        }
+    }, [activeSection, previousSection]);
 
     // Default handlers if not provided
     const defaultNavHandler = (section: string) => {
         console.log(`Navigation to: ${section}`);
-        navigate('/mainapp');
+        
+        // If current location is credits page and we're navigating to another tab
+        if (location.pathname === '/credits' && section !== 'credits') {
+            // Navigate back to mainapp with the selected section
+            navigate('/mainapp', { state: { activeSection: section } });
+        } else {
+            // Normal navigation within mainapp
+            if (handleSidebarNavigation) {
+                handleSidebarNavigation(section);
+            } else {
+                navigate('/mainapp');
+            }
+        }
     };
 
     const defaultDeepLinkHandler = () => {
@@ -71,6 +94,11 @@ const Layout: React.FC<LayoutProps> = ({
     const isDropdownOpen = activeSection === 'deepLink' || isDeepLinkOpen;
 
     const handleCreditsClick = () => {
+        // Store the current section before navigating to credits
+        if (activeSection !== 'credits') {
+            setPreviousSection(activeSection);
+        }
+        // Navigate to credits page
         navigate('/credits');
     };
 

@@ -43,6 +43,7 @@ interface MainAppProps { }
 
 function MainApp(_props: MainAppProps) {
     const { user, logout } = useAuth();
+    const location = useLocation();
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -54,6 +55,21 @@ function MainApp(_props: MainAppProps) {
     const [deepLinkSubSection, setDeepLinkSubSection] = useState<'individual' | 'company' | null>(null);
     const [showIndividualOB, setShowIndividualOB] = useState(false);
     const [showCompanyOB, setShowCompanyOB] = useState(false);
+    
+    // Handle navigation back from credits page
+    useEffect(() => {
+        // Check if we have state when returning from another route (like credits)
+        if (location.state && location.state.activeSection) {
+            console.log('Restoring section from router state:', location.state.activeSection);
+            setActiveSection(location.state.activeSection);
+            setShowCompanyOB(false);
+            setShowIndividualOB(false);
+            setShowDashboard(location.state.activeSection === 'insights');
+            
+            // Clear the state to prevent it from being applied again
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
     
     // Add state for pending approvals
     const [pendingApprovals, setPendingApprovals] = useState<{
@@ -350,6 +366,21 @@ function MainApp(_props: MainAppProps) {
         tracking,
         isLoading
     });
+    
+    // Handle navigation back from credits page
+    useEffect(() => {
+        // Check if we have state when returning from another route (like credits)
+        if (location.state && location.state.activeSection) {
+            console.log('Restoring section from router state:', location.state.activeSection);
+            setActiveSection(location.state.activeSection);
+            setShowCompanyOB(false);
+            setShowIndividualOB(false);
+            setShowDashboard(location.state.activeSection === 'insights');
+            
+            // Clear the state to prevent it from being applied again
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     // Update tracking with optimistic updates
     const updateTracking = useCallback(async (name: string, newTrackingStatus: boolean) => {
