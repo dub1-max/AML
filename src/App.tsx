@@ -69,8 +69,8 @@ function App() {
                         <Route path="/mainapp" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
                         <Route path="/edit-profile/:id" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
                         <Route path="/credits" element={<ProtectedRoute><Credits /></ProtectedRoute>} />
-                        {/* Direct to KYCSync documentation without a double redirect */}
-                        <Route path="/" element={<Navigate to="/kycbox/index.html" replace />} />
+                        {/* Root path is handled by the static index.html file in the public folder */}
+                        <Route path="/*" element={null} />
                     </Routes>
                 </Suspense>
             </AuthProvider>
