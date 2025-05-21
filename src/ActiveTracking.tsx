@@ -508,6 +508,25 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                                 <span className="ml-2 text-xs text-red-600">Blacklisted</span>
                                             </div>
                                         )}
+                                        <div className="mt-1 text-xs text-center">
+                                            {result.dataset ? (
+                                                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                                    {result.dataset === 'onboarded' 
+                                                        ? 'Onboarded' 
+                                                        : result.dataset.includes('peps') 
+                                                            ? 'PEP' 
+                                                            : result.dataset.includes('terrorists') 
+                                                                ? 'Terrorist' 
+                                                                : result.dataset.includes('sanctions') 
+                                                                    ? 'Sanctions' 
+                                                                    : result.dataset.includes('debarment') 
+                                                                        ? 'Debarred' 
+                                                                        : result.dataset}
+                                                </span>
+                                            ) : (
+                                                <span>-</span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="py-4 px-6 text-center">
                                         <div className="flex justify-center">
