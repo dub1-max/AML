@@ -1,4 +1,232 @@
-import jsPDF from 'jspdf';import html2canvas from 'html2canvas';import { SearchResult } from '../types';export const generateCustomerPDF = async (person: SearchResult) => {    // Create a PDF document    const pdf = new jsPDF('p', 'mm', 'a4');    const pageWidth = pdf.internal.pageSize.getWidth();        // Set fonts    pdf.setFont("helvetica");        // Add logo (placeholder for actual logo)    pdf.setFontSize(26);    pdf.setTextColor(112, 48, 160); // Purple color for IDENFO    pdf.text("IDENFO", pageWidth - 50, 20);    pdf.setFontSize(20);    pdf.setTextColor(250, 200, 0); // Yellow color for direct    pdf.text("direct", pageWidth - 20, 20, { align: 'left' });    pdf.setTextColor(0, 0, 0); // Reset to black        // Screening Hit Details Section    pdf.setFontSize(18);    pdf.text("Screening Hit Details", 14, 40);        // Table headers for Hit Details    const createTableHeader = (yPos: number) => {        pdf.setFillColor(230, 230, 230);        pdf.rect(14, yPos, pageWidth - 28, 8, 'F');        pdf.setFontSize(10);        pdf.setFont("helvetica", "bold");        pdf.text("Hit Details", 16, yPos + 5);        pdf.text("Keyword", 75, yPos + 5);        pdf.text("Source", 130, yPos + 5);        pdf.text("Score", 170, yPos + 5);        pdf.text("Hit Determination", 180, yPos + 5);        pdf.text("Comments", 235, yPos + 5);    };        createTableHeader(45);        // Add Hit Details data    pdf.setFont("helvetica", "normal");    pdf.setFontSize(9);        // Get simple dataset without the URL/link    const getDatasetText = (dataset: string): string => {        if (!dataset) return 'Unknown';                if (dataset === 'onboarded') return 'Onboarded';        if (dataset.includes('peps')) return 'PEP';        if (dataset.includes('terrorists')) return 'Terrorist';        if (dataset.includes('sanctions')) return 'Sanctions';        if (dataset.includes('debarment')) return 'Debarred';                return dataset;    };        // Add Audit section    pdf.setFontSize(18);    pdf.text("Audit", 14, 65);        // Table headers for Audit    createTableHeader(70);        // Add audit data    const today = new Date();    const formattedDate = today.toLocaleDateString('en-US', {         day: 'numeric',         month: 'long',         year: 'numeric'     });    const time = today.toLocaleTimeString('en-US', {        hour: '2-digit',        minute: '2-digit',        second: '2-digit',        hour12: false    });        pdf.setFont("helvetica", "normal");    pdf.setFontSize(9);    pdf.text(formattedDate + ", " + time, 16, 80);    pdf.text("System User", 75, 80);    pdf.text("Name Screening has been approved", 180, 80);        // Add Sanctions sources explanation box    pdf.setFillColor(240, 240, 240);    pdf.rect(14, 90, pageWidth - 28, 70, 'F');        pdf.setFontSize(10);    const sources = [        { name: "HMT", desc: "– His Majesty's Treasury, UK, Financial sanctions targets; list of all asset freeze targets" },        { name: "EU", desc: "– Consolidated list of persons, groups and entities subject to European Union financial sanctions" },        { name: "OFAC", desc: "– US Treasury, Office of Foreign Assets Control, Specially Designated Nationals And Blocked Persons List (SDN)" },        { name: "UN", desc: "– United Nations Security Council Consolidated Sanction list" },        { name: "MOI", desc: "– Qatari unified record of persons and entities designated on Sanction List" },        { name: "NACTA", desc: "– Pakistani National Counter Terrorism Authority Sanction List" },        { name: "UAE Local Terrorist", desc: "– List produced by UAE Executive Office for Control & Non Proliferation" },    ];        let yPos = 95;    sources.forEach(source => {        pdf.setFont("helvetica", "bold");        pdf.text(source.name, 20, yPos);        pdf.setFont("helvetica", "normal");        pdf.text(source.desc, 60, yPos);        yPos += 10;    });        // Add Customer Information section    pdf.setFontSize(18);    pdf.text("Customer Information", 14, 175);        // Table for customer info    const addRow = (label: string, value: string, yPos: number) => {        // Add gray background for every other row        if (yPos % 14 === 0) {            pdf.setFillColor(240, 240, 240);            pdf.rect(14, yPos - 5, pageWidth - 28, 10, 'F');        }                pdf.setFont("helvetica", "normal");        pdf.setFontSize(10);        pdf.text(label, 16, yPos);        pdf.text(value || 'N/A', 80, yPos);    };        let infoYPos = 185;    addRow("Idenfo Id", person.id.toString(), infoYPos);    infoYPos += 10;    addRow("Full Name", person.name, infoYPos);    infoYPos += 10;    addRow("Country of Residence", person.country || 'N/A', infoYPos);    infoYPos += 10;    addRow("Resident Status", "Resident", infoYPos);    infoYPos += 10;    addRow("Date of Birth", "N/A", infoYPos);    infoYPos += 10;    addRow("Nationality", person.country || 'N/A', infoYPos);    infoYPos += 10;    addRow("Delivery Channel", "Face to Face", infoYPos);    infoYPos += 10;    addRow("Name Screening Hit", person.dataset && person.dataset !== 'onboarded' ? "YES" : "NO", infoYPos);    infoYPos += 10;    addRow("Documents Verification Hit", "NO", infoYPos);    infoYPos += 10;    addRow("Risk Rating Hit", "NO", infoYPos);    infoYPos += 10;    addRow("Status", "approved", infoYPos);    infoYPos += 10;    addRow("Category", getDatasetText(person.dataset), infoYPos);        // Add Key Findings section    pdf.setFontSize(18);    pdf.text("Key Findings", 14, infoYPos + 20);        // Table for key findings    infoYPos += 30;    addRow("Total Matches", "0", infoYPos);    infoYPos += 10;    addRow("Resolved Matches", "0", infoYPos);    pdf.text("Genuine: 0", 150, infoYPos);    pdf.text("Not Genuine: 0", 200, infoYPos);    infoYPos += 10;    addRow("Unresolved Matches", "0", infoYPos);        // Risk Ratings section    pdf.setFontSize(18);    pdf.text("Risk Ratings", 14, infoYPos + 20);        // Create risk factor table header    infoYPos += 30;    pdf.setFillColor(230, 230, 230);    pdf.rect(14, infoYPos - 5, pageWidth - 28, 10, 'F');    pdf.setFont("helvetica", "bold");    pdf.text("Risk factor matrix", 16, infoYPos);    pdf.text("Score", 150, infoYPos);    pdf.text("Level", 200, infoYPos);        // Risk factor data    const riskLevelText = person.riskLevel >= 85 ? "high" : person.riskLevel >= 60 ? "medium" : "low";    infoYPos += 10;    addRow("Country of Residence", "5", infoYPos);    pdf.text("medium", 200, infoYPos);    infoYPos += 10;    addRow("Base Rating", "5", infoYPos);    pdf.text(riskLevelText, 200, infoYPos);    infoYPos += 10;    addRow("Overall Rating", riskLevelText, infoYPos);    pdf.text(riskLevelText, 200, infoYPos);
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { SearchResult } from '../types';
+
+export const generateCustomerPDF = async (person: SearchResult) => {
+    // Create a PDF document
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    
+    // Set fonts
+    pdf.setFont("helvetica");
+    
+    // Add logo
+    // Add logo placeholder and company name
+    pdf.setTextColor(85, 37, 131); // Purple color for IDENFO
+    pdf.setFontSize(32);
+    pdf.text("IDENFO", pageWidth - 60, 20);
+    pdf.setTextColor(245, 188, 0); // Yellow/gold color
+    pdf.setFontSize(24);
+    pdf.text("direct", pageWidth - 33, 20);
+    pdf.setTextColor(0, 0, 0); // Reset to black
+    
+    // Add Screening Hit Details section
+    pdf.setFontSize(16);
+    pdf.text("Screening Hit Details", 14, 40);
+    
+    // Add table headers
+    const tableTop = 45;
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(14, tableTop, pageWidth - 28, 7, 'F');
+    
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text("Hit Details", 16, tableTop + 5);
+    pdf.text("Keyword", 75, tableTop + 5);
+    pdf.text("Source", 130, tableTop + 5);
+    pdf.text("Score", 170, tableTop + 5);
+    pdf.text("Hit Determination", 190, tableTop + 5);
+    pdf.text("Comments", pageWidth - 16, tableTop + 5, { align: 'right' });
+    
+    // Add Audit section
+    let currentY = tableTop + 15;
+    pdf.setFontSize(16);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text("Audit", 14, currentY);
+    
+    // Audit table
+    currentY += 5;
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(14, currentY, pageWidth - 28, 7, 'F');
+    
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text("Date", 16, currentY + 5);
+    pdf.text("Actioned By", 60, currentY + 5);
+    pdf.text("Action", 150, currentY + 5);
+    
+    // Add audit data
+    currentY += 7;
+    pdf.setTextColor(0, 0, 0);
+    const today = new Date().toISOString().split('T')[0].replace(/-/g, ' ');
+    pdf.text(today, 16, currentY + 5);
+    pdf.text("RESPECT CORPORATE SERVICES PROVIDER LLC", 60, currentY + 5);
+    pdf.text("Registered new customer into the system.", 150, currentY + 5);
+    
+    // Add second row
+    currentY += 7;
+    pdf.text(today, 16, currentY + 5);
+    pdf.text("System User", 60, currentY + 5);
+    pdf.text("Name Screening has been approved", 150, currentY + 5);
+    
+    // Add Sanction Lists section
+    currentY += 15;
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(14, currentY, pageWidth - 28, 95, 'F');
+    
+    // Add sanction list entries - these are the categories
+    currentY += 10;
+    const lists = [
+        { name: "HMT", desc: "– His Majesty's Treasury, UK, Financial sanctions targets; list of all asset freeze targets" },
+        { name: "EU", desc: "– Consolidated list of persons, groups and entities subject to European Union financial sanctions" },
+        { name: "OFAC", desc: "– US Treasury, Office of Foreign Assets Control, Specially Designated Nationals And Blocked Persons List (SDN)" },
+        { name: "UN", desc: "– United Nations Security Council Consolidated Sanction list" },
+        { name: "MOI", desc: "– Qatari unified record of persons and entities designated on Sanction List" },
+        { name: "NACTA", desc: "– Pakistani National Counter Terrorism Authority Sanction List" },
+        { name: "UAE Local Terrorist", desc: "– List produced by UAE Executive Office for Control & Non Proliferation" }
+    ];
+    
+    lists.forEach(list => {
+        pdf.setFontSize(10);
+        pdf.text(`${list.name} ${list.desc}`, 20, currentY);
+        currentY += 6;
+    });
+    
+    // Customer Information section
+    currentY += 20;
+    pdf.setFontSize(16);
+    pdf.text("Customer Information", 14, currentY);
+    
+    // Customer info table
+    currentY += 10;
+    const addInfoRow = (label: string, value: string, labelX: number, valueX: number) => {
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
+        
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(label, labelX, currentY);
+        
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(value || 'N/A', valueX, currentY);
+        
+        currentY += 7;
+    };
+    
+    // Create rows with proper alignment
+    addInfoRow("Idenfo Id", person.id.toString(), 16, 100);
+    addInfoRow("Full Name", person.name, 16, 100);
+    addInfoRow("Country of Residence", person.country || "N/A", 16, 100);
+    addInfoRow("Resident Status", "Resident Expat", 16, 100);
+    addInfoRow("Date of Birth", "N/A", 16, 100);
+    addInfoRow("Nationality", person.country || "N/A", 16, 100);
+    addInfoRow("Delivery Channel", "Face to Face", 16, 100);
+    addInfoRow("National ID Document Number", "N/A", 16, 100);
+    addInfoRow("ID Expiry Date", "N/A", 16, 100);
+    
+    // Display category info instead of dataset URL
+    const getCategoryFromDataset = (dataset: string) => {
+        if (dataset === 'onboarded') return 'Onboarded';
+        if (dataset.includes('peps')) return 'PEP';
+        if (dataset.includes('terrorists')) return 'Terrorist';
+        if (dataset.includes('sanctions')) return 'Sanctions';
+        if (dataset.includes('debarment')) return 'Debarred';
+        return dataset;
+    };
+    
+    addInfoRow("Name Screening Hit", person.dataset !== 'onboarded' ? "YES" : "NO", 16, 100);
+    addInfoRow("Category", getCategoryFromDataset(person.dataset), 16, 100);
+    
+    // Key Findings section
+    currentY += 10;
+    pdf.setFontSize(16);
+    pdf.text("Key Findings", 14, currentY);
+    
+    currentY += 10;
+    addInfoRow("Total Matches", "0", 16, 100);
+    addInfoRow("Resolved Matches", "0", 16, 100);
+    addInfoRow("Unresolved Matches", "0", 16, 100);
+    
+    // Risk Ratings
+    currentY += 10;
+    pdf.setFontSize(16);
+    pdf.text("Risk Ratings", 14, currentY);
+    
+    currentY += 10;
+    // Risk factor matrix header
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
+    
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text("Risk factor matrix", 16, currentY);
+    pdf.text("Score", 150, currentY);
+    pdf.text("Level", 180, currentY);
+    
+    currentY += 7;
+    
+    // Risk factors data
+    const riskFactors = [
+        { name: "Country of Residence", score: 5, level: "medium" },
+        { name: "Delivery Channel", score: 0, level: "low" },
+        { name: "Industry", score: 0, level: "low" },
+        { name: "Nationality", score: 0, level: "low" },
+        { name: "Product", score: 0, level: "low" },
+        { name: "PEP", score: 0, level: "low" },
+        { name: "Document Verification", score: 0, level: "low" },
+        { name: "Base Rating", score: 5, level: "low" }
+    ];
+    
+    riskFactors.forEach(factor => {
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
+        
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(factor.name, 16, currentY);
+        pdf.text(factor.score.toString(), 150, currentY);
+        pdf.text(factor.level, 180, currentY);
+        
+        currentY += 7;
+    });
+    
+    // Risk factor override section
+    currentY += 7;
+    pdf.setFillColor(240, 240, 240);
+    pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
+    
+    pdf.setTextColor(100, 100, 100);
+    pdf.text("Risk factor override", 16, currentY);
+    pdf.text("Override To", 150, currentY);
+    pdf.text("Level", 180, currentY);
+    
+    currentY += 7;
+    
+    // Override factors data
+    const overrideFactors = [
+        { name: "Suspicious Transaction Report filed", override: "N/A", level: "low" },
+        { name: "Non Resident", override: "N/A", level: "low" },
+        { name: "Residence Country is Sanctioned", override: "N/A", level: "low" },
+        { name: "Nationality Country is Sanctioned", override: "N/A", level: "low" },
+        { name: "Contact No. Code Country is Sanctioned", override: "N/A", level: "low" },
+        { name: "Sanction Hit", override: "N/A", level: "low" },
+        { name: "PEP", override: "N/A", level: "low" },
+        { name: "Special Interest Hit", override: "N/A", level: "low" },
+        { name: "Document Verification", override: "N/A", level: "low" },
+        { name: "Adverse Media Hit", override: "N/A", level: "low" },
+        { name: "Overall Rating", override: "low", level: "low" }
+    ];
+    
+    overrideFactors.forEach(factor => {
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
+        
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(factor.name, 16, currentY);
+        pdf.text(factor.override, 150, currentY);
+        pdf.text(factor.level, 180, currentY);
+        
+        currentY += 7;
+    });
     
     // Add disclaimer at the bottom
     const disclaimer = "This report is generated automatically for AML compliance purposes. This document contains confidential information and should be handled accordingly.";
