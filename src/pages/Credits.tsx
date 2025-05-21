@@ -91,7 +91,7 @@ const Credits: React.FC<CreditsProps> = () => {
         // Load PayPal SDK
         const loadPayPalScript = () => {
             const script = document.createElement('script');
-            script.src = "https://www.paypal.com/sdk/js?client-id=AW_r5mx6frqH8LQR7iXk6x8H9UYQpZ6KtUJlz9paGXi4P5DGQM4E-IZrYHPt4MxlG-jnIm6Pv-9HFf15&currency=USD";
+            script.src = "https://www.paypal.com/sdk/js?client-id=AW_r5mx6frqH8LQR7iXk6x8H9UYQpZ6KtUJlz9paGXi4P5DGQM4E-IZrYHPt4MxlG-jnIm6Pv-9HFf15&currency=AED";
             script.async = true;
             script.onload = () => {
                 console.log('PayPal SDK loaded');
@@ -128,7 +128,7 @@ const Credits: React.FC<CreditsProps> = () => {
                                 purchase_units: [{
                                     amount: {
                                         value: purchaseAmount.toString(),
-                                        currency_code: 'USD'
+                                        currency_code: 'AED'
                                     },
                                     description: `Purchase ${purchaseAmount} credits for AML Checker`
                                 }]
@@ -321,9 +321,9 @@ const Credits: React.FC<CreditsProps> = () => {
     };
 
     const creditPackages = [
-        { amount: 50, price: '$50', popular: false },
-        { amount: 100, price: '$100', popular: true },
-        { amount: 200, price: '$200', popular: false },
+        { amount: 50, price: '185 AED', popular: false },
+        { amount: 100, price: '370 AED', popular: true },
+        { amount: 200, price: '740 AED', popular: false },
     ];
 
     return (
@@ -443,7 +443,6 @@ const Credits: React.FC<CreditsProps> = () => {
                                 <div className="text-center">
                                     <div className="text-lg font-bold">{pkg.amount} Credits</div>
                                     <div className="text-2xl font-bold text-purple-600 mt-2">{pkg.price}</div>
-                                    <div className="text-xs text-gray-500 mt-1">USD</div>
                                 </div>
                             </div>
                         ))}
