@@ -43,6 +43,7 @@ interface MainAppProps { }
 
 function MainApp(_props: MainAppProps) {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const location = useLocation();
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -100,8 +101,7 @@ function MainApp(_props: MainAppProps) {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [totalResults, setTotalResults] = useState<number>(0);
     
-    const navigate = useNavigate();
-    const location = useLocation();
+    // Navigation hooks are already declared at the top
 
     // Cache duration in milliseconds (5 minutes)
     const CACHE_DURATION = 5 * 60 * 1000;
