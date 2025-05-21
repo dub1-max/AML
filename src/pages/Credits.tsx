@@ -321,9 +321,9 @@ const Credits: React.FC<CreditsProps> = () => {
     };
 
     const creditPackages = [
-        { amount: 50, price: '185 AED', popular: false },
-        { amount: 100, price: '370 AED', popular: true },
-        { amount: 200, price: '740 AED', popular: false },
+        { amount: 50, price: '100 AED', popular: false },
+        { amount: 100, price: '200 AED', popular: true },
+        { amount: 200, price: '400 AED', popular: false },
     ];
 
     return (
