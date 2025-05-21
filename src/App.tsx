@@ -69,7 +69,8 @@ function App() {
                         <Route path="/mainapp" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
                         <Route path="/edit-profile/:id" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
                         <Route path="/credits" element={<ProtectedRoute><Credits /></ProtectedRoute>} />
-                        <Route path="/" element={<Navigate to="/kycbox/index.html" replace />} />
+                        {/* This redirect should trigger our custom index.html in the public folder */}
+                        <Route path="/" element={<Navigate to="/index.html" replace />} />
                     </Routes>
                 </Suspense>
             </AuthProvider>
