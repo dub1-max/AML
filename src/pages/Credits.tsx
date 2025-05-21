@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Loader2, CreditCard as CreditCardIcon } from 'lucide-react';
+import { CreditCard, Loader2, CreditCard as CreditCardIcon, CheckCircle, Star } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import Layout from '../components/Layout';
 import { getApiBaseUrl } from '../config';
@@ -15,6 +15,16 @@ declare global {
 
 interface CreditsProps {}
 
+interface SubscriptionPlan {
+    id: string;
+    name: string;
+    price: number;
+    currency: string;
+    profileLimit: number;
+    isPopular: boolean;
+    isActive: boolean;
+}
+
 const Credits: React.FC<CreditsProps> = () => {
     const { user } = useAuth();
     const [credits, setCredits] = useState<number>(0);
@@ -23,12 +33,55 @@ const Credits: React.FC<CreditsProps> = () => {
     const [processingPayment, setProcessingPayment] = useState<boolean>(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'paypal' | 'card'>('paypal');
     
+    // Subscription state
+    const [loadingSubscription, setLoadingSubscription] = useState<boolean>(true);
+    const [activeSubscription, setActiveSubscription] = useState<SubscriptionPlan | null>(null);
+    const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([
+        {
+            id: 'starter',
+            name: 'Starter',
+            price: 200,
+            currency: 'AED',
+            profileLimit: 100,
+            isPopular: false,
+            isActive: false
+        },
+        {
+            id: 'essential',
+            name: 'Essential',
+            price: 500, 
+            currency: 'AED',
+            profileLimit: 250,
+            isPopular: true,
+            isActive: false
+        },
+        {
+            id: 'business',
+            name: 'Business',
+            price: 1000,
+            currency: 'AED',
+            profileLimit: 500,
+            isPopular: false,
+            isActive: false
+        },
+        {
+            id: 'corporate',
+            name: 'Corporate',
+            price: 1500,
+            currency: 'AED',
+            profileLimit: 750,
+            isPopular: false,
+            isActive: false
+        }
+    ]);
+    
     // PayPal script loading state
     const [paypalReady, setPaypalReady] = useState<boolean>(false);
     const [paypalError, setPaypalError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchCredits();
+        fetchSubscription();
         
         // Load PayPal SDK
         const loadPayPalScript = () => {
@@ -158,11 +211,51 @@ const Credits: React.FC<CreditsProps> = () => {
             setLoadingCredits(false);
         }
     };
+    
+    const fetchSubscription = async () => {
+        try {
+            setLoadingSubscription(true);
+            // This endpoint doesn't exist yet - you'll need to implement it
+            const response = await fetch(`${API_BASE_URL}/subscription`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.subscription) {
+                    setActiveSubscription(data.subscription);
+                    
+                    // Update subscription plans to mark active plan
+                    setSubscriptionPlans(prevPlans => 
+                        prevPlans.map(plan => ({
+                            ...plan,
+                            isActive: plan.id === data.subscription.id
+                        }))
+                    );
+                }
+            } else {
+                // If endpoint doesn't exist yet or no subscription, we'll show defaults
+                console.log('No active subscription or endpoint not available');
+            }
+        } catch (error) {
+            console.error('Error fetching subscription:', error);
+        } finally {
+            setLoadingSubscription(false);
+        }
+    };
 
     // Legacy method (will be replaced with PayPal)
     const handlePurchase = async () => {
         // This is kept for backward compatibility
         alert(`Please use PayPal to purchase credits`);
+    };
+    
+    const handleSubscriptionSelect = async (planId: string) => {
+        alert(`Subscription selection for ${planId} will be implemented in a future update.`);
     };
 
     const creditPackages = [
@@ -196,6 +289,75 @@ const Credits: React.FC<CreditsProps> = () => {
                             <div className="text-4xl font-bold text-purple-700">{credits}</div>
                             <p className="text-gray-500 mt-1">Available credits</p>
                         </div>
+                    )}
+                </div>
+                
+                {/* Subscription Plans Section */}
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+                    <h2 className="text-2xl font-bold text-center text-purple-700 mb-2">Subscription Plans</h2>
+                    <p className="text-center text-gray-600 mb-8">Choose the plan that fits your business needs</p>
+                    
+                    {loadingSubscription ? (
+                        <div className="flex justify-center items-center py-8">
+                            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                            <span className="ml-2">Loading subscription details...</span>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                {subscriptionPlans.map(plan => (
+                                    <div 
+                                        key={plan.id}
+                                        className={`relative rounded-lg border ${plan.isActive ? 'border-purple-500 ring-2 ring-purple-300' : 'border-gray-200'} 
+                                        p-6 flex flex-col items-center transition-all hover:shadow-md`}
+                                    >
+                                        {plan.isActive && (
+                                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-purple-600 text-xs text-white px-3 py-1 rounded-full flex items-center">
+                                                <CheckCircle className="w-3 h-3 mr-1" />
+                                                CURRENT PLAN
+                                            </div>
+                                        )}
+                                        
+                                        {plan.isPopular && !plan.isActive && (
+                                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-xs text-yellow-800 px-3 py-1 rounded-full">
+                                                Most Popular
+                                            </div>
+                                        )}
+                                        
+                                        <h3 className="text-xl font-bold text-gray-800 mb-6">{plan.name}</h3>
+                                        
+                                        <div className="text-5xl font-bold text-purple-600 mb-1">
+                                            {plan.price}
+                                            <span className="text-base font-normal text-gray-500 ml-1">{plan.currency}/Year</span>
+                                        </div>
+                                        
+                                        <div className="text-gray-600 my-4">Up to {plan.profileLimit} profiles</div>
+                                        <div className="text-xs text-gray-500 mb-6">All prices are exclusive of VAT</div>
+                                        
+                                        <button
+                                            onClick={() => handleSubscriptionSelect(plan.id)}
+                                            className={`px-6 py-2 rounded-md transition-colors
+                                                ${plan.isActive 
+                                                    ? 'bg-gray-200 text-gray-500 cursor-default' 
+                                                    : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                                            disabled={plan.isActive}
+                                        >
+                                            {plan.isActive ? 'Current Plan' : 'Get Started'}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div className="text-center mt-10">
+                                <h3 className="text-xl font-semibold text-gray-700 mb-4">Need something custom?</h3>
+                                <button 
+                                    onClick={() => alert('Contact sales feature will be implemented in a future update.')}
+                                    className="border border-purple-600 text-purple-700 hover:bg-purple-50 py-2 px-6 rounded-md transition-colors"
+                                >
+                                    Talk to Sales
+                                </button>
+                            </div>
+                        </>
                     )}
                 </div>
                 
