@@ -10,71 +10,61 @@ export const generateCustomerPDF = async (person: SearchResult) => {
     // Set fonts
     pdf.setFont("helvetica");
     
-    // Add logo
-    // Add logo placeholder and company name
-    pdf.setTextColor(85, 37, 131); // Purple color for IDENFO
-    pdf.setFontSize(32);
-    pdf.text("IDENFO", pageWidth - 60, 20);
-    pdf.setTextColor(245, 188, 0); // Yellow/gold color
-    pdf.setFontSize(24);
-    pdf.text("direct", pageWidth - 33, 20);
-    pdf.setTextColor(0, 0, 0); // Reset to black
-    
-    // Add Screening Hit Details section
+    // Screening Hit Details header
     pdf.setFontSize(16);
-    pdf.text("Screening Hit Details", 14, 40);
+    pdf.text("Screening Hit Details", 26, 30);
     
     // Add table headers
-    const tableTop = 45;
+    const tableTop = 36;
     pdf.setFillColor(240, 240, 240);
-    pdf.rect(14, tableTop, pageWidth - 28, 7, 'F');
+    pdf.rect(26, tableTop, pageWidth - 52, 7, 'F');
     
     pdf.setFontSize(9);
     pdf.setTextColor(100, 100, 100);
-    pdf.text("Hit Details", 16, tableTop + 5);
-    pdf.text("Keyword", 75, tableTop + 5);
-    pdf.text("Source", 130, tableTop + 5);
-    pdf.text("Score", 170, tableTop + 5);
-    pdf.text("Hit Determination", 190, tableTop + 5);
-    pdf.text("Comments", pageWidth - 16, tableTop + 5, { align: 'right' });
+    pdf.text("Hit Details", 28, tableTop + 5);
+    pdf.text("Keyword", 87, tableTop + 5);
+    pdf.text("Source", 142, tableTop + 5);
+    pdf.text("Score", 182, tableTop + 5);
+    pdf.text("Hit Determination", pageWidth - 68, tableTop + 5);
+    pdf.text("Comments", pageWidth - 28, tableTop + 5);
     
     // Add Audit section
     let currentY = tableTop + 15;
     pdf.setFontSize(16);
     pdf.setTextColor(0, 0, 0);
-    pdf.text("Audit", 14, currentY);
+    pdf.text("Audit", 26, currentY);
     
     // Audit table
     currentY += 5;
     pdf.setFillColor(240, 240, 240);
-    pdf.rect(14, currentY, pageWidth - 28, 7, 'F');
+    pdf.rect(26, currentY, pageWidth - 52, 7, 'F');
     
     pdf.setFontSize(9);
     pdf.setTextColor(100, 100, 100);
-    pdf.text("Date", 16, currentY + 5);
-    pdf.text("Actioned By", 60, currentY + 5);
-    pdf.text("Action", 150, currentY + 5);
+    pdf.text("Date", 28, currentY + 5);
+    pdf.text("Actioned By", 72, currentY + 5);
+    pdf.text("Action", 162, currentY + 5);
     
     // Add audit data
     currentY += 7;
     pdf.setTextColor(0, 0, 0);
-    const today = new Date().toISOString().split('T')[0].replace(/-/g, ' ');
-    pdf.text(today, 16, currentY + 5);
-    pdf.text("RESPECT CORPORATE SERVICES PROVIDER LLC", 60, currentY + 5);
-    pdf.text("Registered new customer into the system.", 150, currentY + 5);
+    const today = new Date().toLocaleDateString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, ' ');
+    pdf.text(today, 28, currentY + 5);
+    pdf.text("RESPECT CORPORATE SERVICES PROVIDER LLC", 72, currentY + 5);
+    pdf.text("Registered new customer into the system.", 162, currentY + 5);
     
     // Add second row
     currentY += 7;
-    pdf.text(today, 16, currentY + 5);
-    pdf.text("System User", 60, currentY + 5);
-    pdf.text("Name Screening has been approved", 150, currentY + 5);
+    pdf.text(today, 28, currentY + 5);
+    pdf.text("System User", 72, currentY + 5);
+    pdf.text("Name Screening has been approved", 162, currentY + 5);
     
     // Add Sanction Lists section
     currentY += 15;
     pdf.setFillColor(240, 240, 240);
-    pdf.rect(14, currentY, pageWidth - 28, 95, 'F');
+    pdf.rect(26, currentY, pageWidth - 52, 95, 'F');
     
-    // Add sanction list entries - these are the categories
+    // Add sanction list entries
     currentY += 10;
     const lists = [
         { name: "HMT", desc: "– His Majesty's Treasury, UK, Financial sanctions targets; list of all asset freeze targets" },
@@ -88,43 +78,44 @@ export const generateCustomerPDF = async (person: SearchResult) => {
     
     lists.forEach(list => {
         pdf.setFontSize(10);
-        pdf.text(`${list.name} ${list.desc}`, 20, currentY);
+        pdf.text(`${list.name} ${list.desc}`, 32, currentY);
         currentY += 6;
     });
     
     // Customer Information section
     currentY += 20;
     pdf.setFontSize(16);
-    pdf.text("Customer Information", 14, currentY);
+    pdf.text("Customer Information", 26, currentY);
     
     // Customer info table
     currentY += 10;
-    const addInfoRow = (label: string, value: string, labelX: number, valueX: number) => {
+    const addInfoRow = (label: string, value: string) => {
         pdf.setFillColor(240, 240, 240);
-        pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
+        pdf.rect(26, currentY - 4, pageWidth - 52, 7, 'F');
         
         pdf.setFontSize(9);
         pdf.setTextColor(100, 100, 100);
-        pdf.text(label, labelX, currentY);
+        pdf.text(label, 28, currentY);
         
         pdf.setTextColor(0, 0, 0);
+        const valueX = 100; // Fixed position for values
         pdf.text(value || 'N/A', valueX, currentY);
         
         currentY += 7;
     };
     
-    // Create rows with proper alignment
-    addInfoRow("Idenfo Id", person.id.toString(), 16, 100);
-    addInfoRow("Full Name", person.name, 16, 100);
-    addInfoRow("Country of Residence", person.country || "N/A", 16, 100);
-    addInfoRow("Resident Status", "Resident Expat", 16, 100);
-    addInfoRow("Date of Birth", "N/A", 16, 100);
-    addInfoRow("Nationality", person.country || "N/A", 16, 100);
-    addInfoRow("Delivery Channel", "Face to Face", 16, 100);
-    addInfoRow("National ID Document Number", "N/A", 16, 100);
-    addInfoRow("ID Expiry Date", "N/A", 16, 100);
+    // Create rows with actual customer data
+    addInfoRow("Idenfo Id", person.id.toString());
+    addInfoRow("Full Name", person.name);
+    addInfoRow("Country of Residence", person.country || "N/A");
+    addInfoRow("Resident Status", "Resident Expat");
+    addInfoRow("Date of Birth", "N/A");
+    addInfoRow("Nationality", person.country || "N/A");
+    addInfoRow("Delivery Channel", "Face to Face");
+    addInfoRow("National ID Document Number", "N/A");
+    addInfoRow("ID Expiry Date", "N/A");
     
-    // Display category info instead of dataset URL
+    // Display category info
     const getCategoryFromDataset = (dataset: string) => {
         if (dataset === 'onboarded') return 'Onboarded';
         if (dataset.includes('peps')) return 'PEP';
@@ -134,106 +125,25 @@ export const generateCustomerPDF = async (person: SearchResult) => {
         return dataset;
     };
     
-    addInfoRow("Name Screening Hit", person.dataset !== 'onboarded' ? "YES" : "NO", 16, 100);
-    addInfoRow("Category", getCategoryFromDataset(person.dataset), 16, 100);
+    addInfoRow("Name Screening Hit", person.dataset !== 'onboarded' ? "YES" : "NO");
+    addInfoRow("Category", getCategoryFromDataset(person.dataset));
     
     // Key Findings section
     currentY += 10;
     pdf.setFontSize(16);
-    pdf.text("Key Findings", 14, currentY);
+    pdf.text("Key Findings", 26, currentY);
     
     currentY += 10;
-    addInfoRow("Total Matches", "0", 16, 100);
-    addInfoRow("Resolved Matches", "0", 16, 100);
-    addInfoRow("Unresolved Matches", "0", 16, 100);
-    
-    // Risk Ratings
-    currentY += 10;
-    pdf.setFontSize(16);
-    pdf.text("Risk Ratings", 14, currentY);
-    
-    currentY += 10;
-    // Risk factor matrix header
-    pdf.setFillColor(240, 240, 240);
-    pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
-    
-    pdf.setFontSize(9);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text("Risk factor matrix", 16, currentY);
-    pdf.text("Score", 150, currentY);
-    pdf.text("Level", 180, currentY);
-    
-    currentY += 7;
-    
-    // Risk factors data
-    const riskFactors = [
-        { name: "Country of Residence", score: 5, level: "medium" },
-        { name: "Delivery Channel", score: 0, level: "low" },
-        { name: "Industry", score: 0, level: "low" },
-        { name: "Nationality", score: 0, level: "low" },
-        { name: "Product", score: 0, level: "low" },
-        { name: "PEP", score: 0, level: "low" },
-        { name: "Document Verification", score: 0, level: "low" },
-        { name: "Base Rating", score: 5, level: "low" }
-    ];
-    
-    riskFactors.forEach(factor => {
-        pdf.setFillColor(240, 240, 240);
-        pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
-        
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(factor.name, 16, currentY);
-        pdf.text(factor.score.toString(), 150, currentY);
-        pdf.text(factor.level, 180, currentY);
-        
-        currentY += 7;
-    });
-    
-    // Risk factor override section
-    currentY += 7;
-    pdf.setFillColor(240, 240, 240);
-    pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
-    
-    pdf.setTextColor(100, 100, 100);
-    pdf.text("Risk factor override", 16, currentY);
-    pdf.text("Override To", 150, currentY);
-    pdf.text("Level", 180, currentY);
-    
-    currentY += 7;
-    
-    // Override factors data
-    const overrideFactors = [
-        { name: "Suspicious Transaction Report filed", override: "N/A", level: "low" },
-        { name: "Non Resident", override: "N/A", level: "low" },
-        { name: "Residence Country is Sanctioned", override: "N/A", level: "low" },
-        { name: "Nationality Country is Sanctioned", override: "N/A", level: "low" },
-        { name: "Contact No. Code Country is Sanctioned", override: "N/A", level: "low" },
-        { name: "Sanction Hit", override: "N/A", level: "low" },
-        { name: "PEP", override: "N/A", level: "low" },
-        { name: "Special Interest Hit", override: "N/A", level: "low" },
-        { name: "Document Verification", override: "N/A", level: "low" },
-        { name: "Adverse Media Hit", override: "N/A", level: "low" },
-        { name: "Overall Rating", override: "low", level: "low" }
-    ];
-    
-    overrideFactors.forEach(factor => {
-        pdf.setFillColor(240, 240, 240);
-        pdf.rect(14, currentY - 4, pageWidth - 28, 7, 'F');
-        
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(factor.name, 16, currentY);
-        pdf.text(factor.override, 150, currentY);
-        pdf.text(factor.level, 180, currentY);
-        
-        currentY += 7;
-    });
+    addInfoRow("Total Matches", "0");
+    addInfoRow("Resolved Matches", "0");
+    addInfoRow("Unresolved Matches", "0");
     
     // Add disclaimer at the bottom
     const disclaimer = "This report is generated automatically for AML compliance purposes. This document contains confidential information and should be handled accordingly.";
     pdf.setFontSize(8);
     pdf.setTextColor(120, 120, 120);
     
-    const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - 40);
+    const splitDisclaimer = pdf.splitTextToSize(disclaimer, pageWidth - 60);
     pdf.text(splitDisclaimer, pageWidth / 2, 280, { align: 'center' });
     
     // Save PDF with person's name
