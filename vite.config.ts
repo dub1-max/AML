@@ -1,9 +1,26 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'redirect-kycbox',
+      configureServer(server) {
+        // Redirect /kycbox/index.html to root
+        server.middlewares.use((req, res, next) => {
+          if (req.url === '/kycbox/index.html') {
+            res.writeHead(301, { Location: '/' });
+            res.end();
+          } else {
+            next();
+          }
+        });
+      }
+    }
+  ],
   
   // Optimize dependencies
   optimizeDeps: {
