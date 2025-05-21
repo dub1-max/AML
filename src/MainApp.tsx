@@ -27,6 +27,8 @@ interface SearchCache {
     [key: string]: {
         results: SearchResult[];
         timestamp: number;
+        totalPages?: number;
+        totalResults?: number;
     };
 }
 
@@ -76,6 +78,11 @@ function MainApp(_props: MainAppProps) {
     // Add state for user credits
     const [credits, setCredits] = useState<number>(0);
     const [loadingCredits, setLoadingCredits] = useState<boolean>(false);
+    
+    // Inside MainApp, add state for pagination
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const [totalResults, setTotalResults] = useState<number>(0);
     
     const navigate = useNavigate();
     const location = useLocation();
@@ -558,19 +565,25 @@ function MainApp(_props: MainAppProps) {
         }
     };
 
-    const handleSearch = useCallback(async () => {
+    // Modify the handleSearch function to support pagination
+    const handleSearch = useCallback(async (page: number = 1) => {
         if ((!searchTerm && !searchId) || (searchTerm && searchTerm.length < MIN_SEARCH_LENGTH)) {
             setSearchResults([]);
+            setTotalPages(1);
+            setTotalResults(0);
             return;
         }
 
-        // Create cache key from search parameters
-        const cacheKey = `${searchTerm}-${searchId}`;
+        // Create cache key from search parameters including page number
+        const cacheKey = `${searchTerm}-${searchId}-page${page}`;
 
         // Check cache first
         const cachedData = searchCache[cacheKey];
         if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
             setSearchResults(cachedData.results || []);
+            setTotalPages(cachedData.totalPages || 1);
+            setTotalResults(cachedData.totalResults || 0);
+            setCurrentPage(page);
             return;
         }
 
@@ -580,6 +593,8 @@ function MainApp(_props: MainAppProps) {
             const url = new URL(`${API_BASE_URL}/persons/search`);
             if (searchTerm) url.searchParams.append('searchTerm', searchTerm);
             if (searchId) url.searchParams.append('searchId', searchId);
+            url.searchParams.append('page', page.toString());
+            url.searchParams.append('limit', '50'); // 50 results per page
 
             const response = await fetch(url.toString(), {
                 credentials: 'include',
@@ -595,18 +610,27 @@ function MainApp(_props: MainAppProps) {
 
             const responseData = await response.json();
             const results = Array.isArray(responseData.data) ? responseData.data : [];
+            const totalPagesFromServer = responseData.pagination?.totalPages || 1;
+            const totalResultsFromServer = responseData.pagination?.total || 0;
             
             // Update cache
             searchCache[cacheKey] = {
                 results,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                totalPages: totalPagesFromServer,
+                totalResults: totalResultsFromServer
             };
             
             setSearchResults(results);
-            console.log('Search results:', results.length); // Debug log
+            setTotalPages(totalPagesFromServer);
+            setTotalResults(totalResultsFromServer);
+            setCurrentPage(page);
+            console.log('Search results:', results.length, 'Page:', page, 'Total pages:', totalPagesFromServer); // Debug log
         } catch (error) {
             console.error('Search failed:', error);
             setSearchResults([]);
+            setTotalPages(1);
+            setTotalResults(0);
         } finally {
             setIsLoading(false);
         }
@@ -614,9 +638,16 @@ function MainApp(_props: MainAppProps) {
 
     // Create debounced search function
     const debouncedSearch = useCallback(
-        debounce(handleSearch, 300),
+        debounce(() => handleSearch(1), 300), // Reset to page 1 when search terms change
         [handleSearch]
     );
+
+    // Function to handle page changes
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            handleSearch(newPage);
+        }
+    };
 
     // Update search when terms change
     useEffect(() => {
@@ -1060,6 +1091,10 @@ function MainApp(_props: MainAppProps) {
                                  <Profiles 
                                      searchResults={searchResults} 
                                      isLoading={false}
+                                     currentPage={currentPage}
+                                     totalPages={totalPages}
+                                     totalResults={totalResults}
+                                     onPageChange={handlePageChange}
                                  />
                              )}
                         </div>
