@@ -26,15 +26,10 @@ export default defineConfig({
     },
     // Add source map for production debugging if needed
     sourcemap: true,
-    // Enable minification
-    minify: 'terser',
-    // Configure terser for better compression
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console logs in production
-        drop_debugger: true
-      }
-    }
+    // Use esbuild for minification instead of terser
+    minify: 'esbuild',
+    // Configure esbuild minify options
+    target: 'es2015',
   },
 
   // Improve server performance
