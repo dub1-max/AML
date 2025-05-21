@@ -288,7 +288,16 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
             return;
         }
 
-        // If turning on tracking, show confirmation dialog
+        // Check if this profile was ever tracked before (even if inactive now)
+        const wasEverTracked = name in tracking;
+        
+        // If profile was previously tracked, skip confirmation and just toggle
+        if (wasEverTracked) {
+            await onToggleTracking(name, newStatus);
+            return;
+        }
+
+        // Only show confirmation dialog for first-time tracking
         setConfirmDialog({
             isOpen: true,
             name,
