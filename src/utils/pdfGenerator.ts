@@ -10,25 +10,14 @@ export const generateCustomerPDF = async (person: SearchResult) => {
     // Set fonts
     pdf.setFont("helvetica");
     
-    // Screening Hit Details header
-    pdf.setFontSize(14);
-    pdf.text("Screening Hit Details", 20, 30);
+    // Add AML logo text in top left
+    pdf.setTextColor(85, 37, 131); // Purple color
+    pdf.setFontSize(24);
+    pdf.text("AML", 20, 20);
+    pdf.setTextColor(0, 0, 0); // Reset to black
     
-    // Add table headers
-    const tableTop = 36;
-    pdf.setFillColor(240, 240, 240);
-    pdf.rect(20, tableTop, pageWidth - 40, 7, 'F');
-    
-    pdf.setFontSize(9);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text("Hit Details", 22, tableTop + 5);
-    pdf.text("Keyword", 80, tableTop + 5);
-    pdf.text("Source", 135, tableTop + 5);
-    pdf.text("Hit Determination", 175, tableTop + 5);
-    pdf.text("Comments", pageWidth - 30, tableTop + 5);
-    
-    // Skip directly to Customer Information section
-    let currentY = tableTop + 15;
+    // Start directly with Customer Information section
+    let currentY = 40;
     pdf.setFontSize(14);
     pdf.setTextColor(0, 0, 0);
     pdf.text("Customer Information", 20, currentY);
@@ -49,16 +38,11 @@ export const generateCustomerPDF = async (person: SearchResult) => {
         currentY += 7;
     };
     
-    // Create rows with actual customer data
-    addInfoRow("Idenfo Id", person.id.toString());
+    // Create rows with only dynamic customer data
+    addInfoRow("ID", person.id.toString());
     addInfoRow("Full Name", person.name);
     addInfoRow("Country of Residence", person.country || "N/A");
-    addInfoRow("Resident Status", "Resident Expat");
-    addInfoRow("Date of Birth", "N/A");
     addInfoRow("Nationality", person.country || "N/A");
-    addInfoRow("Delivery Channel", "Face to Face");
-    addInfoRow("National ID Document Number", "N/A");
-    addInfoRow("ID Expiry Date", "N/A");
     
     // Display category info
     const getCategoryFromDataset = (dataset: string) => {
