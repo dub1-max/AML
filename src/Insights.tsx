@@ -20,6 +20,13 @@ interface Customer {
     type: 'individual' | 'company';
     createdAt: string;
     updatedAt?: string;
+    // Additional date field possibilities
+    created_at?: string;
+    registrationDate?: string;
+    registration_date?: string;
+    onboardingDate?: string;
+    onboarding_date?: string;
+    date?: string;
 }
 
 function Insights(_props: InsightsProps) {
@@ -183,6 +190,20 @@ function Insights(_props: InsightsProps) {
         }
     };
 
+    // Get customer's date for display (with fallbacks to multiple possible field names)
+    const getCustomerDate = (customer: any): string => {
+        // Check multiple possible date field names in both camelCase and snake_case formats
+        const dateValue = customer.createdAt || 
+                        customer.created_at || 
+                        customer.registrationDate || 
+                        customer.registration_date ||
+                        customer.onboardingDate ||
+                        customer.onboarding_date ||
+                        customer.date;
+        
+        return formatDate(dateValue);
+    };
+
     // Function to get customers by status
     const getCustomersByStatus = (status: string | null) => {
         if (status === null) {
@@ -257,7 +278,7 @@ function Insights(_props: InsightsProps) {
                                     <div className="text-sm text-gray-500">{customer.email || 'N/A'}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {formatDate(customer.createdAt)}
+                                    {getCustomerDate(customer)}
                                 </td>
                                 {status === null && (
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -356,7 +377,7 @@ function Insights(_props: InsightsProps) {
                                 </div>
                                 <div>
                                     <dt className="text-sm font-medium text-gray-500">Date Registered</dt>
-                                    <dd className="mt-1 text-sm text-gray-900">{formatDate(selectedCustomer.createdAt)}</dd>
+                                    <dd className="mt-1 text-sm text-gray-900">{getCustomerDate(selectedCustomer)}</dd>
                                 </div>
                                 
                                 {/* Display all available properties */}
