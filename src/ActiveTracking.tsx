@@ -318,6 +318,10 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
         
         // Then apply tracking change
         await onToggleTracking(name, pendingStatus);
+        
+        // Manually trigger a refresh of credits after confirming tracking
+        const refreshCreditsEvent = new CustomEvent('refresh-credits');
+        window.dispatchEvent(refreshCreditsEvent);
     };
 
     // Handle cancel from dialog

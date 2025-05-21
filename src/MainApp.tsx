@@ -434,6 +434,15 @@ function MainApp(_props: MainAppProps) {
                     timestamp: Date.now()
                 });
             }
+            
+            // If we're starting tracking for the first time, also refresh credits
+            if (newTrackingStatus && !tracking[name]?.isTracking) {
+                // Wait a bit to allow the server to process the credit deduction
+                setTimeout(() => {
+                    console.log('Refreshing credits after starting tracking');
+                    fetchUserCredits();
+                }, 500);
+            }
 
         } catch (error) {
             console.error('Error updating tracking:', error);
@@ -865,7 +874,18 @@ function MainApp(_props: MainAppProps) {
             fetchUserCredits();
         }, 30000); // Refresh every 30 seconds
         
-        return () => clearInterval(refreshInterval);
+        // Add event listener for custom refresh-credits event
+        const handleRefreshCredits = () => {
+            console.log('Refreshing credits from custom event');
+            fetchUserCredits();
+        };
+        
+        window.addEventListener('refresh-credits', handleRefreshCredits);
+        
+        return () => {
+            clearInterval(refreshInterval);
+            window.removeEventListener('refresh-credits', handleRefreshCredits);
+        };
     }, [fetchUserCredits, activeSection]);
     
     // Also refetch credits after handling profile approvals or rejections
