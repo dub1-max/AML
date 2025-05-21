@@ -78,6 +78,11 @@ const Credits: React.FC<CreditsProps> = () => {
     // PayPal script loading state
     const [paypalReady, setPaypalReady] = useState<boolean>(false);
     const [paypalError, setPaypalError] = useState<string | null>(null);
+    
+    // Processing states
+    const [purchasingSubscription, setPurchasingSubscription] = useState<boolean>(false);
+    const [purchaseSuccess, setPurchaseSuccess] = useState<boolean>(false);
+    const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchCredits();
@@ -255,7 +260,64 @@ const Credits: React.FC<CreditsProps> = () => {
     };
     
     const handleSubscriptionSelect = async (planId: string) => {
-        alert(`Subscription selection for ${planId} will be implemented in a future update.`);
+        if (activeSubscription?.id === planId) {
+            alert('You are already subscribed to this plan.');
+            return;
+        }
+        
+        const confirmed = window.confirm(`Are you sure you want to purchase the ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan? Your payment method will be charged accordingly.`);
+        
+        if (!confirmed) return;
+        
+        try {
+            setPurchasingSubscription(true);
+            setPurchaseError(null);
+            
+            // For demonstration, using manual payment
+            const response = await fetch(`${API_BASE_URL}/api/subscription/purchase`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    planId: planId,
+                    paymentMethod: 'manual',
+                    paymentId: `manual_${Date.now()}`
+                }),
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to purchase subscription');
+            }
+            
+            const result = await response.json();
+            
+            // Set purchase success and refresh subscription data
+            setPurchaseSuccess(true);
+            setActiveSubscription(result.subscription);
+            
+            // Update subscription plans to mark active plan
+            setSubscriptionPlans(prevPlans => 
+                prevPlans.map(plan => ({
+                    ...plan,
+                    isActive: plan.id === planId
+                }))
+            );
+            
+            // Show success message
+            alert(`Successfully subscribed to ${result.subscription.name} plan!`);
+            
+            // Refresh subscription data
+            await fetchSubscription();
+            
+        } catch (error: any) {
+            setPurchaseError(error.message || 'An error occurred while purchasing the subscription');
+            alert(`Error: ${error.message || 'Failed to purchase subscription'}`);
+        } finally {
+            setPurchasingSubscription(false);
+        }
     };
 
     const creditPackages = [
@@ -339,14 +401,40 @@ const Credits: React.FC<CreditsProps> = () => {
                                             className={`px-6 py-2 rounded-md transition-colors
                                                 ${plan.isActive 
                                                     ? 'bg-gray-200 text-gray-500 cursor-default' 
-                                                    : 'bg-purple-600 text-white hover:bg-purple-700'}`}
-                                            disabled={plan.isActive}
+                                                    : purchasingSubscription && plan.id === activeSubscription?.id
+                                                        ? 'bg-gray-300 text-gray-500 cursor-wait'
+                                                        : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                                            disabled={plan.isActive || purchasingSubscription}
                                         >
-                                            {plan.isActive ? 'Current Plan' : 'Get Started'}
+                                            {plan.isActive 
+                                                ? 'Current Plan' 
+                                                : purchasingSubscription && plan.id === activeSubscription?.id
+                                                    ? (
+                                                        <div className="flex items-center justify-center">
+                                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                                            Processing...
+                                                        </div>
+                                                    )
+                                                    : 'Get Started'
+                                            }
                                         </button>
                                     </div>
                                 ))}
                             </div>
+                            
+                            {purchaseError && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md mb-6">
+                                    <p className="font-semibold">Error!</p>
+                                    <p>{purchaseError}</p>
+                                </div>
+                            )}
+                            
+                            {purchaseSuccess && (
+                                <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-md mb-6">
+                                    <p className="font-semibold">Success!</p>
+                                    <p>Your subscription has been updated successfully.</p>
+                                </div>
+                            )}
                             
                             <div className="text-center mt-10">
                                 <h3 className="text-xl font-semibold text-gray-700 mb-4">Need something custom?</h3>
