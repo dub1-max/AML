@@ -32,6 +32,15 @@ const Layout: React.FC<LayoutProps> = ({
     const navigate = useNavigate();
     // Local state to handle dropdown when handleDeepLinkClick is not provided
     const [isDeepLinkOpen, setIsDeepLinkOpen] = useState(activeSection === 'deepLink');
+    // Store last known credit value to prevent flashing "..." when switching tabs
+    const [lastKnownCredit, setLastKnownCredit] = useState(credits);
+
+    // Update lastKnownCredit whenever credits changes and is not in loading state
+    React.useEffect(() => {
+        if (!loadingCredits && typeof credits === 'number') {
+            setLastKnownCredit(credits);
+        }
+    }, [credits, loadingCredits]);
 
     // Default handlers if not provided
     const defaultNavHandler = (section: string) => {
@@ -184,7 +193,7 @@ const Layout: React.FC<LayoutProps> = ({
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs text-purple-300">Credits</span>
                                 <span className="font-medium">
-                                    {loadingCredits ? "..." : credits}
+                                    {loadingCredits ? lastKnownCredit : credits}
                                 </span>
                             </div>
                             
