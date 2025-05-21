@@ -470,11 +470,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                         <tbody>
                             {filteredAndSortedResults.map((result, index) => (
                                 <tr key={`tracked-${index}-${result.name}`} 
-                                    className={`border-t border-gray-100 hover:bg-gray-50 ${
-                                        tracking?.[result.name]?.isTracking 
-                                            ? 'bg-white' 
-                                            : 'bg-gray-50'
-                                    }`}>
+                                    className="border-t border-gray-100 hover:bg-gray-50 bg-white">
                                     <td className="py-4 px-6">
                                         <div className="flex items-center space-x-3">
                                             <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(result.name || 'Unknown')}`} alt={result.name || 'Unknown'} className="w-8 h-8 rounded-full" />
