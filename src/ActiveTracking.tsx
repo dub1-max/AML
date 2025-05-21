@@ -447,7 +447,7 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                                     BLACKLIST STATUS {renderSortIndicator('blacklist')}
                                 </th>
                                 <th className="pb-4 px-6 whitespace-nowrap cursor-pointer text-center" onClick={() => handleSort('dataset')}>
-                                    SOURCE CATEGORY {renderSortIndicator('dataset')}
+                                    CATEGORY {renderSortIndicator('dataset')}
                                 </th>
                                 <th className="pb-4 px-6 whitespace-nowrap text-center">
                                     DOCUMENTATION

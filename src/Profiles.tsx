@@ -243,7 +243,7 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false }: Pro
                 <th className="pb-4 px-6 whitespace-nowrap text-center">NATIONALITY</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">AGING</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">NAME SCREENING</th>
-                <th className="pb-4 px-6 whitespace-nowrap text-center">SOURCE CATEGORY</th>
+                <th className="pb-4 px-6 whitespace-nowrap text-center">CATEGORY</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">DOCUMENTATION</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">RISK RATING</th>
                 <th className="pb-4 px-6 whitespace-nowrap text-center">STATUS</th>
