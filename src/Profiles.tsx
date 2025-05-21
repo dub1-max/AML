@@ -39,7 +39,7 @@ const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, name }: {
           This action will deduct <span className="font-bold">1 credit</span> from your account to start tracking <span className="font-bold">{name}</span>.
         </p>
         <p className="mb-6 text-sm text-gray-600">
-          You won't be charged again when pausing or resuming tracking for this profile.
+          Credits are only deducted the first time you track a profile. You can pause and resume tracking at any time without additional charges.
         </p>
         <div className="flex justify-end space-x-3">
           <button
