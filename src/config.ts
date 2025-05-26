@@ -1,12 +1,9 @@
 export const FRONTEND_URLS = [
-    
-    'http://kycsync.com:5173'
-    
+    'http://kycsync.com'
 ];
 
 export const API_BASE_URLS = [
-    
-    'http://kycsync.com/api'
+    'http://kycsync.com:5173/api'
 ];
 
 // Function to get the appropriate API URL based on the environment
