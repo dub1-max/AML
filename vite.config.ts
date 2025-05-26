@@ -59,15 +59,29 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    // Configure server to use port 80
+    port: 80,
     // Allow kycsync.com domain
-    host: '0.0.0.0',
+    host: 'kycsync.com',
     allowedHosts: [
       'kycsync.com',
+      'www.kycsync.com',
       'localhost',
       '127.0.0.1'
-    ]
+    ],
+    // Proxy API requests
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:3001',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
 
   // Configure public directory
-  publicDir: 'public'
+  publicDir: 'public',
+
+  // Base URL configuration
+  base: '/'
 });
