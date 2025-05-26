@@ -14,6 +14,9 @@ export default defineConfig({
           if (req.url === '/' || req.url === '') {
             res.writeHead(301, { Location: '/index.html' });
             res.end();
+          } else if (req.url === '/kycbox/index.html') {
+            res.writeHead(301, { Location: '/index.html' });
+            res.end();
           } else {
             next();
           }
@@ -55,15 +58,9 @@ export default defineConfig({
     // Pre-bundle dependencies
     fs: {
       strict: true,
-    },
-    // Configure host and port
-    host: 'kycsync.com',
-    port: 80
+    }
   },
 
   // Configure public directory
-  publicDir: 'public',
-
-  // Base URL configuration
-  base: '/'
+  publicDir: 'public'
 });
