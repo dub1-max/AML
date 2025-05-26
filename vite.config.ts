@@ -61,19 +61,11 @@ export default defineConfig({
     },
     // Allow kycsync.com domain
     host: '0.0.0.0',
-    port: 80,
-    strictPort: true,
     allowedHosts: [
       'kycsync.com',
       'localhost',
       '127.0.0.1'
-    ],
-    proxy: {
-      '/': {
-        target: 'http://localhost:80',
-        changeOrigin: true
-      }
-    }
+    ]
   },
 
   // Configure public directory
