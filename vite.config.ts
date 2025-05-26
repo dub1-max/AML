@@ -58,7 +58,14 @@ export default defineConfig({
     // Pre-bundle dependencies
     fs: {
       strict: true,
-    }
+    },
+    // Allow kycsync.com domain
+    host: '0.0.0.0',
+    allowedHosts: [
+      'kycsync.com',
+      'localhost',
+      '127.0.0.1'
+    ]
   },
 
   // Configure public directory
