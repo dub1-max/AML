@@ -4,6 +4,7 @@ import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/',
   plugins: [
     react(),
     {
@@ -50,6 +51,10 @@ export default defineConfig({
     minify: 'esbuild',
     // Configure esbuild minify options
     target: 'es2015',
+    // Output directory
+    outDir: 'dist',
+    // Assets directory
+    assetsDir: 'assets',
   },
 
   // Improve server performance
@@ -58,9 +63,18 @@ export default defineConfig({
     // Pre-bundle dependencies
     fs: {
       strict: true,
-    }
+    },
+    // Configure host and port
+    host: '0.0.0.0',
+    port: 3000
   },
 
   // Configure public directory
-  publicDir: 'public'
+  publicDir: 'public',
+
+  // Configure preview server
+  preview: {
+    host: '0.0.0.0',
+    port: 3000
+  }
 });
