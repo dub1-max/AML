@@ -1,289 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KYCSync - Advanced KYC/AML Compliance Solution</title>
-  
-  <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
-  
-  <!-- Critical CSS inline for faster rendering -->
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-      color: #444;
-      overflow-x: hidden;
-    }
-    .container {
-      width: 90%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 15px;
-    }
-    header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background-color: rgba(255, 255, 255, 0.95);
-      z-index: 1000;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 0;
-    }
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      padding-top: 80px;
-    }
-  </style>
-  
-  <!-- Preload critical resources -->
-  <link rel="preload" href="css/styles.css" as="style">
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" as="style">
-  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
-  <link rel="preload" href="images/hero-image.svg" as="image">
-  
-  <!-- Non-critical resources loaded after page rendering starts -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-  <!-- Header / Navigation -->
-  <header>
-    <div class="container">
-      <nav>
-        <div class="logo">
-          <h1>KYCSync</h1>
-        </div>
-        <div class="nav-links" id="navLinks">
-          <i class="fas fa-times" id="closeMenu"></i>
-          <ul>
-            <li><a href="#home">Home</a></li>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#compliance">Compliance</a></li>
-            <li><a href="#solutions">Solutions</a></li>
-            <li><a href="#pricing">Pricing</a></li>
-            <li><a href="#contact">Contact</a></li>
-          </ul>
-        </div>
-        <div class="login-link">
-          <a href="../../login" class="btn btn-primary">Go to AML App</a>
-        </div>
-        <i class="fas fa-bars" id="openMenu"></i>
-      </nav>
-    </div>
-  </header>
-
-  <!-- Hero Section -->
-  <section id="home" class="hero">
-    <div class="container">
-      <div class="hero-content">
-        <h1>Advanced KYC/AML Compliance Solution</h1>
-        <p>Screen your customers with speed and accuracy in an increasingly complex regulatory environment.</p>
-        <div class="hero-buttons">
-          <a href="../../login" class="btn btn-primary">Open AML App</a>
-          <a href="#features" class="btn btn-secondary">Learn More</a>
-        </div>
-      </div>
-      <div class="hero-image">
-        <img src="images/hero-image.svg" alt="AML Checker Dashboard" class="img-fluid">
-      </div>
-    </div>
-  </section>
-
-  <!-- About Section -->
-  <section id="about" class="about">
-    <div class="container">
-      <div class="section-header">
-        <h2>About KYCSync</h2>
-      </div>
-      <div class="about-content">
-        <div class="about-text">
-          <p>In today's increasingly complex regulatory environment, it's more important than ever to ensure that your business is fully compliant with UAE laws and regulations. KYCSync understands the challenges that businesses in the UAE face when it comes to KYC and AML compliance, that's why we're here to help.</p>
-          <p>By leveraging the latest digital onboarding solutions, we provide a streamlined customer journey that simplifies the compliance onboarding process for your business. Making it as easy as possible to carry out AML/KYC and IDV checks, so you can focus on running your business smoothly.</p>
-        </div>
-        <div class="about-stats">
-          <div class="stat-box">
-            <h3>1200+</h3>
-            <p>Satisfied Clients</p>
-          </div>
-          <div class="stat-box">
-            <h3>100+</h3>
-            <p>Sanction Lists</p>
-          </div>
-          <div class="stat-box">
-            <h3>24/7</h3>
-            <p>Support</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Features Section -->
-  <section id="features" class="features">
-    <div class="container">
-      <div class="section-header">
-        <h2>Key Features</h2>
-        <p>Our comprehensive solution offers everything you need for regulatory compliance</p>
-      </div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-shield-alt"></i>
-          </div>
-          <h3>Seal Verification</h3>
-          <p>The KYCSync Verified Seal helps you showcase the credibility of your business by highlighting that you are fulfilling AML/KYC regulations.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-database"></i>
-          </div>
-          <h3>Risk Assessment</h3>
-          <p>Comprehensive individual and business risk assessment to identify potential compliance issues.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-bell"></i>
-          </div>
-          <h3>Ongoing Monitoring</h3>
-          <p>Continuous screening and monitoring with alerts for any changes in customer status or risk profile.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-search"></i>
-          </div>
-          <h3>Global Screening</h3>
-          <p>Access to comprehensive global database for thorough screening across multiple jurisdictions.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-chart-line"></i>
-          </div>
-          <h3>Analytics Dashboard</h3>
-          <p>Powerful visualization tools to help you monitor compliance status and identify trends or issues.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-lock"></i>
-          </div>
-          <h3>Secure Data Storage</h3>
-          <p>Enterprise-grade security to protect your sensitive customer information with encrypted storage.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Pricing Section -->
-  <section id="pricing" class="pricing">
-    <div class="container">
-      <div class="section-header">
-        <h2>Subscription Plans</h2>
-        <p>Choose the plan that fits your business needs</p>
-      </div>
-      <div class="pricing-content">
-        <div class="pricing-grid">
-          <div class="pricing-card">
-            <h3>Starter</h3>
-            <div class="price">200<span>AED/Year</span></div>
-            <p class="plan-detail">Up to 100 profiles</p>
-            <p class="vat-note">All prices are exclusive of VAT</p>
-            <a href="../../login" class="btn btn-primary">Get Started</a>
-          </div>
-          <div class="pricing-card popular">
-            <div class="popular-tag">Most Popular</div>
-            <h3>Essential</h3>
-            <div class="price">500<span>AED/Year</span></div>
-            <p class="plan-detail">Up to 250 profiles</p>
-            <p class="vat-note">All prices are exclusive of VAT</p>
-            <a href="../../login" class="btn btn-primary">Get Started</a>
-          </div>
-          <div class="pricing-card">
-            <h3>Business</h3>
-            <div class="price">1,000<span>AED/Year</span></div>
-            <p class="plan-detail">Up to 500 profiles</p>
-            <p class="vat-note">All prices are exclusive of VAT</p>
-            <a href="../../login" class="btn btn-primary">Get Started</a>
-          </div>
-          <div class="pricing-card">
-            <h3>Corporate</h3>
-            <div class="price">1,500<span>AED/Year</span></div>
-            <p class="plan-detail">Up to 750 profiles</p>
-            <p class="vat-note">All prices are exclusive of VAT</p>
-            <a href="../../login" class="btn btn-primary">Get Started</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-logo">
-          <h2>KYCSync</h2>
-          <p>Advanced KYC/AML compliance solution</p>
-        </div>
-        <div class="footer-links">
-          <div class="footer-column">
-            <h3>Company</h3>
-            <ul>
-              <li><a href="#about">About Us</a></li>
-              <li><a href="#features">Features</a></li>
-              <li><a href="#pricing">Pricing</a></li>
-            </ul>
-          </div>
-          <div class="footer-column">
-            <h3>Legal</h3>
-            <ul>
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms of Service</a></li>
-              <li><a href="#">GDPR Compliance</a></li>
-            </ul>
-          </div>
-          <div class="footer-column">
-            <h3>Support</h3>
-            <ul>
-              <li><a href="#contact">Contact Us</a></li>
-              <li><a href="#">Knowledge Base</a></li>
-              <li><a href="#">FAQs</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>&copy; 2024 KYCSync. All rights reserved.</p>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Back to Top Button -->
-  <button id="backToTop" class="back-to-top">
-    <i class="fas fa-arrow-up"></i>
-  </button>
-
-  <!-- Custom JavaScript loaded asynchronously -->
-  <script src="js/main.js" async defer></script>
-  
-  <!-- Ensure all links work even if JS fails -->
-  <noscript>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AML Search</title>
+    
+    <!-- Preload critical JS bundles -->
+    <link rel="modulepreload" href="/src/main.tsx" />
+    
+    <!-- Add a simple inline loading indicator that shows before React loads -->
     <style>
-      .nav-links { display: block !important; }
+      #initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f9fafb;
+        z-index: 9999;
+      }
+      #initial-loader-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #e5e7eb;
+        border-top: 4px solid #4A1D96;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
     </style>
-  </noscript>
-</body>
+  </head>
+  <body>
+    <!-- Initial loader that shows before React loads -->
+    <div id="initial-loader">
+      <div id="initial-loader-spinner"></div>
+    </div>
+    
+    <div id="root"></div>
+    
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Remove the loader once React is mounted -->
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        // Ensure the loader is removed once React has initialized
+        setTimeout(() => {
+          const loader = document.getElementById('initial-loader');
+          if (loader) {
+            loader.style.opacity = '0';
+            loader.style.transition = 'opacity 0.3s ease-out';
+            setTimeout(() => {
+              if (loader.parentNode) {
+                loader.parentNode.removeChild(loader);
+              }
+            }, 300);
+          }
+        }, 500);
+      });
+    </script>
+  </body>
 </html>
