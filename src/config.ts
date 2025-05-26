@@ -1,11 +1,8 @@
 export const FRONTEND_URLS = [
-    
-    'http://kycsync.com:5173'
-    
+    'http://kycsync.com'
 ];
 
 export const API_BASE_URLS = [
-    
     'http://kycsync.com/api'
 ];
 
