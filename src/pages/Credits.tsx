@@ -31,7 +31,7 @@ const Credits: React.FC<CreditsProps> = () => {
     const [loadingCredits, setLoadingCredits] = useState<boolean>(true);
     const [purchaseAmount, setPurchaseAmount] = useState<number>(100);
     const [processingPayment, setProcessingPayment] = useState<boolean>(false);
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'paypal' | 'card'>('paypal');
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'paypal'>('paypal');
     
     // Subscription state
     const [loadingSubscription, setLoadingSubscription] = useState<boolean>(true);
@@ -469,20 +469,13 @@ const Credits: React.FC<CreditsProps> = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Select Payment Method
                         </label>
-                        <div className="flex space-x-4">
+                        <div>
                             <div 
                                 className={`border rounded-lg p-4 flex items-center cursor-pointer transition-all ${selectedPaymentMethod === 'paypal' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
                                 onClick={() => setSelectedPaymentMethod('paypal')}
                             >
                                 <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" className="h-6 mr-2" />
                                 <span>PayPal</span>
-                            </div>
-                            <div 
-                                className={`border rounded-lg p-4 flex items-center cursor-pointer transition-all ${selectedPaymentMethod === 'card' ? 'border-purple-500 bg-purple-50' : 'border-gray-200'}`}
-                                onClick={() => { alert('Credit card payments coming soon!'); }}
-                            >
-                                <CreditCardIcon className="h-5 w-5 mr-2 text-gray-600" />
-                                <span>Credit Card (Coming Soon)</span>
                             </div>
                         </div>
                     </div>
@@ -505,16 +498,6 @@ const Credits: React.FC<CreditsProps> = () => {
                             
                             <div id="paypal-button-container" className="w-full"></div>
                         </div>
-                    )}
-                    
-                    {selectedPaymentMethod === 'card' && (
-                        <button
-                            onClick={() => alert('Credit card payments coming soon!')}
-                            disabled={true}
-                            className="w-full bg-gray-400 text-white py-2 px-4 rounded-md transition duration-200 cursor-not-allowed"
-                        >
-                            Credit Card Payment (Coming Soon)
-                        </button>
                     )}
                 </div>
             </div>
