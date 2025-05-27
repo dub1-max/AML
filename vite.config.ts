@@ -61,7 +61,6 @@ export default defineConfig({
     },
     // Allow kycsync.com domain
     host: '0.0.0.0',
-    port: 80,
     allowedHosts: [
       'kycsync.com',
       'localhost',
