@@ -1,5 +1,5 @@
 export const FRONTEND_URLS = [
-    'http://kycsync.com'
+    'http://kycsync.com:80'
 ];
 
 export const API_BASE_URLS = [
