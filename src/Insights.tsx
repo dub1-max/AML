@@ -40,10 +40,7 @@ function Insights(_props: InsightsProps) {
     const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [timelineData, setTimelineData] = useState<{ date: string; count: number; }[]>([]);
-    const [customerOnboardingData, setCustomerOnboardingData] = useState([
-        { name: 'Onboarding Without Alert', value: 8, color: '#9333EA' },
-        { name: 'Onboarding With Alert', value: 4, color: '#22D3EE' }
-    ]);
+    const [customerOnboardingData, setCustomerOnboardingData] = useState<{ name: string; value: number; color: string; }[]>([]);
 
     const fromDateRef = useRef<HTMLInputElement>(null);
     const toDateRef = useRef<HTMLInputElement>(null);
@@ -161,6 +158,41 @@ function Insights(_props: InsightsProps) {
 
             // Process timeline data
             processTimelineData(allCustomers);
+
+            // Calculate customers with and without alerts
+            let customersWithAlert = 0;
+            let customersWithoutAlert = 0;
+
+            allCustomers.forEach(customer => {
+                // Check if customer has any matches/alerts
+                // Adjust these conditions based on your actual data structure
+                const hasAlert = customer.hasMatch || 
+                               customer.has_match || 
+                               customer.alertStatus === 'triggered' ||
+                               customer.alert_status === 'triggered' ||
+                               customer.matches?.length > 0 ||
+                               customer.alerts?.length > 0;
+
+                if (hasAlert) {
+                    customersWithAlert++;
+                } else {
+                    customersWithoutAlert++;
+                }
+            });
+
+            // Update customer onboarding data
+            setCustomerOnboardingData([
+                {
+                    name: 'Onboarding Without Alert',
+                    value: customersWithoutAlert,
+                    color: '#9333EA'
+                },
+                {
+                    name: 'Onboarding With Alert',
+                    value: customersWithAlert,
+                    color: '#22D3EE'
+                }
+            ]);
 
         } catch (error: any) {
             console.error('Error fetching data:', error.message);
@@ -308,7 +340,12 @@ function Insights(_props: InsightsProps) {
                     data={customerOnboardingData}
                     centerText={{
                         label: 'HIGHEST',
-                        value: 'Onboarding Without Alert 8'
+                        value: customerOnboardingData.length > 0 
+                            ? `${customerOnboardingData.reduce((prev, current) => 
+                                prev.value > current.value ? prev : current).name} ${
+                                customerOnboardingData.reduce((prev, current) => 
+                                prev.value > current.value ? prev : current).value}`
+                            : 'No data'
                     }}
                 />
             </div>
