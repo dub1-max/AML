@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './config';
 import CustomerList from './components/CustomerList';
 import CustomerDetails from './components/CustomerDetails';
+import ActivityTimeline from './components/ActivityTimeline';
 
 interface Customer {
     id: string;
@@ -37,6 +38,7 @@ function Insights(_props: InsightsProps) {
     const [currentView, setCurrentView] = useState<'dashboard' | 'list' | 'details'>('dashboard');
     const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [timelineData, setTimelineData] = useState<{ date: string; count: number; }[]>([]);
 
     const fromDateRef = useRef<HTMLInputElement>(null);
     const toDateRef = useRef<HTMLInputElement>(null);
@@ -58,6 +60,35 @@ function Insights(_props: InsightsProps) {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    const processTimelineData = (customers: Customer[]) => {
+        const dateMap = new Map<string, number>();
+        
+        customers.forEach(customer => {
+            const date = customer.createdAt || 
+                        customer.created_at || 
+                        customer.registrationDate || 
+                        customer.registration_date ||
+                        customer.onboardingDate ||
+                        customer.onboarding_date ||
+                        customer.date;
+            
+            if (date) {
+                const formattedDate = new Date(date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+                dateMap.set(formattedDate, (dateMap.get(formattedDate) || 0) + 1);
+            }
+        });
+
+        // Convert map to array and sort by date
+        const timelineData = Array.from(dateMap.entries())
+            .map(([date, count]) => ({ date, count }))
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        setTimelineData(timelineData);
+    };
 
     const fetchData = async () => {
         if (!user) {
@@ -123,6 +154,9 @@ function Insights(_props: InsightsProps) {
             setApprovedCustomers(approved);
             setRejectedCustomers(rejected);
 
+            // Process timeline data
+            processTimelineData(allCustomers);
+
         } catch (error: any) {
             console.error('Error fetching data:', error.message);
         }
@@ -168,6 +202,12 @@ function Insights(_props: InsightsProps) {
     const renderDashboard = () => (
         <div className="p-6">
             <h2 className="text-lg font-semibold mb-4">Activity Dashboard</h2>
+
+            {/* Activity Timeline */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h3 className="text-base font-medium text-gray-900 mb-4">Activity Timeline</h3>
+                <ActivityTimeline data={timelineData} />
+            </div>
 
             <div className="mb-6">
                 <div className="flex items-center space-x-4">
