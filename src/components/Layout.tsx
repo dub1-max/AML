@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
     children: React.ReactNode;
-    activeSection?: 'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking' | 'credits';
+    activeSection?: 'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking' | 'credits' | 'customers';
     deepLinkSubSection?: 'individual' | 'company' | null;
     credits?: number;
     loadingCredits?: boolean;
@@ -133,6 +133,16 @@ const Layout: React.FC<LayoutProps> = ({
                         </button>
 
                         <button
+                            onClick={() => navHandler('customers')}
+                            className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
+                                activeSection === 'customers' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                            }`}
+                        >
+                            <Users className="w-5 h-5" />
+                            <span>Customers</span>
+                        </button>
+
+                        <button
                             onClick={() => navHandler('activeTracking')}
                             className={`flex items-center space-x-3 w-full p-3 rounded-lg text-gray-300 ${
                                 activeSection === 'activeTracking' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
@@ -148,7 +158,7 @@ const Layout: React.FC<LayoutProps> = ({
                                 activeSection === 'profiles' ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
                             }`}
                         >
-                            <Users className="w-5 h-5" />
+                            <Search className="w-5 h-5" />
                             <span>Search Profiles</span>
                         </button>
 
