@@ -287,10 +287,10 @@ function Insights(_props: InsightsProps) {
                     </div>
                 </div>
 
-                <div 
+                    <div 
                     className="bg-white rounded-lg shadow p-6 cursor-pointer hover:bg-purple-50 transition-colors"
                     onClick={() => handleSectionClick('pending')}
-                >
+                    >
                     <div className="flex justify-between items-center">
                         <div>
                             <h3 className="text-base font-medium text-gray-900">PENDING CUSTOMERS</h3>
@@ -300,10 +300,10 @@ function Insights(_props: InsightsProps) {
                     </div>
                 </div>
 
-                <div 
+                    <div 
                     className="bg-white rounded-lg shadow p-6 cursor-pointer hover:bg-purple-50 transition-colors"
                     onClick={() => handleSectionClick('approved')}
-                >
+                    >
                     <div className="flex justify-between items-center">
                         <div>
                             <h3 className="text-base font-medium text-gray-900">APPROVED CUSTOMERS</h3>
@@ -313,10 +313,10 @@ function Insights(_props: InsightsProps) {
                     </div>
                 </div>
 
-                <div 
+                    <div 
                     className="bg-white rounded-lg shadow p-6 cursor-pointer hover:bg-purple-50 transition-colors"
                     onClick={() => handleSectionClick('rejected')}
-                >
+                    >
                     <div className="flex justify-between items-center">
                         <div>
                             <h3 className="text-base font-medium text-gray-900">REJECTED CUSTOMERS</h3>

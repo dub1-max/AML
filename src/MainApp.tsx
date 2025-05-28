@@ -19,7 +19,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DebugLog, { addLog } from './components/DebugLog';
 import EditProfile from './EditProfile';
 import Layout from './components/Layout';
-import OnboardedCustomers from './components/OnboardedCustomers';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -53,7 +52,7 @@ function MainApp(_props: MainAppProps) {
     const [tracking, setTracking] = useState<Tracking>({});
     const [trackedResults, setTrackedResults] = useState<SearchResult[]>([]);
     const [showDashboard, setShowDashboard] = useState(true);
-    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking' | 'customers'>('insights');
+    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking'>('insights');
     const [deepLinkSubSection, setDeepLinkSubSection] = useState<'individual' | 'company' | null>(null);
     const [showIndividualOB, setShowIndividualOB] = useState(false);
     const [showCompanyOB, setShowCompanyOB] = useState(false);
@@ -903,7 +902,7 @@ function MainApp(_props: MainAppProps) {
 
     return (
         <Layout 
-            activeSection={activeSection as 'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking' | 'credits' | 'customers'}
+            activeSection={activeSection}
             deepLinkSubSection={deepLinkSubSection}
             credits={credits}
             loadingCredits={loadingCredits}
@@ -920,7 +919,6 @@ function MainApp(_props: MainAppProps) {
                              showIndividualOB ? 'Individual Onboarding' :
                              showCompanyOB ? 'Company Onboarding' :
                              activeSection === 'activeTracking' ? 'Screening' :
-                             activeSection === 'customers' ? 'Customers' :
                             'Search'}
                         </h2>
                     </div>
@@ -980,52 +978,193 @@ function MainApp(_props: MainAppProps) {
                     )}
                 </header>
 
-                <main className="p-6">
+                {showDashboard ? (
                     <ErrorBoundary>
-                        {showDashboard && (
-                            <Insights />
-                        )}
-                        {activeSection === 'profiles' && (
-                            <Profiles 
-                                searchResults={searchResults}
-                                isLoading={isLoading}
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                totalResults={totalResults}
-                                onPageChange={handlePageChange}
-                            />
-                        )}
-                        {activeSection === 'activeTracking' && (
+                        <Insights />
+                    </ErrorBoundary>
+                ) : showIndividualOB ? (
+                    <ErrorBoundary>
+                        <IndividualOB />
+                    </ErrorBoundary>
+                ) : showCompanyOB ? (
+                    <ErrorBoundary>
+                        <CompanyOB />
+                    </ErrorBoundary>
+                ) : activeSection === 'activeTracking' ? (
+                    <ErrorBoundary>
+                        <div>
+                            {/* Pending approvals section */}
+                            {pendingApprovals.filter(item => item.isMatched).length > 0 && (
+                                <div className="p-6 border-b border-gray-200">
+                                    <h3 className="text-lg font-semibold mb-4">Customers Requiring Approval</h3>
+                                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
+                                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                {pendingApprovals.filter(item => item.isMatched).map((item) => (
+                                                    <React.Fragment key={`${item.type}-${item.id}`}>
+                                                        <tr>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                                {item.type === 'individual' ? 'Individual' : 'Company'}
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                                    Potential Match Found
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <div className="text-sm text-gray-900">
+                                                                    {item.matches && item.matches.length > 0 && (
+                                                                        <details className="cursor-pointer">
+                                                                            <summary className="flex items-center">
+                                                                                <span className="font-semibold">{item.matches.length} potential {item.matches.length === 1 ? 'match' : 'matches'}</span>
+                                                                                <Eye className="h-4 w-4 ml-2 text-purple-500" />
+                                                                            </summary>
+                                                                            <div className="mt-3 p-4 bg-gray-50 rounded-md border border-gray-200">
+                                                                                <h4 className="font-medium text-gray-700 mb-2">Match Details:</h4>
+                                                                                <ul className="space-y-2">
+                                                                                    {item.matches.map((match, index) => (
+                                                                                        <li key={`match-${match.id}-${index}`} className={`p-2 border-b border-gray-200 last:border-0 ${
+                                                                                            item.processedMatches?.[match.id] === 'approved' ? 'bg-green-50' :
+                                                                                            item.processedMatches?.[match.id] === 'rejected' ? 'bg-red-50' : ''
+                                                                                        }`}>
+                                                                                            <div className="flex justify-between">
+                                                                                                <span className="font-medium">{match.name}</span>
+                                                                                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                                                                                    match.riskLevel >= 85 ? 'bg-red-100 text-red-800' :
+                                                                                                    match.riskLevel >= 65 ? 'bg-yellow-100 text-yellow-800' :
+                                                                                                    'bg-green-100 text-green-800'
+                                                                                                }`}>
+                                                                                                    Risk: {match.riskLevel}%
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <div className="mt-1 text-sm text-gray-600">
+                                                                                                <div><span className="font-medium">Type:</span> {match.type}</div>
+                                                                                                <div><span className="font-medium">Country:</span> {match.country}</div>
+                                                                                                <div><span className="font-medium">ID:</span> {match.identifiers}</div>
+                                                                                            </div>
+                                                                                            
+                                                                                            {/* Match approval/rejection buttons */}
+                                                                                            {!item.processedMatches?.[match.id] ? (
+                                                                                                <div className="mt-2 flex justify-end space-x-2">
+                                                                                                    <button 
+                                                                                                        onClick={() => handleMatchApproval(item.id, item.type, match.id, match.name, 'approved')}
+                                                                                                        className="px-3 py-1 bg-green-100 text-green-800 rounded-md text-xs flex items-center hover:bg-green-200"
+                                                                                                    >
+                                                                                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                                                                                        Approve Match
+                                                                                                    </button>
+                                                                                                    <button 
+                                                                                                        onClick={() => handleMatchApproval(item.id, item.type, match.id, match.name, 'rejected')}
+                                                                                                        className="px-3 py-1 bg-red-100 text-red-800 rounded-md text-xs flex items-center hover:bg-red-200"
+                                                                                                    >
+                                                                                                        <XCircle className="w-3 h-3 mr-1" />
+                                                                                                        Reject Match
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            ) : (
+                                                                                                <div className="mt-2 text-sm italic">
+                                                                                                    {item.processedMatches[match.id] === 'approved' ? (
+                                                                                                        <span className="text-green-600">✓ Approved - Added to tracking</span>
+                                                                                                    ) : (
+                                                                                                        <span className="text-red-600">✗ Rejected</span>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        </details>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                                <button 
+                                                                    onClick={() => handleMatchApproval(item.id, item.type, item.id, item.name, 'approved')}
+                                                                    className="text-green-600 hover:text-green-900 mr-4"
+                                                                >
+                                                                    <CheckCircle className="inline w-5 h-5 mr-1" />
+                                                                    Approve
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleMatchApproval(item.id, item.type, item.id, item.name, 'rejected')}
+                                                                    className="text-red-600 hover:text-red-900"
+                                                                >
+                                                                    <XCircle className="inline w-5 h-5 mr-1" />
+                                                                    Reject
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    </React.Fragment>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Main active tracking component */}
                             <ActiveTracking
                                 trackedResults={trackedResults}
                                 tracking={tracking}
                                 isLoading={isLoading}
                                 onToggleTracking={updateTracking}
                             />
-                        )}
-                        {activeSection === 'customers' && (
-                            <OnboardedCustomers
-                                customers={trackedResults.filter(result => result.dataset === 'onboarded').map(result => ({
-                                    ...result,
-                                    id: result.id.toString(),
-                                    status: 'approved'
-                                }))}
-                                isLoading={isLoading}
-                                onRefresh={() => {
-                                    setIsLoading(true);
-                                    setTrackingCache(null);
-                                    fetchTrackedData();
-                                }}
-                            />
-                        )}
-                        {showIndividualOB && (
-                            <IndividualOB />
-                        )}
-                        {showCompanyOB && (
-                            <CompanyOB />
-                        )}
+                        </div>
                     </ErrorBoundary>
-                </main>
+                ) : (
+                    <ErrorBoundary>
+                        <div className="p-6">
+                            {/* Loading indicator and search results */}
+                            {isLoading && (
+                                <div className="flex items-center text-purple-700 mb-6">
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                    <span>Searching...</span>
+                                </div>
+                            )}
+                            
+                            {/* Search guidance */}
+                            {!isLoading && searchTerm.length < MIN_SEARCH_LENGTH && searchResults.length === 0 && (
+                                <div className="text-center p-12">
+                                    <p className="text-gray-500 mb-4">
+                                        Enter at least {MIN_SEARCH_LENGTH} characters to search for profiles
+                                    </p>
+                                </div>
+                            )}
+                            
+                            {/* No results message */}
+                            {!isLoading && searchTerm.length >= MIN_SEARCH_LENGTH && searchResults.length === 0 && (
+                                <div className="text-center p-12">
+                                    <p className="text-gray-500 mb-4">
+                                        No results found for "{searchTerm}"
+                                    </p>
+                                </div>
+                            )}
+                            
+                                                         {/* Search Results */}
+                             {searchResults.length > 0 && (
+                                 <Profiles 
+                                     searchResults={searchResults} 
+                                     isLoading={false}
+                                     currentPage={currentPage}
+                                     totalPages={totalPages}
+                                     totalResults={totalResults}
+                                     onPageChange={handlePageChange}
+                                 />
+                             )}
+                        </div>
+                    </ErrorBoundary>
+                )}
             </div>
         </Layout>
     );
