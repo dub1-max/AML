@@ -7,7 +7,6 @@ import { getApiBaseUrl } from './config';
 import CustomerList from './components/CustomerList';
 import CustomerDetails from './components/CustomerDetails';
 import ActivityTimeline from './components/ActivityTimeline';
-import KYCScreeningChart from './components/KYCScreeningChart';
 import DonutChart from './components/DonutChart';
 
 interface Customer {
@@ -41,16 +40,6 @@ function Insights(_props: InsightsProps) {
     const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [timelineData, setTimelineData] = useState<{ date: string; count: number; }[]>([]);
-    const [kycScreeningData, setKycScreeningData] = useState([
-        { name: 'Name Screening Hit', value: 0 },
-        { name: 'Document Verification Hit', value: 3, tooltip: 'Documents expired or near to expiry: 3' },
-        { name: 'Risk Rating Hit', value: 0 }
-    ]);
-
-    const [kycAlertTypeData, setKycAlertTypeData] = useState([
-        { name: 'Triggered', value: 3, color: '#9333EA' }
-    ]);
-
     const [customerOnboardingData, setCustomerOnboardingData] = useState([
         { name: 'Onboarding Without Alert', value: 8, color: '#9333EA' },
         { name: 'Onboarding With Alert', value: 4, color: '#22D3EE' }
@@ -219,13 +208,8 @@ function Insights(_props: InsightsProps) {
         <div className="p-6">
             <h2 className="text-lg font-semibold mb-4">Activity Dashboard</h2>
 
-            {/* Activity Timeline */}
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-                <h3 className="text-base font-medium text-gray-900 mb-4">Activity Timeline</h3>
-                <ActivityTimeline data={timelineData} />
-            </div>
-
             <div className="mb-6">
+                {/* Date Range Picker */}
                 <div className="flex items-center space-x-4">
                     <div>
                         <label htmlFor="from-date" className="block text-sm font-medium text-gray-700">From</label>
@@ -256,33 +240,8 @@ function Insights(_props: InsightsProps) {
                 </div>
             </div>
 
-            {/* KYC Charts Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <KYCScreeningChart data={kycScreeningData} />
-                <DonutChart
-                    title="KYC Alerts by Alert Type"
-                    data={kycAlertTypeData}
-                    centerText={{
-                        label: 'HIGHEST',
-                        value: 'Triggered 3'
-                    }}
-                />
-            </div>
-
-            {/* Customer Onboarding Chart */}
-            <div className="mb-6">
-                <DonutChart
-                    title="Customer Onboarding With / Without Alert"
-                    data={customerOnboardingData}
-                    centerText={{
-                        label: 'HIGHEST',
-                        value: 'Onboarding Without Alert 8'
-                    }}
-                />
-            </div>
-
             {/* Customer Stats Cards */}
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-6 mb-6">
                 <div 
                     className="bg-white rounded-lg shadow p-6 cursor-pointer hover:bg-purple-50 transition-colors"
                     onClick={() => handleSectionClick(null)}
@@ -334,6 +293,24 @@ function Insights(_props: InsightsProps) {
                         <ArrowRight className="h-5 w-5 text-gray-500" />
                     </div>
                 </div>
+            </div>
+
+            {/* Activity Timeline */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h3 className="text-base font-medium text-gray-900 mb-4">Activity Timeline</h3>
+                <ActivityTimeline data={timelineData} />
+            </div>
+
+            {/* Customer Onboarding Chart */}
+            <div className="mb-6">
+                <DonutChart
+                    title="Customer Onboarding With / Without Alert"
+                    data={customerOnboardingData}
+                    centerText={{
+                        label: 'HIGHEST',
+                        value: 'Onboarding Without Alert 8'
+                    }}
+                />
             </div>
 
             {/* Onboard New Profile Button */}
