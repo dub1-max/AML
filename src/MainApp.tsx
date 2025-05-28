@@ -19,7 +19,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DebugLog, { addLog } from './components/DebugLog';
 import EditProfile from './EditProfile';
 import Layout from './components/Layout';
-import Screening from './Screening';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -994,12 +993,7 @@ function MainApp(_props: MainAppProps) {
                 ) : activeSection === 'activeTracking' ? (
                     <ErrorBoundary>
                         <div>
-                            <Screening
-                                trackedResults={trackedResults}
-                                tracking={tracking}
-                                isLoading={isLoading}
-                                onToggleTracking={updateTracking}
-                            />
+                            {/* Pending approvals section */}
                             {pendingApprovals.filter(item => item.isMatched).length > 0 && (
                                 <div className="p-6 border-b border-gray-200">
                                     <h3 className="text-lg font-semibold mb-4">Customers Requiring Approval</h3>
