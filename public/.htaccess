@@ -1,24 +1,22 @@
-# Enable rewrite engine
-RewriteEngine On
-RewriteBase /
+# Redirect root URL to index.html
+RedirectMatch 301 ^/$ /index.html
 
-# Redirect index.html to root URL
-RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+index\.html [NC]
-RewriteRule ^ / [R=301,L]
+# Redirect /kycbox/index.html to index.html
+RedirectMatch 301 ^/kycbox/index\.html$ /index.html
 
-# Redirect www to non-www
-RewriteCond %{HTTP_HOST} ^www\.kycsync\.com [NC]
-RewriteRule ^(.*)$ https://kycsync.com/$1 [L,R=301]
-
-# Redirect HTTP to HTTPS
-RewriteCond %{HTTP:X-Forwarded-Proto} !https
-RewriteCond %{HTTPS} off
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
-# Handle Angular/React routes - Don't rewrite files or directories
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.html [L]
+# Rewrite rules for SPA
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # If the request is for an actual file or directory, don't rewrite
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # For all other routes (not index.html), serve the index.html
+  RewriteCond %{REQUEST_URI} !^/index\.html$
+  RewriteRule ^ index.html [QSA,L]
+</IfModule>
 
 # Set correct MIME types
 <IfModule mod_mime.c>
@@ -50,19 +48,4 @@ RewriteRule ^ index.html [L]
   ExpiresByType image/gif "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
   ExpiresByType image/svg+xml "access plus 1 year"
-</IfModule>
-
-# Compression
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/plain
-    AddOutputFilterByType DEFLATE text/html
-    AddOutputFilterByType DEFLATE text/xml
-    AddOutputFilterByType DEFLATE text/css
-    AddOutputFilterByType DEFLATE text/javascript
-    AddOutputFilterByType DEFLATE application/xml
-    AddOutputFilterByType DEFLATE application/xhtml+xml
-    AddOutputFilterByType DEFLATE application/rss+xml
-    AddOutputFilterByType DEFLATE application/javascript
-    AddOutputFilterByType DEFLATE application/x-javascript
-    AddOutputFilterByType DEFLATE image/svg+xml
 </IfModule> 
