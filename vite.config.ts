@@ -61,8 +61,10 @@ export default defineConfig({
     },
     // Allow kycsync.com domain
     host: '0.0.0.0',
+    // HTTPS is handled by Cloudflare
     allowedHosts: [
       'kycsync.com',
+      'www.kycsync.com',
       'localhost',
       '127.0.0.1'
     ]
