@@ -1,21 +1,24 @@
-# Remove .html extension
+# Enable rewrite engine
 RewriteEngine On
 RewriteBase /
 
-# Remove trailing index.html
-RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+/)?index\.html[\s?] [NC]
-RewriteRule ^ /%1 [R=301,L]
+# Redirect index.html to root URL
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+index\.html [NC]
+RewriteRule ^ / [R=301,L]
 
-# Remove .html extension
+# Redirect www to non-www
+RewriteCond %{HTTP_HOST} ^www\.kycsync\.com [NC]
+RewriteRule ^(.*)$ https://kycsync.com/$1 [L,R=301]
+
+# Redirect HTTP to HTTPS
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Handle Angular/React routes - Don't rewrite files or directories
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}.html -f
-RewriteRule ^(.+?)/?$ $1.html [L]
-
-# Handle SPA routes
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.html [QSA,L]
+RewriteRule ^ index.html [L]
 
 # Set correct MIME types
 <IfModule mod_mime.c>
@@ -47,4 +50,19 @@ RewriteRule ^ index.html [QSA,L]
   ExpiresByType image/gif "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
   ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE image/svg+xml
 </IfModule> 

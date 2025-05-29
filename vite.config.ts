@@ -7,19 +7,16 @@ export default defineConfig({
   plugins: [
     react(),
     {
-      name: 'redirect-root-to-index',
+      name: 'rewrite-middleware',
       configureServer(server) {
-        // Redirect root to /index.html
         server.middlewares.use((req, res, next) => {
-          if (req.url === '/' || req.url === '') {
-            res.writeHead(301, { Location: '/index.html' });
+          // Remove index.html from URL
+          if (req.url === '/index.html') {
+            res.writeHead(301, { Location: '/' });
             res.end();
-          } else if (req.url === '/kycbox/index.html') {
-            res.writeHead(301, { Location: '/index.html' });
-            res.end();
-          } else {
-            next();
+            return;
           }
+          next();
         });
       }
     }
@@ -54,18 +51,21 @@ export default defineConfig({
 
   // Improve server performance
   server: {
-    hmr: true,
-    // Pre-bundle dependencies
-    fs: {
-      strict: true,
-    },
-    // Allow kycsync.com domain
     host: '0.0.0.0',
-    allowedHosts: [
-      'kycsync.com',
-      'localhost',
-      '127.0.0.1'
-    ]
+    port: 5173,
+    strictPort: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:80',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
+
+  preview: {
+    port: 4173,
+    host: '0.0.0.0'
   },
 
   // Configure public directory
