@@ -154,3 +154,63 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('mousedown', () => {
   document.body.classList.remove('keyboard-navigation');
 });
+
+// main.js - KYCSync landing page functionality
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Mobile menu toggle
+  const openMenu = document.getElementById('openMenu');
+  const closeMenu = document.getElementById('closeMenu');
+  const navLinks = document.getElementById('navLinks');
+  
+  if (openMenu) {
+    openMenu.addEventListener('click', function() {
+      navLinks.style.right = '0';
+    });
+  }
+  
+  if (closeMenu) {
+    closeMenu.addEventListener('click', function() {
+      navLinks.style.right = '-200px';
+    });
+  }
+  
+  // Back to top button functionality
+  const backToTopButton = document.getElementById('backToTop');
+  
+  if (backToTopButton) {
+    // Show button when user scrolls down 300px
+    window.addEventListener('scroll', function() {
+      if (window.pageYOffset > 300) {
+        backToTopButton.style.display = 'block';
+      } else {
+        backToTopButton.style.display = 'none';
+      }
+    });
+    
+    // Scroll to top when button clicked
+    backToTopButton.addEventListener('click', function() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+  }
+  
+  // Smooth scrolling for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const targetId = this.getAttribute('href');
+      if (targetId === '#') return;
+      
+      const targetElement = document.querySelector(targetId);
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+});
