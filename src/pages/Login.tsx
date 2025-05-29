@@ -124,7 +124,7 @@ export default function Login() {
                                     Register
                                 </a>
                                 <a
-                                    href="/kycbox/index.html"
+                                    href="/"
                                     className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200"
                                 >
                                     Back to KYCSYNC
