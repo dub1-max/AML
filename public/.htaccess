@@ -1,22 +1,21 @@
-# Redirect root URL to index.html
-RedirectMatch 301 ^/$ /index.html
+# Remove .html extension
+RewriteEngine On
+RewriteBase /
 
-# Redirect /kycbox/index.html to index.html
-RedirectMatch 301 ^/kycbox/index\.html$ /index.html
+# Remove trailing index.html
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+(.+/)?index\.html[\s?] [NC]
+RewriteRule ^ /%1 [R=301,L]
 
-# Rewrite rules for SPA
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  
-  # If the request is for an actual file or directory, don't rewrite
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  
-  # For all other routes (not index.html), serve the index.html
-  RewriteCond %{REQUEST_URI} !^/index\.html$
-  RewriteRule ^ index.html [QSA,L]
-</IfModule>
+# Remove .html extension
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+?)/?$ $1.html [L]
+
+# Handle SPA routes
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [QSA,L]
 
 # Set correct MIME types
 <IfModule mod_mime.c>
