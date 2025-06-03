@@ -176,8 +176,14 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     <div className="flex-1">
                         <div className="flex items-center space-x-4 mb-4">
                             <h2 className="text-2xl font-bold">{getCustomerName()}</h2>
-                            <span className="px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-full">
-                                ✓ Approved
+                            <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                                customer.status === 'approved' ? 'text-green-700 bg-green-100' :
+                                customer.status === 'pending' ? 'text-yellow-700 bg-yellow-100' :
+                                'text-red-700 bg-red-100'
+                            }`}>
+                                {customer.status === 'approved' ? '✓ Approved' :
+                                 customer.status === 'pending' ? '⏳ Pending' :
+                                 '✗ Rejected'}
                             </span>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -223,7 +229,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                             </div>
                             <div>
                                 <span className="text-gray-500">Onboarded By</span>
-                                <p className="font-medium">{customer.onboarded_by || 'RESPECT CORPORATE SERVICES PROVIDER LLC'}</p>
+                                <p className="font-medium">{customer.onboarded_by || 'N/A'}</p>
                             </div>
                             <div>
                                 <span className="text-gray-500">Record Last Updated</span>
@@ -240,27 +246,27 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <span className="text-gray-500">Address</span>
-                        <p className="font-medium">{customer.address || ''}</p>
+                        <p className="font-medium">{customer.address || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">City</span>
-                        <p className="font-medium">{customer.city || ''}</p>
+                        <p className="font-medium">{customer.city || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">State</span>
-                        <p className="font-medium">{customer.state || ''}</p>
+                        <p className="font-medium">{customer.state || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Zip/Postal Code</span>
-                        <p className="font-medium">{customer.zip_code || customer.postal_code || ''}</p>
+                        <p className="font-medium">{customer.zip_code || customer.postal_code || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Contact Number</span>
-                        <p className="font-medium">{customer.contact_number || customer.phone_number || ''}</p>
+                        <p className="font-medium">{customer.contact_number || customer.phone_number || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Email Address</span>
-                        <p className="font-medium">{customer.email || ''}</p>
+                        <p className="font-medium">{customer.email || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -287,7 +293,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">Delivery Channel</span>
-                        <p className="font-medium">Face to Face</p>
+                        <p className="font-medium">{customer.delivery_channel || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Company Name</span>
@@ -299,7 +305,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">Relationship Start Date</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{formatDate(customer.relationship_start_date) || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -318,7 +324,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">HAVE YOU EVER HELD ANY PUBLIC POSITION?</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.ever_held_public_position || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">DO YOU HAVE OR HAVE YOU EVER HAD ANY DIPLOMATIC IMMUNITY?</span>
@@ -338,7 +344,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">IF YOU HAVE ANSWERED "YES" TO ANY OF THE QUESTIONS, DETAILS.</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.pep_details || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -364,7 +370,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <span className="text-gray-500">Is Joint Account</span>
-                        <p className="font-medium">{customer.is_joint_account ? 'Yes' : 'N/A'}</p>
+                        <p className="font-medium">{customer.is_joint_account ? 'Yes' : 'No'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Name of Joint Account Holder</span>
@@ -372,7 +378,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">Relationship with Customer</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.joint_account_relationship || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Joint Act Holder National ID No</span>
@@ -380,15 +386,15 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">Email Address</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.joint_account_email || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Mailing Address</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.joint_account_address || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Phone Number</span>
-                        <p className="font-medium">N/A N/A</p>
+                        <p className="font-medium">{customer.joint_account_phone || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -399,7 +405,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <span className="text-gray-500">Is Minor Account</span>
-                        <p className="font-medium">{customer.is_minor_account ? 'Yes' : 'N/A'}</p>
+                        <p className="font-medium">{customer.is_minor_account ? 'Yes' : 'No'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Name of Guardian</span>
@@ -407,7 +413,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">Relationship with Minor</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.guardian_relationship || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Guardian National ID No.</span>
@@ -415,15 +421,15 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">Guardian Email Address</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.guardian_email || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Guardian Address</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.guardian_address || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Guardian Phone Number</span>
-                        <p className="font-medium">N/A N/A</p>
+                        <p className="font-medium">{customer.guardian_phone || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -438,7 +444,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">National ID Number</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.fatca_national_id || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Place Of Birth</span>
@@ -450,11 +456,11 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">POWER OF ATTORNEY'S NAME</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.fatca_power_of_attorney_name || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">POWER OF ATTORNEY'S ADDRESS</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.fatca_power_of_attorney_address || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">ARE YOU A RESIDENT OF ANY OVERSEAS COUNTRY?</span>
@@ -462,7 +468,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">COUNTRY OF OVERSEAS RESIDENCE</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.fatca_overseas_country || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">DO YOU HAVE ANY OVERSEAS TAX OBLIGATIONS?</span>
@@ -470,7 +476,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">COUNTRY OF OVERSEAS TAX OBLIGATION</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.fatca_tax_country || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -513,11 +519,11 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div>
                         <span className="text-gray-500">IF REASON B SELECTED, PLEASE EXPLAIN WHY YOU ARE UNABLE TO OBTAIN A TIN OR FUNCTIONAL EQUIVALENT #2</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.crs_reason_2_details || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">IF REASON B SELECTED, PLEASE EXPLAIN WHY YOU ARE UNABLE TO OBTAIN A TIN OR FUNCTIONAL EQUIVALENT #3</span>
-                        <p className="font-medium">N/A</p>
+                        <p className="font-medium">{customer.crs_reason_3_details || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Investment Range</span>
@@ -532,11 +538,11 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <span className="text-gray-500">Last Review</span>
-                        <p className="font-medium">{formatDate(customer.last_review) || '21 May, 2025'}</p>
+                        <p className="font-medium">{formatDate(customer.last_review) || 'N/A'}</p>
                     </div>
                     <div>
                         <span className="text-gray-500">Next Review</span>
-                        <p className="font-medium text-blue-600 underline">{formatDate(customer.next_review) || '21 May, 2030'}</p>
+                        <p className="font-medium text-blue-600 underline">{formatDate(customer.next_review) || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -552,10 +558,10 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                 <div className="mb-6">
                     <h4 className="font-medium mb-4">Name Screening</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                        {renderVerificationStatus(customer.sanction_status || true, 'Sanction')}
-                        {renderVerificationStatus(customer.pep_status || true, 'PEP')}
-                        {renderVerificationStatus(customer.special_interest_status || true, 'Special Interest')}
-                        {renderVerificationStatus(customer.adverse_media_status || true, 'Adverse Media')}
+                        {renderVerificationStatus(customer.sanction_status, 'Sanction')}
+                        {renderVerificationStatus(customer.pep_status, 'PEP')}
+                        {renderVerificationStatus(customer.special_interest_status, 'Special Interest')}
+                        {renderVerificationStatus(customer.adverse_media_status, 'Adverse Media')}
                     </div>
                 </div>
             </div>
@@ -567,19 +573,19 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             <div className="bg-white rounded-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Documents Verification</h3>
                 <div className="space-y-4">
-                    {renderVerificationStatus(customer.document_matched || true, 'Document Matched')}
+                    {renderVerificationStatus(customer.document_matched, 'Document Matched')}
                 </div>
                 
                 <h4 className="font-medium mt-6 mb-4">Document Upload</h4>
                 <div className="space-y-4">
-                    {renderVerificationStatus(customer.document_verified || true, 'Verified')}
+                    {renderVerificationStatus(customer.document_verified, 'Verified')}
                 </div>
             </div>
 
             <div className="bg-white rounded-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Politically Exposed Person (PEP)</h3>
                 <div className="space-y-4">
-                    {renderVerificationStatus(customer.pep_status || true, 'Self Declared PEP')}
+                    {renderVerificationStatus(customer.pep_status, 'Self Declared PEP')}
                 </div>
             </div>
         </div>
@@ -590,7 +596,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             <div className="bg-white rounded-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Risk Rating</h3>
                 <div className="space-y-4">
-                    {renderVerificationStatus(customer.risk_rating || 'low', 'Low')}
+                    {renderVerificationStatus(customer.risk_rating, 'Risk Rating')}
                 </div>
             </div>
         </div>
@@ -615,7 +621,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </div>
                     <div className="border-l-4 border-purple-500 pl-4">
                         <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">Status Updated to Approved</span>
+                            <span className="text-sm font-medium">Status Updated to {customer.status}</span>
                             <span className="text-xs text-gray-500">{formatDate(customer.record_last_updated)}</span>
                         </div>
                     </div>
