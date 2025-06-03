@@ -47,7 +47,7 @@ interface Customer {
     adverse_media_status?: string;
     risk_rating?: string;
     
-    // Dates
+    // Date
     onboarded_by?: string;
     record_last_updated?: string;
     last_review?: string;
