@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown, Search, Edit, AlertCircle } from 'lucide-react';
+import { Loader2, XCircle, Download, CheckCircle, RefreshCw, FileText, ChevronUp, ChevronDown, Search, Edit, AlertCircle, Eye } from 'lucide-react';
 import { SearchResult, Tracking } from './types';
 import { generateCustomerPDF } from './utils/pdfGenerator';
 import { useNavigate } from 'react-router-dom';
+import CustomerProfileDetails from './components/CustomerProfileDetails';
 
 interface ActiveTrackingProps {
     trackedResults: SearchResult[];
@@ -10,6 +11,50 @@ interface ActiveTrackingProps {
     isLoading: boolean;
     onToggleTracking: (name: string, newTrackingStatus: boolean) => Promise<void>;
     tabType?: 'alerts' | 'customers';
+}
+
+// Customer interface for profile details
+interface Customer {
+    id: string;
+    user_id?: string;
+    identoId?: string;
+    type: 'individual' | 'company';
+    status: string;
+    full_name?: string;
+    companyName?: string;
+    company_name?: string;
+    gender?: string;
+    date_of_birth?: string;
+    nationality?: string;
+    country_of_residence?: string;
+    national_id_number?: string;
+    national_id_expiry?: string;
+    passport_number?: string;
+    passport_expiry?: string;
+    email?: string;
+    contact_number?: string;
+    phone_number?: string;
+    address?: string;
+    state?: string;
+    city?: string;
+    zip_code?: string;
+    postal_code?: string;
+    work_type?: string;
+    industry?: string;
+    position_in_company?: string;
+    company_name_work?: string;
+    document_matched?: boolean;
+    document_verified?: boolean;
+    sanction_status?: string;
+    pep_status?: string;
+    special_interest_status?: string;
+    adverse_media_status?: string;
+    risk_rating?: string;
+    onboarded_by?: string;
+    record_last_updated?: string;
+    last_review?: string;
+    next_review?: string;
+    [key: string]: any;
 }
 
 type SortableColumn = 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status' | 'dataset';
@@ -66,6 +111,11 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
     const [appliedNameQuery, setAppliedNameQuery] = useState<string>('');
     const [appliedIdQuery, setAppliedIdQuery] = useState<string>('');
     const [activeFilter, setActiveFilter] = useState<'all' | 'custom'>('all');
+    
+    // State for customer profile viewing
+    const [currentView, setCurrentView] = useState<'list' | 'details'>('list');
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    
     const navigate = useNavigate();
     
     // Minimum search term length
@@ -88,6 +138,42 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
             setLastUpdated(new Date().toLocaleTimeString());
         }
     }, [trackedResults, tracking, isLoading]);
+
+    // Convert SearchResult to Customer for profile viewing
+    const convertToCustomer = (result: SearchResult): Customer => {
+        return {
+            id: result.id.toString(),
+            user_id: result.identifiers,
+            identoId: result.identifiers,
+            type: 'individual', // Default to individual, could be enhanced based on data
+            status: result.dataset === 'onboarded' ? 'approved' : 'pending',
+            full_name: result.name,
+            nationality: result.country,
+            country_of_residence: result.country,
+            risk_rating: result.riskLevel?.toString() || '0',
+            sanction_status: result.dataset?.includes('sanctions') ? 'flagged' : 'clear',
+            pep_status: result.dataset?.includes('peps') ? 'flagged' : 'clear',
+            special_interest_status: result.dataset?.includes('terrorists') ? 'flagged' : 'clear',
+            adverse_media_status: 'clear',
+            document_matched: result.dataset === 'onboarded',
+            document_verified: result.dataset === 'onboarded',
+            last_review: tracking?.[result.name]?.startDate,
+            // Add any other available data from SearchResult
+            ...result
+        };
+    };
+
+    // Handle viewing customer profile
+    const handleViewCustomer = (result: SearchResult) => {
+        const customerForView = convertToCustomer(result);
+        setSelectedCustomer(customerForView);
+        setCurrentView('details');
+    };
+
+    const handleBackToList = () => {
+        setCurrentView('list');
+        setSelectedCustomer(null);
+    };
 
     const getRiskColor = (percentage: number): string => {
         if (percentage >= 85) return 'text-red-600';
@@ -198,53 +284,62 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
         
         // Then apply column-specific sorting
         return baseResults.sort((a, b) => {
-            const multiplier = sortDirection === 'asc' ? 1 : -1;
+            let aVal: any, bVal: any;
             
             switch (sortColumn) {
                 case 'identifiers':
-                    return multiplier * (a.identifiers || '').localeCompare(b.identifiers || '');
+                    aVal = a.identifiers || '';
+                    bVal = b.identifiers || '';
+                    break;
                 case 'name':
-                    return multiplier * (a.name || '').localeCompare(b.name || '');
+                    aVal = a.name || '';
+                    bVal = b.name || '';
+                    break;
                 case 'country':
-                    return multiplier * (a.country || '').localeCompare(b.country || '');
+                    aVal = a.country || '';
+                    bVal = b.country || '';
+                    break;
                 case 'aging':
-                    const aAging = calculateAging(a).replace('D', '');
-                    const bAging = calculateAging(b).replace('D', '');
-                    return multiplier * (parseInt(aAging) || 0) - (parseInt(bAging) || 0);
+                    aVal = calculateAging(a) || '';
+                    bVal = calculateAging(b) || '';
+                    break;
                 case 'blacklist':
-                    const aBlacklist = a.dataset === 'onboarded' ? 0 : 1;
-                    const bBlacklist = b.dataset === 'onboarded' ? 0 : 1;
-                    return multiplier * (aBlacklist - bBlacklist);
+                    aVal = a.isBlacklisted ? 1 : 0;
+                    bVal = b.isBlacklisted ? 1 : 0;
+                    break;
                 case 'risk':
-                    return multiplier * ((a.riskLevel || 0) - (b.riskLevel || 0));
+                    aVal = a.riskLevel || 0;
+                    bVal = b.riskLevel || 0;
+                    break;
                 case 'status':
-                    const aStatus = tracking?.[a.name]?.isTracking ? 1 : 0;
-                    const bStatus = tracking?.[b.name]?.isTracking ? 1 : 0;
-                    return multiplier * (aStatus - bStatus);
+                    aVal = tracking?.[a.name]?.isTracking ? 1 : 0;
+                    bVal = tracking?.[b.name]?.isTracking ? 1 : 0;
+                    break;
                 case 'dataset':
-                    const aDataset = a.dataset || '';
-                    const bDataset = b.dataset || '';
-                    return multiplier * aDataset.localeCompare(bDataset);
+                    aVal = a.dataset || '';
+                    bVal = b.dataset || '';
+                    break;
                 default:
                     return 0;
             }
+            
+            if (typeof aVal === 'string' && typeof bVal === 'string') {
+                return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            }
+            
+            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
         });
     };
 
     const handleGeneratePDF = async (person: SearchResult) => {
+        setGeneratingPdf(prev => ({ ...prev, [person.id]: true }));
+        
         try {
-            // Set PDF generation status for this person
-            setGeneratingPdf(prev => ({ ...prev, [person.id]: true }));
-            
-            // Generate the PDF
             await generateCustomerPDF(person);
-            
-            // Reset PDF generation status
-            setGeneratingPdf(prev => ({ ...prev, [person.id]: false }));
         } catch (error) {
             console.error('Error generating PDF:', error);
+        } finally {
             setGeneratingPdf(prev => ({ ...prev, [person.id]: false }));
-            alert('Failed to generate PDF. Please try again.');
         }
     };
 
@@ -329,6 +424,11 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
     const handleCancelTracking = () => {
         setConfirmDialog({ isOpen: false, name: '', pendingStatus: false });
     };
+
+    // Render customer profile details
+    if (currentView === 'details' && selectedCustomer) {
+        return <CustomerProfileDetails customer={selectedCustomer} onBack={handleBackToList} />;
+    }
 
     return (
         <div className="p-6">
@@ -464,14 +564,15 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
                                     STATUS {renderSortIndicator('status')}
                                 </th>
                                 <th className="pb-4 px-6 whitespace-nowrap text-center">
-                                    TRACKING
+                                    ACTIONS
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredAndSortedResults.map((result, index) => (
                                 <tr key={`tracked-${index}-${result.name}`} 
-                                    className="border-t border-gray-100 hover:bg-gray-50 bg-white">
+                                    className="border-t border-gray-100 hover:bg-gray-50 bg-white cursor-pointer"
+                                    onClick={() => handleViewCustomer(result)}>
                                     <td className="py-4 px-6">
                                         <div className="flex items-center space-x-3">
                                             <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(result.name || 'Unknown')}`} alt={result.name || 'Unknown'} className="w-8 h-8 rounded-full" />
@@ -551,7 +652,10 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
                                     <td className="py-4 px-6 text-center">
                                         <div className="flex justify-center">
                                             <button 
-                                                onClick={() => handleGeneratePDF(result)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleGeneratePDF(result);
+                                                }}
                                                 disabled={generatingPdf[result.id]}
                                                 className="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-full transition-colors duration-200"
                                                 title="Download Report"
@@ -581,8 +685,23 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
                                     <td className="py-4 px-6 text-center">
                                         <div className="flex justify-center items-center space-x-2">
                                             <button
-                                                onClick={() => handleToggleTracking(result.name, !tracking?.[result.name]?.isTracking)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleViewCustomer(result);
+                                                }}
+                                                className="p-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full transition-colors duration-200"
+                                                title="View Profile"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                            
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleToggleTracking(result.name, !tracking?.[result.name]?.isTracking);
+                                                }}
                                                 className={`w-8 h-5 rounded-full flex items-center transition-colors duration-300 focus:outline-none ${tracking?.[result.name]?.isTracking ? 'bg-purple-500' : 'bg-gray-300'}`}
+                                                title="Toggle Tracking"
                                             >
                                                 <div
                                                     className={`w-3 h-3 rounded-full bg-white shadow-md transform transition-transform duration-300 ${tracking?.[result.name]?.isTracking ? 'translate-x-5' : 'translate-x-0.5'}`}
@@ -590,8 +709,11 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
                                             </button>
                                             
                                             <button
-                                                onClick={() => handleEditProfile(result)}
-                                                className="ml-2 p-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full transition-colors duration-200"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditProfile(result);
+                                                }}
+                                                className="p-1 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-full transition-colors duration-200"
                                                 title="Edit Profile"
                                             >
                                                 <Edit className="w-4 h-4" />

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Download, CheckCircle } from 'lucide-react';
+import { Loader2, Download, CheckCircle, ArrowLeft, Eye } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './config';
+import CustomerProfileDetails from './components/CustomerProfileDetails';
 
 interface CompanyOB {
     user_id: string;
@@ -65,6 +66,13 @@ interface PaginationInfo {
     totalPages: number;
 }
 
+// Unified Customer interface for the detail view
+interface Customer extends IndividualOB, CompanyOB {
+    id: string;
+    type: 'individual' | 'company';
+    companyName?: string;
+}
+
 function CustomerProfiles() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -78,6 +86,10 @@ function CustomerProfiles() {
     const [companyPagination, setCompanyPagination] = useState<PaginationInfo>({ total: 0, page: 1, totalPages: 1 });
     const [individualPagination, setIndividualPagination] = useState<PaginationInfo>({ total: 0, page: 1, totalPages: 1 });
     const [error, setError] = useState<string | null>(null);
+    
+    // State for customer profile viewing
+    const [currentView, setCurrentView] = useState<'list' | 'details'>('list');
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
     const fetchData = useCallback(async () => {
         if (!user) {
@@ -147,6 +159,24 @@ function CustomerProfiles() {
         fetchData();
     }, [fetchData]);
 
+    // Handle viewing customer profile
+    const handleViewCustomer = (customer: IndividualOB | CompanyOB, type: 'individual' | 'company') => {
+        const customerForView: Customer = {
+            ...customer,
+            id: customer.user_id,
+            type: type,
+            companyName: type === 'company' ? (customer as CompanyOB).company_name : undefined,
+            status: customer.status || 'approved'
+        };
+        setSelectedCustomer(customerForView);
+        setCurrentView('details');
+    };
+
+    const handleBack = () => {
+        setCurrentView('list');
+        setSelectedCustomer(null);
+    };
+
     const generateIndividualPDF = async (individual: IndividualOB) => {
         // ... existing PDF generation code ...
     };
@@ -202,6 +232,11 @@ function CustomerProfiles() {
         );
     };
 
+    // Render customer profile details
+    if (currentView === 'details' && selectedCustomer) {
+        return <CustomerProfileDetails customer={selectedCustomer} onBack={handleBack} />;
+    }
+
     if (error) {
         return (
             <div className="p-6">
@@ -236,7 +271,11 @@ function CustomerProfiles() {
                             </thead>
                             <tbody>
                                 {individualData.map((individual, index) => (
-                                    <tr key={index} className="border-t border-gray-100 hover:bg-gray-50">
+                                    <tr 
+                                        key={index} 
+                                        className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                        onClick={() => handleViewCustomer(individual, 'individual')}
+                                    >
                                         <td className="py-4 px-6">{individual.user_id}</td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center space-x-3">
@@ -258,13 +297,28 @@ function CustomerProfiles() {
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
-                                            <button
-                                                onClick={() => generateIndividualPDF(individual)}
-                                                className="text-purple-600 hover:text-purple-800"
-                                                title="Download PDF"
-                                            >
-                                                <Download className="w-5 h-5" />
-                                            </button>
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewCustomer(individual, 'individual');
+                                                    }}
+                                                    className="text-blue-600 hover:text-blue-800"
+                                                    title="View Profile"
+                                                >
+                                                    <Eye className="w-5 h-5" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        generateIndividualPDF(individual);
+                                                    }}
+                                                    className="text-purple-600 hover:text-purple-800"
+                                                    title="Download PDF"
+                                                >
+                                                    <Download className="w-5 h-5" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -292,7 +346,11 @@ function CustomerProfiles() {
                             </thead>
                             <tbody>
                                 {companyData.map((company, index) => (
-                                    <tr key={index} className="border-t border-gray-100 hover:bg-gray-50">
+                                    <tr 
+                                        key={index} 
+                                        className="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                        onClick={() => handleViewCustomer(company, 'company')}
+                                    >
                                         <td className="py-4 px-6">{company.user_id}</td>
                                         <td className="py-4 px-6">
                                             <div className="flex items-center space-x-3">
@@ -314,13 +372,28 @@ function CustomerProfiles() {
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
-                                            <button
-                                                onClick={() => generateCompanyPDF(company)}
-                                                className="text-purple-600 hover:text-purple-800"
-                                                title="Download PDF"
-                                            >
-                                                <Download className="w-5 h-5" />
-                                            </button>
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewCustomer(company, 'company');
+                                                    }}
+                                                    className="text-blue-600 hover:text-blue-800"
+                                                    title="View Profile"
+                                                >
+                                                    <Eye className="w-5 h-5" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        generateCompanyPDF(company);
+                                                    }}
+                                                    className="text-purple-600 hover:text-purple-800"
+                                                    title="Download PDF"
+                                                >
+                                                    <Download className="w-5 h-5" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
