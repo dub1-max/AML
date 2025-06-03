@@ -101,6 +101,9 @@ function MainApp(_props: MainAppProps) {
     const [totalPages, setTotalPages] = useState<number>(1);
     const [totalResults, setTotalResults] = useState<number>(0);
     
+    // Add state for screening tabs
+    const [activeScreeningTab, setActiveScreeningTab] = useState<'alerts' | 'customers' | 'review'>('alerts');
+    
     // Navigation hooks are already declared at the top
 
     // Cache duration in milliseconds (5 minutes)
@@ -900,6 +903,13 @@ function MainApp(_props: MainAppProps) {
         navigate('/credits');
     };
 
+    // Add effect to automatically switch to review tab when there are pending approvals
+    useEffect(() => {
+        if (pendingApprovals.filter(item => item.isMatched).length > 0 && activeSection === 'activeTracking') {
+            setActiveScreeningTab('review');
+        }
+    }, [pendingApprovals, activeSection]);
+
     return (
         <Layout 
             activeSection={activeSection}
@@ -993,10 +1003,66 @@ function MainApp(_props: MainAppProps) {
                 ) : activeSection === 'activeTracking' ? (
                     <ErrorBoundary>
                         <div>
-                            {/* Pending approvals section */}
-                            {pendingApprovals.filter(item => item.isMatched).length > 0 && (
+                            {/* Screening Tabs */}
+                            <div className="border-b border-gray-200 mb-4">
+                                <div className="flex px-6 pt-4">
+                                    <button 
+                                        onClick={() => setActiveScreeningTab('alerts')}
+                                        className={`py-3 px-6 font-medium text-sm border-b-2 relative ${
+                                            activeScreeningTab === 'alerts'
+                                            ? 'border-purple-600 text-purple-600' 
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        Alerts
+                                        {trackedResults.filter(result => tracking?.[result.name]?.isTracking && result.dataset !== 'onboarded').length > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                                {trackedResults.filter(result => tracking?.[result.name]?.isTracking && result.dataset !== 'onboarded').length}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <button 
+                                        onClick={() => setActiveScreeningTab('customers')}
+                                        className={`py-3 px-6 font-medium text-sm border-b-2 relative ${
+                                            activeScreeningTab === 'customers'
+                                            ? 'border-purple-600 text-purple-600' 
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        Customers
+                                        {trackedResults.filter(result => result.dataset === 'onboarded').length > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                                {trackedResults.filter(result => result.dataset === 'onboarded').length}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <button 
+                                        onClick={() => setActiveScreeningTab('review')}
+                                        className={`py-3 px-6 font-medium text-sm border-b-2 relative ${
+                                            activeScreeningTab === 'review'
+                                            ? 'border-purple-600 text-purple-600' 
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        Review
+                                        {pendingApprovals.filter(item => item.isMatched).length > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                                {pendingApprovals.filter(item => item.isMatched).length}
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Pending approvals section - only show when Review tab is active */}
+                            {activeScreeningTab === 'review' && pendingApprovals.filter(item => item.isMatched).length > 0 && (
                                 <div className="p-6 border-b border-gray-200">
-                                    <h3 className="text-lg font-semibold mb-4">Customers Requiring Approval</h3>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-semibold">Customers Requiring Approval</h3>
+                                        <div className="text-sm text-gray-500">
+                                            Review and approve or reject potential matches
+                                        </div>
+                                    </div>
                                     <div className="bg-white rounded-lg shadow overflow-hidden">
                                         <table className="min-w-full divide-y divide-gray-200">
                                             <thead className="bg-gray-50">
@@ -1113,13 +1179,37 @@ function MainApp(_props: MainAppProps) {
                                 </div>
                             )}
                             
-                            {/* Main active tracking component */}
-                            <ActiveTracking
-                                trackedResults={trackedResults}
-                                tracking={tracking}
-                                isLoading={isLoading}
-                                onToggleTracking={updateTracking}
-                            />
+                            {/* Main active tracking component - only show on Alerts or Customers tab */}
+                            {(activeScreeningTab === 'alerts' || activeScreeningTab === 'customers') && (
+                                <ActiveTracking
+                                    trackedResults={trackedResults.filter(result => {
+                                        // For Alerts tab: show tracked profiles that are not onboarded
+                                        if (activeScreeningTab === 'alerts') {
+                                            return tracking?.[result.name]?.isTracking && result.dataset !== 'onboarded';
+                                        }
+                                        // For Customers tab: show only onboarded profiles
+                                        else {
+                                            return result.dataset === 'onboarded';
+                                        }
+                                    })}
+                                    tracking={tracking}
+                                    isLoading={isLoading}
+                                    onToggleTracking={updateTracking}
+                                    tabType={activeScreeningTab === 'customers' ? 'customers' : 'alerts'}
+                                />
+                            )}
+                            
+                            {/* Show message when Review tab is active but no pending approvals */}
+                            {activeScreeningTab === 'review' && pendingApprovals.filter(item => item.isMatched).length === 0 && (
+                                <div className="p-6 text-center">
+                                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-md">
+                                        <p className="text-blue-700">No profiles requiring review at this time</p>
+                                        <p className="text-sm text-blue-600 mt-2">
+                                            When new customers are onboarded with potential matches, they will appear here for review.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </ErrorBoundary>
                 ) : (

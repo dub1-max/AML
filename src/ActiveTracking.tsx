@@ -9,6 +9,7 @@ interface ActiveTrackingProps {
     tracking: Tracking;
     isLoading: boolean;
     onToggleTracking: (name: string, newTrackingStatus: boolean) => Promise<void>;
+    tabType?: 'alerts' | 'customers';
 }
 
 type SortableColumn = 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status' | 'dataset';
@@ -55,7 +56,7 @@ const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, name }: {
     );
 };
 
-function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking }: ActiveTrackingProps) {
+function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking, tabType = 'alerts' }: ActiveTrackingProps) {
     const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
     const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
     const [sortColumn, setSortColumn] = useState<SortableColumn>('name');
@@ -380,8 +381,8 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking 
                     <div>
                         <p className="text-sm text-gray-500">
                             {activeFilter === 'custom' 
-                                ? `Showing ${resultsCount} of ${totalCount} tracked items` 
-                                : `Total tracked items: ${totalCount}`}
+                                ? `Showing ${resultsCount} of ${totalCount} ${tabType === 'alerts' ? 'tracked items' : 'customers'}` 
+                                : `Total ${tabType === 'alerts' ? 'tracked items' : 'customers'}: ${totalCount}`}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
                             Last updated: {lastUpdated}
