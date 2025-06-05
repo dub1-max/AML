@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Download, Bell, CheckCircle, XCircle, AlertTriangle, User, Globe, FileText, Activity } from 'lucide-react';
 
 interface Customer {
@@ -107,6 +107,49 @@ type TabType = 'profile' | 'nameScreening' | 'documentVerification' | 'riskRatin
 
 const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ customer, onBack }) => {
     const [activeTab, setActiveTab] = useState<TabType>('profile');
+    const [matchingProfiles, setMatchingProfiles] = useState<any[]>([]);
+    const [isLoadingMatches, setIsLoadingMatches] = useState(false);
+
+    // Fetch matching profiles when tab changes to nameScreening
+    useEffect(() => {
+        if (activeTab === 'nameScreening') {
+            fetchMatchingProfiles();
+        }
+    }, [activeTab]);
+
+    const fetchMatchingProfiles = async () => {
+        setIsLoadingMatches(true);
+        try {
+            // This is a placeholder. In a real app, you would fetch from your API
+            // const response = await fetch(`/api/name-screening/${customer.id}`);
+            // const data = await response.json();
+            
+            // For now, we'll simulate some matching profiles
+            setTimeout(() => {
+                const mockMatches = customer.name_screening_hits || [
+                    {
+                        full_name: customer.full_name || customer.name,
+                        dob: customer.date_of_birth,
+                        id_number: "ID" + Math.floor(Math.random() * 10000000),
+                        country: customer.nationality || "China",
+                        source_list: "Global Watchlist",
+                        score: Math.floor(Math.random() * 30) + 70,
+                        sanction: Math.random() > 0.5,
+                        pep: Math.random() > 0.5,
+                        special_interest: Math.random() > 0.7,
+                        adverse_media: Math.random() > 0.6,
+                        hit_determination: Math.random() > 0.5 ? "Potential Match" : "False Positive"
+                    }
+                ];
+                
+                setMatchingProfiles(mockMatches);
+                setIsLoadingMatches(false);
+            }, 500);
+        } catch (error) {
+            console.error("Error fetching matching profiles:", error);
+            setIsLoadingMatches(false);
+        }
+    };
 
     const tabs = [
         { id: 'profile' as TabType, label: 'Customer Profile', icon: User },
@@ -573,51 +616,99 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             <div className="bg-white rounded-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Name Screening Hit Details</h3>
                 
-                {customer.name_screening_hits && customer.name_screening_hits.length > 0 ? (
+                {isLoadingMatches ? (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700"></div>
+                    </div>
+                ) : matchingProfiles.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-100">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOB</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source List</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sanction</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PEP</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Special Interest</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adverse Media</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hit Determination</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Relevant</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Not Relevant</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOB</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source List</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Sanction</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">PEP</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Special Interest</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adverse Media</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hit Determination</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Relevant</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Not Relevant</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {customer.name_screening_hits.map((hit: any, index: number) => (
-                                    <tr key={index}>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{hit.full_name || hit.name || 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.dob || formatDate(hit.date_of_birth) || 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.id_number || 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.country || 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.source_list || 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.score || 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.sanction ? '✓' : '✗'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.pep ? '✓' : '✗'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.special_interest ? '✓' : '✗'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.adverse_media ? '✓' : '✗'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.hit_determination || 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {matchingProfiles.map((match, index) => (
+                                    <tr key={index} className="hover:bg-gray-50">
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{match.full_name || match.name || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.dob || formatDate(match.date_of_birth) || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.id_number || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                            {match.country && match.country !== 'Unknown' && match.country !== 'N/A' ? (
+                                                <div className="flex items-center">
+                                                    <img 
+                                                        src={`https://flagcdn.com/w20/${match.country.toLowerCase()}.png`}
+                                                        alt={match.country}
+                                                        className="mr-2 h-3 rounded shadow-sm"
+                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                    />
+                                                    {match.country}
+                                                </div>
+                                            ) : 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.source_list || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.score || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            {match.sanction ? (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 bg-red-100 rounded-full">
+                                                    <CheckCircle className="w-3 h-3 text-red-600" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            {match.pep ? (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 bg-yellow-100 rounded-full">
+                                                    <CheckCircle className="w-3 h-3 text-yellow-600" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            {match.special_interest ? (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 bg-purple-100 rounded-full">
+                                                    <CheckCircle className="w-3 h-3 text-purple-600" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            {match.adverse_media ? (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-100 rounded-full">
+                                                    <CheckCircle className="w-3 h-3 text-blue-600" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.hit_determination || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                                             <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                                             <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.comments || 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <button className="text-purple-600 hover:text-purple-800">View</button>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.comments || '-'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            <button className="text-purple-600 hover:text-purple-800 font-medium">View</button>
                                         </td>
                                     </tr>
                                 ))}
