@@ -137,24 +137,64 @@ function SelfLinkCompanyOB() {
             }
 
             const data = await response.json();
+            console.log("Received extracted company data:", data);
             setExtractedData(data);
+            
+            // Track which fields were successfully extracted
+            const extractedFields = [];
             
             // Pre-fill form with extracted data
             const updatedFormData = { ...formData };
-            if (data.companyName) updatedFormData.companyName = data.companyName;
-            if (data.registrationNumber) updatedFormData.registrationNumber = data.registrationNumber;
-            if (data.incorporationDate) updatedFormData.incorporationDate = data.incorporationDate;
-            if (data.businessNature) updatedFormData.businessNature = data.businessNature;
-            if (data.registeredAddress) updatedFormData.registeredAddress = data.registeredAddress;
-            if (data.city) updatedFormData.city = data.city;
-            if (data.postalCode) updatedFormData.postalCode = data.postalCode;
-            if (data.contactEmail) updatedFormData.contactEmail = data.contactEmail;
-            if (data.contactPhone) updatedFormData.contactPhone = data.contactPhone;
-            if (data.taxNumber) updatedFormData.taxNumber = data.taxNumber;
+            
+            if (data.companyName) {
+                updatedFormData.companyName = data.companyName;
+                extractedFields.push('Company Name');
+            }
+            if (data.registrationNumber) {
+                updatedFormData.registrationNumber = data.registrationNumber;
+                extractedFields.push('Registration Number');
+            }
+            if (data.incorporationDate) {
+                updatedFormData.incorporationDate = data.incorporationDate;
+                extractedFields.push('Incorporation Date');
+            }
+            if (data.businessNature) {
+                updatedFormData.businessNature = data.businessNature;
+                extractedFields.push('Business Nature');
+            }
+            if (data.registeredAddress) {
+                updatedFormData.registeredAddress = data.registeredAddress;
+                extractedFields.push('Registered Address');
+            }
+            if (data.city) {
+                updatedFormData.city = data.city;
+                extractedFields.push('City');
+            }
+            if (data.postalCode) {
+                updatedFormData.postalCode = data.postalCode;
+                extractedFields.push('Postal Code');
+            }
+            if (data.contactEmail) {
+                updatedFormData.contactEmail = data.contactEmail;
+                extractedFields.push('Contact Email');
+            }
+            if (data.contactPhone) {
+                updatedFormData.contactPhone = data.contactPhone;
+                extractedFields.push('Contact Phone');
+            }
+            if (data.taxNumber) {
+                updatedFormData.taxNumber = data.taxNumber;
+                extractedFields.push('Tax Number');
+            }
             
             setFormData(updatedFormData);
             
-            alert('Document analyzed successfully! Please review and complete the form.');
+            if (extractedFields.length > 0) {
+                alert(`Document analyzed successfully! Extracted fields: ${extractedFields.join(', ')}.\n\nPlease review and complete any missing information.`);
+            } else {
+                alert('Document processed, but no fields could be automatically extracted. Please fill the form manually.');
+            }
+            
             setCurrentStep('form');
         } catch (error) {
             console.error('Error analyzing document:', error);

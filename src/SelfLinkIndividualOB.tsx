@@ -114,24 +114,72 @@ function SelfLinkIndividualOB() {
             }
 
             const data = await response.json();
+            console.log("Received extracted data:", data);
             setExtractedData(data);
             
-            // Pre-fill form with extracted data
-            if (data.fullName) setFullName(data.fullName);
-            if (data.email) setEmail(data.email);
-            if (data.dateOfBirth) setDateOfBirth(data.dateOfBirth);
-            if (data.nationality) setNationality(data.nationality);
-            if (data.countryOfResidence) setCountryOfResidence(data.countryOfResidence);
-            if (data.nationalIdNumber) setNationalIdNumber(data.nationalIdNumber);
-            if (data.nationalIdExpiry) setNationalIdExpiry(data.nationalIdExpiry);
-            if (data.passportNumber) setPassportNumber(data.passportNumber);
-            if (data.passportExpiry) setPassportExpiry(data.passportExpiry);
-            if (data.address) setAddress(data.address);
-            if (data.city) setCity(data.city);
-            if (data.zipCode) setZipCode(data.zipCode);
-            if (data.contactNumber) setContactNumber(data.contactNumber);
+            // Track which fields were successfully extracted
+            const extractedFields = [];
             
-            alert('Document analyzed successfully! Please review and complete the form.');
+            // Pre-fill form with extracted data
+            if (data.fullName) {
+                setFullName(data.fullName);
+                extractedFields.push('Full Name');
+            }
+            if (data.email) {
+                setEmail(data.email);
+                extractedFields.push('Email');
+            }
+            if (data.dateOfBirth) {
+                setDateOfBirth(data.dateOfBirth);
+                extractedFields.push('Date of Birth');
+            }
+            if (data.nationality) {
+                setNationality(data.nationality);
+                extractedFields.push('Nationality');
+            }
+            if (data.countryOfResidence) {
+                setCountryOfResidence(data.countryOfResidence);
+                extractedFields.push('Country of Residence');
+            }
+            if (data.nationalIdNumber) {
+                setNationalIdNumber(data.nationalIdNumber);
+                extractedFields.push('ID Number');
+            }
+            if (data.nationalIdExpiry) {
+                setNationalIdExpiry(data.nationalIdExpiry);
+                extractedFields.push('ID Expiry');
+            }
+            if (data.passportNumber) {
+                setPassportNumber(data.passportNumber);
+                extractedFields.push('Passport Number');
+            }
+            if (data.passportExpiry) {
+                setPassportExpiry(data.passportExpiry);
+                extractedFields.push('Passport Expiry');
+            }
+            if (data.address) {
+                setAddress(data.address);
+                extractedFields.push('Address');
+            }
+            if (data.city) {
+                setCity(data.city);
+                extractedFields.push('City');
+            }
+            if (data.zipCode) {
+                setZipCode(data.zipCode);
+                extractedFields.push('Zip Code');
+            }
+            if (data.contactNumber) {
+                setContactNumber(data.contactNumber);
+                extractedFields.push('Contact Number');
+            }
+            
+            if (extractedFields.length > 0) {
+                alert(`Document analyzed successfully! Extracted fields: ${extractedFields.join(', ')}.\n\nPlease review and complete any missing information.`);
+            } else {
+                alert('Document processed, but no fields could be automatically extracted. Please fill the form manually.');
+            }
+            
             setCurrentStep('form');
         } catch (error) {
             console.error('Error analyzing document:', error);
