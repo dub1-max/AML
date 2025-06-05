@@ -92,6 +92,9 @@ interface Customer {
     crs_reason_3?: string;
     crs_investment_range?: string;
     
+    // Name Screening
+    name_screening_hits?: any[];
+    
     [key: string]: any;
 }
 
@@ -564,6 +567,72 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                         {renderVerificationStatus(customer.adverse_media_status, 'Adverse Media')}
                     </div>
                 </div>
+            </div>
+
+            {/* Name Screening Hit Details */}
+            <div className="bg-white rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Name Screening Hit Details</h3>
+                
+                {customer.name_screening_hits && customer.name_screening_hits.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOB</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source List</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sanction</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PEP</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Special Interest</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adverse Media</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hit Determination</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Relevant</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Not Relevant</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {customer.name_screening_hits.map((hit: any, index: number) => (
+                                    <tr key={index}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{hit.full_name || hit.name || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.dob || formatDate(hit.date_of_birth) || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.id_number || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.country || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.source_list || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.score || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.sanction ? '✓' : '✗'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.pep ? '✓' : '✗'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.special_interest ? '✓' : '✗'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.adverse_media ? '✓' : '✗'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.hit_determination || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{hit.comments || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <button className="text-purple-600 hover:text-purple-800">View</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
+                        <div className="bg-purple-100 rounded-full p-3 mb-4">
+                            <CheckCircle className="w-10 h-10 text-purple-600" />
+                        </div>
+                        <p className="text-lg font-medium text-gray-900">No Name Screening Hits</p>
+                        <p className="text-sm text-gray-500 mt-1">This customer has no name screening matches.</p>
+                    </div>
+                )}
             </div>
         </div>
     );
