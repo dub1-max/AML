@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Search, FileText, Shield, LogOut, Link, Users, CreditCard, ChevronDown, Camera
+    Search, FileText, Shield, LogOut, Link, Users, CreditCard, ChevronDown, ChevronUp, Upload
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
     children: React.ReactNode;
-    activeSection?: 'insights' | 'profiles' | 'deepLink' | 'selfLink' | 'bulk' | 'activeTracking' | 'credits';
+    activeSection?: 'insights' | 'profiles' | 'deepLink' | 'selfLink' | 'selfService' | 'bulk' | 'activeTracking' | 'credits';
     deepLinkSubSection?: 'individual' | 'company' | null;
     selfLinkSubSection?: 'individual' | 'company' | null;
     credits?: number;
     loadingCredits?: boolean;
     handleSidebarNavigation?: (section: string) => void;
     handleDeepLinkClick?: () => void;
+    handleSelfLinkClick?: () => void;
     handleIndividualOBClick?: () => void;
     handleCompanyOBClick?: () => void;
-    handleSelfLinkClick?: () => void;
-    handleSelfLinkIndividualOBClick?: () => void;
-    handleSelfLinkCompanyOBClick?: () => void;
+    handleSelfIndividualOBClick?: () => void;
+    handleSelfCompanyOBClick?: () => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ 
@@ -30,11 +30,11 @@ const Layout: React.FC<LayoutProps> = ({
     loadingCredits = false,
     handleSidebarNavigation,
     handleDeepLinkClick,
+    handleSelfLinkClick,
     handleIndividualOBClick,
     handleCompanyOBClick,
-    handleSelfLinkClick,
-    handleSelfLinkIndividualOBClick,
-    handleSelfLinkCompanyOBClick
+    handleSelfIndividualOBClick,
+    handleSelfCompanyOBClick
 }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
@@ -42,6 +42,7 @@ const Layout: React.FC<LayoutProps> = ({
     
     // Local state to handle dropdown when handleDeepLinkClick is not provided
     const [isDeepLinkOpen, setIsDeepLinkOpen] = useState(activeSection === 'deepLink');
+    // Local state to handle dropdown when handleSelfLinkClick is not provided
     const [isSelfLinkOpen, setIsSelfLinkOpen] = useState(activeSection === 'selfLink');
     // Store last known credit value to prevent flashing "..." when switching tabs
     const [lastKnownCredit, setLastKnownCredit] = useState(credits);
@@ -122,12 +123,12 @@ const Layout: React.FC<LayoutProps> = ({
         console.log('Company onboarding clicked');
     };
 
-    const defaultSelfLinkIndividualHandler = () => {
-        console.log('Self link individual onboarding clicked');
+    const defaultSelfIndividualHandler = () => {
+        console.log('Self-service individual onboarding clicked');
     };
 
-    const defaultSelfLinkCompanyHandler = () => {
-        console.log('Self link company onboarding clicked');
+    const defaultSelfCompanyHandler = () => {
+        console.log('Self-service company onboarding clicked');
     };
 
     // Use provided handlers or fallback to defaults
@@ -136,12 +137,12 @@ const Layout: React.FC<LayoutProps> = ({
     const selfLinkHandler = handleSelfLinkClick || defaultSelfLinkHandler;
     const individualHandler = handleIndividualOBClick || defaultIndividualHandler;
     const companyHandler = handleCompanyOBClick || defaultCompanyHandler;
-    const selfLinkIndividualHandler = handleSelfLinkIndividualOBClick || defaultSelfLinkIndividualHandler;
-    const selfLinkCompanyHandler = handleSelfLinkCompanyOBClick || defaultSelfLinkCompanyHandler;
+    const selfIndividualHandler = handleSelfIndividualOBClick || defaultSelfIndividualHandler;
+    const selfCompanyHandler = handleSelfCompanyOBClick || defaultSelfCompanyHandler;
 
     // Dropdown is expanded either through parent state or local state
-    const isDeepLinkDropdownOpen = activeSection === 'deepLink' || isDeepLinkOpen;
-    const isSelfLinkDropdownOpen = activeSection === 'selfLink' || isSelfLinkOpen;
+    const isDeepDropdownOpen = activeSection === 'deepLink' || isDeepLinkOpen;
+    const isSelfDropdownOpen = activeSection === 'selfLink' || isSelfLinkOpen;
 
     const handleCreditsClick = () => {
         // Store the current section before navigating to credits
@@ -195,9 +196,9 @@ const Layout: React.FC<LayoutProps> = ({
                             <button
                                 onClick={deepLinkHandler}
                                 className={`flex items-center justify-between w-full p-3 rounded-lg text-gray-300 ${
-                                    isDeepLinkDropdownOpen ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                                    isDeepDropdownOpen ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
                                 }`}
-                                aria-expanded={isDeepLinkDropdownOpen}
+                                aria-expanded={isDeepDropdownOpen}
                                 aria-controls="deeplink-submenu"
                             >
                                 <div className="flex items-center space-x-3">
@@ -206,7 +207,7 @@ const Layout: React.FC<LayoutProps> = ({
                                 </div>
                                 <ChevronDown 
                                     className={`w-4 h-4 transition-transform duration-200 ${
-                                        isDeepLinkDropdownOpen ? 'transform rotate-180' : ''
+                                        isDeepDropdownOpen ? 'transform rotate-180' : ''
                                     }`} 
                                 />
                             </button>
@@ -215,7 +216,7 @@ const Layout: React.FC<LayoutProps> = ({
                             <div 
                                 id="deeplink-submenu"
                                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                                    isDeepLinkDropdownOpen ? 'max-h-24 mt-1 opacity-100' : 'max-h-0 opacity-0'
+                                    isDeepDropdownOpen ? 'max-h-24 mt-1 opacity-100' : 'max-h-0 opacity-0'
                                 }`}
                             >
                                 <div className="py-1 pl-4 pr-2 bg-[#421C87] rounded-lg">
@@ -248,18 +249,18 @@ const Layout: React.FC<LayoutProps> = ({
                             <button
                                 onClick={selfLinkHandler}
                                 className={`flex items-center justify-between w-full p-3 rounded-lg text-gray-300 ${
-                                    isSelfLinkDropdownOpen ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
+                                    isSelfDropdownOpen ? 'bg-[#5D2BA8] text-white' : 'hover:bg-[#5D2BA8]'
                                 }`}
-                                aria-expanded={isSelfLinkDropdownOpen}
+                                aria-expanded={isSelfDropdownOpen}
                                 aria-controls="selflink-submenu"
                             >
                                 <div className="flex items-center space-x-3">
-                                    <Camera className="w-5 h-5" />
+                                    <Upload className="w-5 h-5" />
                                     <span>Self Link Onboarding</span>
                                 </div>
                                 <ChevronDown 
                                     className={`w-4 h-4 transition-transform duration-200 ${
-                                        isSelfLinkDropdownOpen ? 'transform rotate-180' : ''
+                                        isSelfDropdownOpen ? 'transform rotate-180' : ''
                                     }`} 
                                 />
                             </button>
@@ -268,12 +269,12 @@ const Layout: React.FC<LayoutProps> = ({
                             <div 
                                 id="selflink-submenu"
                                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                                    isSelfLinkDropdownOpen ? 'max-h-24 mt-1 opacity-100' : 'max-h-0 opacity-0'
+                                    isSelfDropdownOpen ? 'max-h-24 mt-1 opacity-100' : 'max-h-0 opacity-0'
                                 }`}
                             >
                                 <div className="py-1 pl-4 pr-2 bg-[#421C87] rounded-lg">
                                     <button
-                                        onClick={selfLinkIndividualHandler}
+                                        onClick={selfIndividualHandler}
                                         className={`flex items-center w-full py-2 px-3 text-left text-gray-300 rounded transition-colors duration-150 ${
                                             selfLinkSubSection === 'individual' 
                                                 ? 'bg-[#5D2BA8] text-white' 
@@ -283,7 +284,7 @@ const Layout: React.FC<LayoutProps> = ({
                                         <span className="text-sm">Individual Onboarding</span>
                                     </button>
                                     <button
-                                        onClick={selfLinkCompanyHandler}
+                                        onClick={selfCompanyHandler}
                                         className={`flex items-center w-full py-2 px-3 text-left text-gray-300 rounded transition-colors duration-150 ${
                                             selfLinkSubSection === 'company' 
                                                 ? 'bg-[#5D2BA8] text-white' 

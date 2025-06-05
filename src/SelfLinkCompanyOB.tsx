@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, ArrowRight, ArrowLeft, Eye, X } from 'lucide-react';
+import { Upload, FileText, ArrowRight, ArrowLeft, Eye, X, File } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { getApiBaseUrl } from './config';
 import { useNavigate } from 'react-router-dom';
@@ -39,6 +39,7 @@ function SelfLinkCompanyOB() {
     // Image upload state
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isPdf, setIsPdf] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [extractedData, setExtractedData] = useState<any>(null);
     
@@ -78,12 +79,13 @@ function SelfLinkCompanyOB() {
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            if (file.type.startsWith('image/')) {
+            if (file.type.startsWith('image/') || file.type === 'application/pdf') {
                 setSelectedFile(file);
                 const url = URL.createObjectURL(file);
                 setPreviewUrl(url);
+                setIsPdf(file.type === 'application/pdf');
             } else {
-                alert('Please select an image file (JPG, PNG, etc.)');
+                alert('Please select an image or PDF file');
             }
         }
     };
@@ -91,12 +93,13 @@ function SelfLinkCompanyOB() {
     const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
         const file = event.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
+        if (file && (file.type.startsWith('image/') || file.type === 'application/pdf')) {
             setSelectedFile(file);
             const url = URL.createObjectURL(file);
             setPreviewUrl(url);
+            setIsPdf(file.type === 'application/pdf');
         } else {
-            alert('Please drop an image file (JPG, PNG, etc.)');
+            alert('Please drop an image or PDF file');
         }
     };
 
@@ -111,6 +114,7 @@ function SelfLinkCompanyOB() {
             setPreviewUrl(null);
         }
         setExtractedData(null);
+        setIsPdf(false);
     };
 
     const analyzeImage = async () => {
@@ -118,7 +122,8 @@ function SelfLinkCompanyOB() {
 
         setIsUploading(true);
         const uploadFormData = new FormData();
-        uploadFormData.append('image', selectedFile);
+        uploadFormData.append('document', selectedFile);
+        uploadFormData.append('documentType', isPdf ? 'pdf' : 'image');
 
         try {
             const response = await fetch(`${API_BASE_URL}/analyze-company-document`, {
@@ -292,7 +297,7 @@ function SelfLinkCompanyOB() {
                 <div>
                     <h1 className="text-3xl font-bold mb-6">Upload Company Documents</h1>
                     <p className="mb-8 text-gray-600">
-                        Upload an image of your business registration, incorporation certificate, or other company documents to automatically extract information.
+                        Upload an image or PDF of your business registration, incorporation certificate, or other company documents to automatically extract information.
                     </p>
 
                     <div className="bg-white p-6 rounded-2xl shadow-lg">
@@ -334,17 +339,45 @@ function SelfLinkCompanyOB() {
                                 
                                 {previewUrl && (
                                     <div className="relative">
-                                        <img
-                                            src={previewUrl}
-                                            alt="Document preview"
-                                            className="max-w-full h-64 object-contain border rounded-lg"
-                                        />
+                                        {isPdf ? (
+                                            <div className="flex flex-col items-center border rounded-lg p-4 bg-gray-50">
+                                                <File className="w-16 h-16 text-red-500 mb-2" />
+                                                <p className="text-sm font-medium">PDF Document</p>
+                                                <a 
+                                                    href={previewUrl} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="mt-2 text-blue-600 hover:underline text-sm"
+                                                >
+                                                    View PDF
+                                                </a>
+                                                <object
+                                                    data={previewUrl}
+                                                    type="application/pdf"
+                                                    width="100%"
+                                                    height="300px"
+                                                    className="mt-4 border rounded"
+                                                >
+                                                    <p>Your browser does not support PDF preview.</p>
+                                                </object>
+                                            </div>
+                                        ) : (
+                                            <img
+                                                src={previewUrl}
+                                                alt="Document preview"
+                                                className="max-w-full h-64 object-contain border rounded-lg"
+                                            />
+                                        )}
                                     </div>
                                 )}
                                 
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                        <FileText className="w-4 h-4" />
+                                        {isPdf ? (
+                                            <FileText className="w-4 h-4 text-red-500" />
+                                        ) : (
+                                            <FileText className="w-4 h-4" />
+                                        )}
                                         <span>{selectedFile.name}</span>
                                         <span>({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
                                     </div>
