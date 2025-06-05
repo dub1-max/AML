@@ -12,6 +12,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import debounce from 'lodash/debounce';
 import IndividualOB from './IndividualOB';
 import CompanyOB from './CompanyOB';
+import SelfLinkIndividualOB from './SelfLinkIndividualOB';
+import SelfLinkCompanyOB from './SelfLinkCompanyOB';
 import Insights from './Insights';
 import { getApiBaseUrl } from './config';
 import ActiveTracking from './ActiveTracking';
@@ -52,10 +54,13 @@ function MainApp(_props: MainAppProps) {
     const [tracking, setTracking] = useState<Tracking>({});
     const [trackedResults, setTrackedResults] = useState<SearchResult[]>([]);
     const [showDashboard, setShowDashboard] = useState(true);
-    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfService' | 'bulk' | 'activeTracking'>('insights');
+    const [activeSection, setActiveSection] = useState<'insights' | 'profiles' | 'deepLink' | 'selfLink' | 'bulk' | 'activeTracking'>('insights');
     const [deepLinkSubSection, setDeepLinkSubSection] = useState<'individual' | 'company' | null>(null);
+    const [selfLinkSubSection, setSelfLinkSubSection] = useState<'individual' | 'company' | null>(null);
     const [showIndividualOB, setShowIndividualOB] = useState(false);
     const [showCompanyOB, setShowCompanyOB] = useState(false);
+    const [showSelfLinkIndividualOB, setShowSelfLinkIndividualOB] = useState(false);
+    const [showSelfLinkCompanyOB, setShowSelfLinkCompanyOB] = useState(false);
     
     // Handle navigation back from credits page
     useEffect(() => {
@@ -65,6 +70,8 @@ function MainApp(_props: MainAppProps) {
             setActiveSection(location.state.activeSection);
             setShowCompanyOB(false);
             setShowIndividualOB(false);
+            setShowSelfLinkIndividualOB(false);
+            setShowSelfLinkCompanyOB(false);
             setShowDashboard(location.state.activeSection === 'insights');
             
             // Clear the state to prevent it from being applied again
@@ -462,6 +469,8 @@ function MainApp(_props: MainAppProps) {
         setActiveSection(section as any);
         setShowCompanyOB(false);
         setShowIndividualOB(false);
+        setShowSelfLinkIndividualOB(false);
+        setShowSelfLinkCompanyOB(false);
         setShowDashboard(section === 'insights');
         
         // Fetch fresh data when switching to active tracking, but only if shouldRefreshData is true
@@ -709,6 +718,22 @@ function MainApp(_props: MainAppProps) {
             setDeepLinkSubSection('individual'); // Set a default sub-section
             setShowIndividualOB(true); // show by default
             setShowCompanyOB(false);
+            setShowSelfLinkIndividualOB(false);
+            setShowSelfLinkCompanyOB(false);
+        }
+    };
+
+    const handleSelfLinkClick = () => {
+        if (activeSection === 'selfLink') {
+            handleSidebarNavigation('insights');
+            setSelfLinkSubSection(null);
+        } else {
+            handleSidebarNavigation('selfLink');
+            setSelfLinkSubSection('individual'); // Set a default sub-section
+            setShowSelfLinkIndividualOB(true); // show by default
+            setShowSelfLinkCompanyOB(false);
+            setShowIndividualOB(false);
+            setShowCompanyOB(false);
         }
     };
 
@@ -716,6 +741,8 @@ function MainApp(_props: MainAppProps) {
         setDeepLinkSubSection('individual');
         setShowIndividualOB(true);
         setShowCompanyOB(false);
+        setShowSelfLinkIndividualOB(false);
+        setShowSelfLinkCompanyOB(false);
         setShowDashboard(false); // Add this to hide dashboard
         setActiveSection('deepLink'); // Add this to ensure correct sidebar highlighting
     }
@@ -724,8 +751,30 @@ function MainApp(_props: MainAppProps) {
         setDeepLinkSubSection('company');
         setShowCompanyOB(true);
         setShowIndividualOB(false);
+        setShowSelfLinkIndividualOB(false);
+        setShowSelfLinkCompanyOB(false);
         setShowDashboard(false); // Add this to hide dashboard
         setActiveSection('deepLink'); // Add this to ensure correct sidebar highlighting
+    }
+
+    const handleSelfLinkIndividualOBClick = () => {
+        setSelfLinkSubSection('individual');
+        setShowSelfLinkIndividualOB(true);
+        setShowSelfLinkCompanyOB(false);
+        setShowIndividualOB(false);
+        setShowCompanyOB(false);
+        setShowDashboard(false);
+        setActiveSection('selfLink');
+    }
+
+    const handleSelfLinkCompanyOBClick = () => {
+        setSelfLinkSubSection('company');
+        setShowSelfLinkCompanyOB(true);
+        setShowSelfLinkIndividualOB(false);
+        setShowIndividualOB(false);
+        setShowCompanyOB(false);
+        setShowDashboard(false);
+        setActiveSection('selfLink');
     }
 
     // Handle general navigation through sidebar
@@ -785,6 +834,7 @@ function MainApp(_props: MainAppProps) {
         const state = location.state as { 
             activeSection?: string;
             deepLinkSubSection?: 'individual' | 'company';
+            selfLinkSubSection?: 'individual' | 'company';
             refreshData?: boolean;
             timestamp?: number;
         } || {};
@@ -805,6 +855,18 @@ function MainApp(_props: MainAppProps) {
                 setDeepLinkSubSection(subSection);
                 setShowIndividualOB(subSection === 'individual');
                 setShowCompanyOB(subSection === 'company');
+                setShowDashboard(false);
+            } 
+            // Handle Self Link Onboarding special case
+            else if (state.activeSection === 'selfLink') {
+                setActiveSection('selfLink');
+                // Set selfLinkSubSection if provided, otherwise default to 'individual'
+                const subSection = state.selfLinkSubSection || 'individual';
+                setSelfLinkSubSection(subSection);
+                setShowSelfLinkIndividualOB(subSection === 'individual');
+                setShowSelfLinkCompanyOB(subSection === 'company');
+                setShowIndividualOB(false);
+                setShowCompanyOB(false);
                 setShowDashboard(false);
             } else {
                 // Call handleTabChange with the refreshData flag for other sections
@@ -914,12 +976,16 @@ function MainApp(_props: MainAppProps) {
         <Layout 
             activeSection={activeSection}
             deepLinkSubSection={deepLinkSubSection}
+            selfLinkSubSection={selfLinkSubSection}
             credits={credits}
             loadingCredits={loadingCredits}
             handleSidebarNavigation={handleSidebarNavigation}
             handleDeepLinkClick={handleDeepLinkClick}
             handleIndividualOBClick={handleIndividualOBClick}
             handleCompanyOBClick={handleCompanyOBClick}
+            handleSelfLinkClick={handleSelfLinkClick}
+            handleSelfLinkIndividualOBClick={handleSelfLinkIndividualOBClick}
+            handleSelfLinkCompanyOBClick={handleSelfLinkCompanyOBClick}
         >
             <div className="flex-1">
                 <header className="bg-white border-b border-gray-200">
@@ -928,12 +994,14 @@ function MainApp(_props: MainAppProps) {
                             {showDashboard ? 'Activity Dashboard' : 
                              showIndividualOB ? 'Individual Onboarding' :
                              showCompanyOB ? 'Company Onboarding' :
+                             showSelfLinkIndividualOB ? 'Self Link Individual' :
+                             showSelfLinkCompanyOB ? 'Self Link Company' :
                              activeSection === 'activeTracking' ? 'Screening' :
                             'Search'}
                         </h2>
                     </div>
 
-                    {!showDashboard && !showIndividualOB && !showCompanyOB && 
+                    {!showDashboard && !showIndividualOB && !showCompanyOB && !showSelfLinkIndividualOB && !showSelfLinkCompanyOB && 
                      activeSection !== 'activeTracking' && (
                         <div className="px-6 py-3 flex items-center space-x-4 border-t border-gray-200">
                             <div className="flex space-x-2">
@@ -999,6 +1067,14 @@ function MainApp(_props: MainAppProps) {
                 ) : showCompanyOB ? (
                     <ErrorBoundary>
                         <CompanyOB />
+                    </ErrorBoundary>
+                ) : showSelfLinkIndividualOB ? (
+                    <ErrorBoundary>
+                        <SelfLinkIndividualOB />
+                    </ErrorBoundary>
+                ) : showSelfLinkCompanyOB ? (
+                    <ErrorBoundary>
+                        <SelfLinkCompanyOB />
                     </ErrorBoundary>
                 ) : activeSection === 'activeTracking' ? (
                     <ErrorBoundary>
