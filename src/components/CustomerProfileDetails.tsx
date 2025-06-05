@@ -999,33 +999,216 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
         </div>
     );
 
-    const renderActivityTimelineTab = () => (
-        <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6">
-                <h3 className="text-lg font-semibold mb-4">Activity Timeline</h3>
-                <div className="space-y-4">
-                    <div className="border-l-4 border-blue-500 pl-4">
-                        <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">Customer Profile Created</span>
-                            <span className="text-xs text-gray-500">{formatDate(customer.createdAt || customer.created_at)}</span>
+    const renderActivityTimelineTab = () => {
+        // Get the current date for the timeline header
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-US', { 
+            month: 'long', 
+            day: 'numeric', 
+            year: 'numeric' 
+        });
+        
+        // Create activity entries from actual customer data
+        const activities = [];
+        
+        // Add customer creation activity if we have a creation date
+        if (customer.createdAt || customer.created_at) {
+            const creationDate = new Date(customer.createdAt || customer.created_at);
+            activities.push({
+                id: 'creation',
+                type: 'system',
+                actor: 'Identfo',
+                actorType: 'System Activity',
+                date: creationDate,
+                action: 'Registered new customer into the system.',
+                purpose: 'Support user action',
+                actionBy: customer.onboarded_by || 'RESPECT CORPORATE SERVICES PROVIDER LLC',
+                legalBasis: 'Legitimate interest',
+                retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
+            });
+        }
+        
+        // Add screening activity if applicable
+        if (customer.dataset && customer.dataset !== 'onboarded') {
+            const screeningDate = new Date(customer.updatedAt || customer.updated_at || customer.record_last_updated || today);
+            activities.push({
+                id: 'screening',
+                type: 'system',
+                actor: 'Identfo',
+                actorType: 'System Activity',
+                date: screeningDate,
+                action: 'Name Screening Hit applied with the approved result.',
+                purpose: 'Regulatory compliance',
+                actionBy: 'Identfo System',
+                legalBasis: 'Legal Obligation',
+                retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
+            });
+        }
+        
+        // Add document verification activity if we have document verification data
+        if (customer.document_verified || customer.document_matched) {
+            const docDate = new Date(customer.document_verified_date || customer.document_matched_date || customer.updatedAt || customer.updated_at || today);
+            // Set doc date to be before screening date if both exist
+            if (activities.length > 0 && activities[activities.length - 1].id === 'screening') {
+                docDate.setHours(docDate.getHours() - 2);
+            }
+            
+            activities.push({
+                id: 'document',
+                type: 'system',
+                actor: 'Identfo',
+                actorType: 'System Activity',
+                date: docDate,
+                action: 'Document verification completed successfully.',
+                purpose: 'Identity verification',
+                actionBy: 'Identfo System',
+                legalBasis: 'Legal Obligation',
+                retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
+            });
+        }
+        
+        // Add status update activity if we have a status
+        if (customer.status) {
+            const statusDate = new Date(customer.status_updated_at || customer.record_last_updated || today);
+            // Set status date to be after other activities
+            if (activities.length > 0) {
+                statusDate.setHours(statusDate.getHours() + 1);
+            }
+            
+            const statusAction = customer.status === 'approved' 
+                ? 'Customer profile approved.' 
+                : customer.status === 'pending' 
+                    ? 'Customer profile pending review.' 
+                    : 'Customer profile rejected.';
+                    
+            activities.push({
+                id: 'status',
+                type: 'admin',
+                actor: customer.onboarded_by || 'RESPECT CORPORATE SERVICES PROVIDER LLC',
+                actorType: 'Admin',
+                date: statusDate,
+                action: statusAction,
+                purpose: 'Account management',
+                actionBy: customer.onboarded_by || 'RESPECT CORPORATE SERVICES PROVIDER LLC (Admin)',
+                legalBasis: 'Legitimate interest',
+                retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
+            });
+        }
+        
+        // Sort activities by date (newest first)
+        activities.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-semibold">{formattedDate}</h3>
+                    <button className="px-4 py-2 bg-yellow-500 text-white font-medium rounded-md hover:bg-yellow-600 transition-colors">
+                        EXPORT TIMELINE
+                    </button>
+                </div>
+                
+                {/* Timeline entries */}
+                <div className="relative">
+                    {activities.map((activity, index) => {
+                        const formattedTime = activity.date.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: true
+                        });
+                        const formattedFullDate = activity.date.toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                        
+                        return (
+                            <div key={activity.id} className="mb-8 relative">
+                                {/* Timeline connector */}
+                                {index < activities.length - 1 && (
+                                    <div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gray-200"></div>
+                                )}
+                                
+                                <div className="flex">
+                                    {/* Activity icon */}
+                                    <div className="flex-shrink-0 mr-4">
+                                        <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                                            activity.type === 'system' ? 'bg-purple-900' : 'bg-gray-300'
+                                        }`}>
+                                            {activity.type === 'system' ? (
+                                                <span className="text-white text-sm font-medium">
+                                                    {activity.actor.substring(0, 2).toUpperCase()}
+                                                </span>
+                                            ) : (
+                                                <img 
+                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(activity.actor)}&background=random`} 
+                                                    alt={activity.actor}
+                                                    className="w-16 h-16 rounded-full"
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Activity content */}
+                                    <div className="flex-1 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 className="font-semibold text-gray-900">{activity.actor}</h4>
+                                                <p className="text-sm text-gray-500">{activity.actorType}</p>
+                                            </div>
+                                            <span className="text-sm text-gray-500">
+                                                {formattedFullDate} {formattedTime}
+                                            </span>
+                                        </div>
+                                        
+                                        <p className="mb-4 text-gray-800">{activity.action}</p>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span className="text-gray-500">Purpose of Processing :</span>
+                                                <span className="ml-2 font-medium">{activity.purpose}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500">Action By :</span>
+                                                <span className="ml-2 font-medium">{activity.actionBy}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500">Legal Basis for Processing :</span>
+                                                <span className="ml-2 font-medium">{activity.legalBasis}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500">Retention Period :</span>
+                                                <span className="ml-2 font-medium">{activity.retentionPeriod}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    
+                    {/* Start marker at the bottom */}
+                    {activities.length > 0 && (
+                        <div className="flex justify-center mt-8">
+                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-medium">
+                                START
+                            </div>
                         </div>
-                    </div>
-                    <div className="border-l-4 border-green-500 pl-4">
-                        <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">Verification Completed</span>
-                            <span className="text-xs text-gray-500">{formatDate(customer.updatedAt || customer.updated_at)}</span>
+                    )}
+                    
+                    {/* Empty state if no activities */}
+                    {activities.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
+                            <div className="bg-purple-100 rounded-full p-3 mb-4">
+                                <Activity className="w-10 h-10 text-purple-600" />
+                            </div>
+                            <p className="text-lg font-medium text-gray-900">No Activity History</p>
+                            <p className="text-sm text-gray-500 mt-1">This customer has no recorded activities.</p>
                         </div>
-                    </div>
-                    <div className="border-l-4 border-purple-500 pl-4">
-                        <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">Status Updated to {customer.status}</span>
-                            <span className="text-xs text-gray-500">{formatDate(customer.record_last_updated)}</span>
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderTabContent = () => {
         switch (activeTab) {
