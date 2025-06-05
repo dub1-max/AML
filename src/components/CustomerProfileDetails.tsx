@@ -95,6 +95,9 @@ interface Customer {
     // Name Screening
     name_screening_hits?: any[];
     
+    // New dataset field
+    dataset?: string;
+    
     [key: string]: any;
 }
 
@@ -177,34 +180,121 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
         }
     };
 
-    const renderVerificationStatus = (status: string | boolean | undefined, label: string) => {
+    const getVerificationStatus = (type: string): 'clear' | 'flagged' | 'pending' => {
+        // Determine verification status based on dataset and other properties
+        if (customer.dataset) {
+            switch (type) {
+                case 'Sanction':
+                    return customer.dataset.includes('sanctions') ? 'flagged' : 'clear';
+                case 'PEP':
+                    return customer.dataset.includes('peps') ? 'flagged' : 'clear';
+                case 'Special Interest':
+                    return customer.dataset.includes('special') || customer.dataset.includes('interest') ? 'flagged' : 'clear';
+                case 'Adverse Media':
+                    return customer.dataset.includes('adverse') || customer.dataset.includes('media') ? 'flagged' : 'clear';
+                case 'Document Matched':
+                    return 'clear'; // Default to clear for document verification
+                case 'Verified':
+                    return 'clear'; // Default to clear for document verification
+                case 'Self Declared PEP':
+                    // Handle PEP status specifically
+                    if (typeof customer.pep_status === 'boolean') {
+                        return customer.pep_status ? 'flagged' : 'clear';
+                    } else if (typeof customer.pep_status === 'string') {
+                        return customer.pep_status === 'flagged' ? 'flagged' : 'clear';
+                    }
+                    return 'clear';
+                case 'Risk Rating':
+                    // Handle risk rating
+                    if (customer.risk_rating) {
+                        const riskValue = parseInt(String(customer.risk_rating));
+                        return !isNaN(riskValue) && riskValue > 70 ? 'flagged' : 'clear';
+                    }
+                    return 'clear';
+                default:
+                    return 'clear';
+            }
+        }
+        
+        // Fallback to existing status fields if dataset isn't available
+        switch (type) {
+            case 'Sanction':
+                if (typeof customer.sanction_status === 'boolean') {
+                    return customer.sanction_status ? 'flagged' : 'clear';
+                } else if (typeof customer.sanction_status === 'string') {
+                    return customer.sanction_status === 'flagged' ? 'flagged' : 'clear';
+                }
+                return 'clear';
+            case 'PEP':
+                if (typeof customer.pep_status === 'boolean') {
+                    return customer.pep_status ? 'flagged' : 'clear';
+                } else if (typeof customer.pep_status === 'string') {
+                    return customer.pep_status === 'flagged' ? 'flagged' : 'clear';
+                }
+                return 'clear';
+            case 'Special Interest':
+                if (typeof customer.special_interest_status === 'boolean') {
+                    return customer.special_interest_status ? 'flagged' : 'clear';
+                } else if (typeof customer.special_interest_status === 'string') {
+                    return customer.special_interest_status === 'flagged' ? 'flagged' : 'clear';
+                }
+                return 'clear';
+            case 'Adverse Media':
+                if (typeof customer.adverse_media_status === 'boolean') {
+                    return customer.adverse_media_status ? 'flagged' : 'clear';
+                } else if (typeof customer.adverse_media_status === 'string') {
+                    return customer.adverse_media_status === 'flagged' ? 'flagged' : 'clear';
+                }
+                return 'clear';
+            case 'Document Matched':
+                return typeof customer.document_matched === 'boolean' && customer.document_matched ? 'flagged' : 'clear';
+            case 'Verified':
+                return typeof customer.document_verified === 'boolean' && customer.document_verified ? 'flagged' : 'clear';
+            case 'Self Declared PEP':
+                // Already handled above
+                if (typeof customer.pep_status === 'boolean') {
+                    return customer.pep_status ? 'flagged' : 'clear';
+                } else if (typeof customer.pep_status === 'string') {
+                    return customer.pep_status === 'flagged' ? 'flagged' : 'clear';
+                }
+                return 'clear';
+            case 'Risk Rating':
+                // Already handled above
+                if (customer.risk_rating) {
+                    const riskValue = parseInt(String(customer.risk_rating));
+                    return !isNaN(riskValue) && riskValue > 70 ? 'flagged' : 'clear';
+                }
+                return 'clear';
+            default:
+                return 'clear';
+        }
+    };
+
+    const renderVerificationStatus = (type: string) => {
+        const status = getVerificationStatus(type);
         let statusIcon;
         let statusColor;
         let statusText;
 
-        if (status === true || status === 'approved' || status === 'verified' || status === 'clear') {
-            statusIcon = <CheckCircle className="w-5 h-5 text-green-500" />;
-            statusColor = 'text-green-600';
-            statusText = 'Verified';
-        } else if (status === false || status === 'rejected' || status === 'failed' || status === 'flagged') {
-            statusIcon = <XCircle className="w-5 h-5 text-red-500" />;
-            statusColor = 'text-red-600';
-            statusText = 'Failed';
-        } else if (status === 'pending' || status === 'review') {
-            statusIcon = <AlertTriangle className="w-5 h-5 text-yellow-500" />;
-            statusColor = 'text-yellow-600';
-            statusText = 'Pending';
-        } else {
+        if (status === 'clear') {
             statusIcon = <CheckCircle className="w-5 h-5 text-green-500" />;
             statusColor = 'text-green-600';
             statusText = 'Clear';
+        } else if (status === 'flagged') {
+            statusIcon = <XCircle className="w-5 h-5 text-red-500" />;
+            statusColor = 'text-red-600';
+            statusText = 'Flagged';
+        } else {
+            statusIcon = <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+            statusColor = 'text-yellow-600';
+            statusText = 'Pending';
         }
 
         return (
             <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
                 <div className="flex items-center space-x-3">
                     {statusIcon}
-                    <span className="font-medium">{label}</span>
+                    <span className="font-medium">{type}</span>
                 </div>
                 <span className={`text-sm font-medium ${statusColor}`}>{statusText}</span>
             </div>
@@ -595,254 +685,157 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
         </div>
     );
 
-    const renderNameScreeningTab = () => {
-        // Helper function to check if a status is "flagged"
-        const isFlagged = (status: string | boolean | undefined): boolean => {
-            return status === 'flagged' || status === true;
-        };
-
-        // Helper function to check if a status is "clear"
-        const isClear = (status: string | boolean | undefined): boolean => {
-            return status === 'clear' || status === false;
-        };
-
-        // Helper function to determine status
-        const getStatusDisplay = (status: string | boolean | undefined) => {
-            if (isClear(status)) {
-                return { icon: <CheckCircle className="w-5 h-5 text-green-500" />, text: 'Clear', textColor: 'text-green-600' };
-            } else if (isFlagged(status)) {
-                return { icon: <XCircle className="w-5 h-5 text-red-500" />, text: 'Flagged', textColor: 'text-red-600' };
-            } else {
-                return { 
-                    icon: <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center">
-                        <XCircle className="w-4 h-4 text-red-500" />
-                    </div>, 
-                    text: 'Unknown', 
-                    textColor: 'text-gray-600' 
-                };
-            }
-        };
-
-        const sanctionStatus = getStatusDisplay(customer.sanction_status);
-        const pepStatus = getStatusDisplay(customer.pep_status);
-        const specialInterestStatus = getStatusDisplay(customer.special_interest_status);
-        const adverseMediaStatus = getStatusDisplay(customer.adverse_media_status);
-
-        // Customize colors based on category
-        if (isFlagged(customer.pep_status)) {
-            pepStatus.icon = <XCircle className="w-5 h-5 text-yellow-500" />;
-            pepStatus.textColor = 'text-yellow-600';
-        }
-        
-        if (isFlagged(customer.special_interest_status)) {
-            specialInterestStatus.icon = <XCircle className="w-5 h-5 text-purple-500" />;
-            specialInterestStatus.textColor = 'text-purple-600';
-        }
-        
-        if (isFlagged(customer.adverse_media_status)) {
-            adverseMediaStatus.icon = <XCircle className="w-5 h-5 text-blue-500" />;
-            adverseMediaStatus.textColor = 'text-blue-600';
-        }
-
-        return (
-            <div className="space-y-6">
-                {/* Verification Summary */}
-                <div className="bg-white rounded-lg p-6">
-                    <h3 className="text-lg font-semibold mb-4">Verification summary</h3>
-                    
-                    <div className="mb-6">
-                        <h4 className="font-medium mb-4">Name Screening</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                            {/* Sanction Status */}
-                            <div className="p-4 bg-white rounded-lg border">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        {sanctionStatus.icon}
-                                        <span className="font-medium">Sanction</span>
-                                    </div>
-                                    <span className={`text-sm font-medium ${sanctionStatus.textColor}`}>
-                                        {sanctionStatus.text}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* PEP Status */}
-                            <div className="p-4 bg-white rounded-lg border">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        {pepStatus.icon}
-                                        <span className="font-medium">PEP</span>
-                                    </div>
-                                    <span className={`text-sm font-medium ${pepStatus.textColor}`}>
-                                        {pepStatus.text}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Special Interest Status */}
-                            <div className="p-4 bg-white rounded-lg border">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        {specialInterestStatus.icon}
-                                        <span className="font-medium">Special Interest</span>
-                                    </div>
-                                    <span className={`text-sm font-medium ${specialInterestStatus.textColor}`}>
-                                        {specialInterestStatus.text}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Adverse Media Status */}
-                            <div className="p-4 bg-white rounded-lg border">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        {adverseMediaStatus.icon}
-                                        <span className="font-medium">Adverse Media</span>
-                                    </div>
-                                    <span className={`text-sm font-medium ${adverseMediaStatus.textColor}`}>
-                                        {adverseMediaStatus.text}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+    const renderNameScreeningTab = () => (
+        <div className="space-y-6">
+            {/* Verification Summary */}
+            <div className="bg-white rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Verification summary</h3>
+                
+                <div className="mb-6">
+                    <h4 className="font-medium mb-4">Name Screening</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        {renderVerificationStatus('Sanction')}
+                        {renderVerificationStatus('PEP')}
+                        {renderVerificationStatus('Special Interest')}
+                        {renderVerificationStatus('Adverse Media')}
                     </div>
                 </div>
-
-                {/* Name Screening Hit Details */}
-                <div className="bg-white rounded-lg p-6">
-                    <h3 className="text-lg font-semibold mb-4">Name Screening Hit Details</h3>
-                    
-                    {isLoadingMatches ? (
-                        <div className="flex justify-center items-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700"></div>
-                        </div>
-                    ) : matchingProfiles.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOB</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source List</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Sanction</th>
-                                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">PEP</th>
-                                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Special Interest</th>
-                                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adverse Media</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hit Determination</th>
-                                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Relevant</th>
-                                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Not Relevant</th>
-                                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
-                                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {matchingProfiles.map((match, index) => (
-                                        <tr key={index} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{match.full_name || match.name || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.dob || formatDate(match.date_of_birth) || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.id_number || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                                {match.country && match.country !== 'Unknown' && match.country !== 'N/A' ? (
-                                                    <div className="flex items-center">
-                                                        <img 
-                                                            src={`https://flagcdn.com/w20/${match.country.toLowerCase()}.png`}
-                                                            alt={match.country}
-                                                            className="mr-2 h-3 rounded shadow-sm"
-                                                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                        />
-                                                        {match.country}
-                                                    </div>
-                                                ) : 'N/A'}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.source_list || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.score || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                {match.sanction ? (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 bg-red-100 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-red-600" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                {match.pep ? (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 bg-yellow-100 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-yellow-600" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                {match.special_interest ? (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 bg-purple-100 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-purple-600" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                {match.adverse_media ? (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-100 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-blue-600" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.hit_determination || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.comments || '-'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                <button className="text-purple-600 hover:text-purple-800 font-medium">View</button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
-                            <div className="bg-purple-100 rounded-full p-3 mb-4">
-                                <CheckCircle className="w-10 h-10 text-purple-600" />
-                            </div>
-                            <p className="text-lg font-medium text-gray-900">No Name Screening Hits</p>
-                            <p className="text-sm text-gray-500 mt-1">This customer has no name screening matches.</p>
-                        </div>
-                    )}
-                </div>
             </div>
-        );
-    };
+
+            {/* Name Screening Hit Details */}
+            <div className="bg-white rounded-lg p-6">
+                <h3 className="text-lg font-semibold mb-4">Name Screening Hit Details</h3>
+                
+                {isLoadingMatches ? (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700"></div>
+                    </div>
+                ) : matchingProfiles.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DOB</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Number</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source List</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Sanction</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">PEP</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Special Interest</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Adverse Media</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hit Determination</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Relevant</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Not Relevant</th>
+                                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comments</th>
+                                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {matchingProfiles.map((match, index) => (
+                                    <tr key={index} className="hover:bg-gray-50">
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{match.full_name || match.name || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.dob || formatDate(match.date_of_birth) || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.id_number || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                            {match.country && match.country !== 'Unknown' && match.country !== 'N/A' ? (
+                                                <div className="flex items-center">
+                                                    <img 
+                                                        src={`https://flagcdn.com/w20/${match.country.toLowerCase()}.png`}
+                                                        alt={match.country}
+                                                        className="mr-2 h-3 rounded shadow-sm"
+                                                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                    />
+                                                    {match.country}
+                                                </div>
+                                            ) : 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.source_list || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.score || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            {match.sanction ? (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 bg-red-100 rounded-full">
+                                                    <CheckCircle className="w-3 h-3 text-red-600" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            {match.pep ? (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 bg-yellow-100 rounded-full">
+                                                    <CheckCircle className="w-3 h-3 text-yellow-600" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            {match.special_interest ? (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 bg-purple-100 rounded-full">
+                                                    <CheckCircle className="w-3 h-3 text-purple-600" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            {match.adverse_media ? (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-100 rounded-full">
+                                                    <CheckCircle className="w-3 h-3 text-blue-600" />
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.hit_determination || 'N/A'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.comments || '-'}</td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                            <button className="text-purple-600 hover:text-purple-800 font-medium">View</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
+                        <div className="bg-purple-100 rounded-full p-3 mb-4">
+                            <CheckCircle className="w-10 h-10 text-purple-600" />
+                        </div>
+                        <p className="text-lg font-medium text-gray-900">No Name Screening Hits</p>
+                        <p className="text-sm text-gray-500 mt-1">This customer has no name screening matches.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 
     const renderDocumentVerificationTab = () => (
         <div className="space-y-6">
             <div className="bg-white rounded-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Documents Verification</h3>
                 <div className="space-y-4">
-                    {renderVerificationStatus(customer.document_matched, 'Document Matched')}
+                    {renderVerificationStatus('Document Matched')}
                 </div>
                 
                 <h4 className="font-medium mt-6 mb-4">Document Upload</h4>
                 <div className="space-y-4">
-                    {renderVerificationStatus(customer.document_verified, 'Verified')}
+                    {renderVerificationStatus('Verified')}
                 </div>
             </div>
 
             <div className="bg-white rounded-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Politically Exposed Person (PEP)</h3>
                 <div className="space-y-4">
-                    {renderVerificationStatus(customer.pep_status, 'Self Declared PEP')}
+                    {renderVerificationStatus('Self Declared PEP')}
                 </div>
             </div>
         </div>
@@ -853,7 +846,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             <div className="bg-white rounded-lg p-6">
                 <h3 className="text-lg font-semibold mb-4">Risk Rating</h3>
                 <div className="space-y-4">
-                    {renderVerificationStatus(customer.risk_rating, 'Risk Rating')}
+                    {renderVerificationStatus('Risk Rating')}
                 </div>
             </div>
         </div>
