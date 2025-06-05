@@ -104,11 +104,15 @@ interface Customer {
 interface CustomerProfileDetailsProps {
     customer: Customer;
     onBack: () => void;
+    currentUser?: {
+        name?: string;
+        role?: string;
+    };
 }
 
 type TabType = 'profile' | 'nameScreening' | 'documentVerification' | 'riskRating' | 'activityTimeline';
 
-const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ customer, onBack }) => {
+const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ customer, onBack, currentUser = {} }) => {
     const [activeTab, setActiveTab] = useState<TabType>('profile');
     const [matchingProfiles, setMatchingProfiles] = useState<any[]>([]);
     const [isLoadingMatches, setIsLoadingMatches] = useState(false);
@@ -1008,6 +1012,9 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             year: 'numeric' 
         });
         
+        // Get admin name from currentUser or fall back to customer.onboarded_by
+        const adminName = currentUser?.name || customer.onboarded_by || 'Admin';
+        
         // Create activity entries from actual customer data
         const activities = [];
         
@@ -1017,12 +1024,12 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             activities.push({
                 id: 'creation',
                 type: 'system',
-                actor: 'Identfo',
+                actor: 'KYCSync',
                 actorType: 'System Activity',
                 date: creationDate,
                 action: 'Registered new customer into the system.',
                 purpose: 'Support user action',
-                actionBy: customer.onboarded_by || 'RESPECT CORPORATE SERVICES PROVIDER LLC',
+                actionBy: adminName,
                 legalBasis: 'Legitimate interest',
                 retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
             });
@@ -1034,12 +1041,12 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             activities.push({
                 id: 'screening',
                 type: 'system',
-                actor: 'Identfo',
+                actor: 'KYCSync',
                 actorType: 'System Activity',
                 date: screeningDate,
                 action: 'Name Screening Hit applied with the approved result.',
                 purpose: 'Regulatory compliance',
-                actionBy: 'Identfo System',
+                actionBy: 'KYCSync System',
                 legalBasis: 'Legal Obligation',
                 retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
             });
@@ -1056,12 +1063,12 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             activities.push({
                 id: 'document',
                 type: 'system',
-                actor: 'Identfo',
+                actor: 'KYCSync',
                 actorType: 'System Activity',
                 date: docDate,
                 action: 'Document verification completed successfully.',
                 purpose: 'Identity verification',
-                actionBy: 'Identfo System',
+                actionBy: 'KYCSync System',
                 legalBasis: 'Legal Obligation',
                 retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
             });
@@ -1084,14 +1091,36 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             activities.push({
                 id: 'status',
                 type: 'admin',
-                actor: customer.onboarded_by || 'RESPECT CORPORATE SERVICES PROVIDER LLC',
+                actor: adminName,
                 actorType: 'Admin',
                 date: statusDate,
                 action: statusAction,
                 purpose: 'Account management',
-                actionBy: customer.onboarded_by || 'RESPECT CORPORATE SERVICES PROVIDER LLC (Admin)',
+                actionBy: `${adminName} (Admin)`,
                 legalBasis: 'Legitimate interest',
                 retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
+            });
+        }
+        
+        // If we have real activity data in the customer object, use that instead
+        if (customer.activities && Array.isArray(customer.activities) && customer.activities.length > 0) {
+            // Replace our generated activities with real ones
+            activities.length = 0;
+            
+            customer.activities.forEach((activity, index) => {
+                // Convert API activity format to our format
+                activities.push({
+                    id: `activity-${index}`,
+                    type: activity.actor_type === 'system' ? 'system' : 'admin',
+                    actor: activity.actor_type === 'system' ? 'KYCSync' : (activity.actor || adminName),
+                    actorType: activity.actor_type === 'system' ? 'System Activity' : 'Admin',
+                    date: new Date(activity.timestamp || activity.date),
+                    action: activity.action || activity.description,
+                    purpose: activity.purpose || 'Regulatory compliance',
+                    actionBy: activity.action_by || (activity.actor_type === 'system' ? 'KYCSync System' : adminName),
+                    legalBasis: activity.legal_basis || 'Legal Obligation',
+                    retentionPeriod: activity.retention_period || 'Logs retained for 7 years, auto-deleted thereafter'
+                });
             });
         }
         
