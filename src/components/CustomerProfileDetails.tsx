@@ -153,6 +153,21 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     }
                 }
                 
+                // Format the source list to be more readable
+                if (sourceList === 'un_sc_sanctions') {
+                    sourceList = 'UN Sanctions';
+                } else if (sourceList === 'ae_local_terrorists') {
+                    sourceList = 'AE Terrorists';
+                } else if (sourceList === 'peps') {
+                    sourceList = 'PEP';
+                } else if (sourceList === 'debarment') {
+                    sourceList = 'Debarment';
+                } else if (sourceList === 'sanctions') {
+                    sourceList = 'Sanctions';
+                } else if (sourceList === 'terrorists') {
+                    sourceList = 'Terrorists';
+                }
+                
                 // Create a match object based on the customer's actual data
                 const matchObject = {
                     full_name: customer.full_name || customer.name,
@@ -163,12 +178,12 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     score: customer.riskLevel || 85, // Use actual risk level if available
                     
                     // Set these based on the actual dataset
-                    sanction: customer.dataset.includes('sanctions'),
+                    sanction: customer.dataset.includes('sanctions') || customer.dataset.includes('un_sc_sanctions'),
                     pep: customer.dataset.includes('peps'),
                     special_interest: customer.dataset.includes('special') || customer.dataset.includes('interest'),
                     adverse_media: customer.dataset.includes('adverse') || customer.dataset.includes('media'),
                     
-                    hit_determination: customer.dataset.includes('sanctions') || customer.dataset.includes('peps') 
+                    hit_determination: customer.dataset.includes('sanctions') || customer.dataset.includes('peps') || customer.dataset.includes('un_sc_sanctions')
                         ? "Potential Match" 
                         : "False Positive",
                     comments: customer.comments || ""
@@ -720,7 +735,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
 
     const renderNameScreeningTab = () => {
         // Determine verification statuses directly from customer data
-        const sanctionStatus = customer.dataset && customer.dataset.includes('sanctions') ? 'flagged' : 'clear';
+        const sanctionStatus = customer.dataset && (customer.dataset.includes('sanctions') || customer.dataset.includes('un_sc_sanctions')) ? 'flagged' : 'clear';
         const pepStatus = customer.dataset && customer.dataset.includes('peps') ? 'flagged' : 'clear';
         const specialInterestStatus = customer.dataset && 
             (customer.dataset.includes('special') || customer.dataset.includes('interest')) ? 'flagged' : 'clear';
@@ -846,6 +861,21 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                                                     break;
                                                 }
                                             }
+                                        }
+                                        
+                                        // Format the source list to be more readable
+                                        if (sourceList === 'un_sc_sanctions') {
+                                            sourceList = 'UN Sanctions';
+                                        } else if (sourceList === 'ae_local_terrorists') {
+                                            sourceList = 'AE Terrorists';
+                                        } else if (sourceList === 'peps') {
+                                            sourceList = 'PEP';
+                                        } else if (sourceList === 'debarment') {
+                                            sourceList = 'Debarment';
+                                        } else if (sourceList === 'sanctions') {
+                                            sourceList = 'Sanctions';
+                                        } else if (sourceList === 'terrorists') {
+                                            sourceList = 'Terrorists';
                                         }
                                         
                                         return (
