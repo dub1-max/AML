@@ -138,13 +138,28 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             
             // Only add a match if the customer is from a sanctioned dataset
             if (customer.dataset) {
+                // Extract the dataset type from the URL if it's a URL
+                let sourceList = customer.dataset;
+                
+                // Parse dataset from URL if it's a URL
+                if (sourceList.includes('opensanctions.org')) {
+                    // Extract dataset type from URL pattern like https://data.opensanctions.org/datasets/20250205/peps/targets.simple.csv
+                    const urlParts = sourceList.split('/');
+                    for (const part of urlParts) {
+                        if (['peps', 'sanctions', 'terrorists', 'debarment', 'ae_local_terrorists', 'un_sc_sanctions'].includes(part)) {
+                            sourceList = part;
+                            break;
+                        }
+                    }
+                }
+                
                 // Create a match object based on the customer's actual data
                 const matchObject = {
                     full_name: customer.full_name || customer.name,
                     dob: customer.date_of_birth,
                     id_number: customer.national_id_number || customer.passport_number,
                     country: customer.nationality || customer.country_of_residence,
-                    source_list: customer.dataset,
+                    source_list: sourceList, // Use the extracted dataset type
                     score: customer.riskLevel || 85, // Use actual risk level if available
                     
                     // Set these based on the actual dataset
@@ -820,75 +835,89 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {matchingProfiles.map((match, index) => (
-                                        <tr key={index} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{match.full_name || match.name || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.dob || formatDate(match.date_of_birth) || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.id_number || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                                                {match.country && match.country !== 'Unknown' && match.country !== 'N/A' ? (
-                                                    <div className="flex items-center">
-                                                        <img 
-                                                            src={`https://flagcdn.com/w20/${match.country.toLowerCase()}.png`}
-                                                            alt={match.country}
-                                                            className="mr-2 h-3 rounded shadow-sm"
-                                                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                                                        />
-                                                        {match.country}
-                                                    </div>
-                                                ) : 'N/A'}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.source_list || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.score || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                {match.sanction ? (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 bg-red-100 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-red-600" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                {match.pep ? (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 bg-yellow-100 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-yellow-600" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                {match.special_interest ? (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 bg-purple-100 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-purple-600" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                {match.adverse_media ? (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-100 rounded-full">
-                                                        <CheckCircle className="w-3 h-3 text-blue-600" />
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.hit_determination || 'N/A'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
-                                            </td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.comments || '-'}</td>
-                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                                <button className="text-purple-600 hover:text-purple-800 font-medium">View</button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {matchingProfiles.map((match, index) => {
+                                        // Extract dataset type from URL if it's a URL
+                                        let sourceList = match.source_list;
+                                        if (sourceList && sourceList.includes('opensanctions.org')) {
+                                            const urlParts = sourceList.split('/');
+                                            for (const part of urlParts) {
+                                                if (['peps', 'sanctions', 'terrorists', 'debarment', 'ae_local_terrorists', 'un_sc_sanctions'].includes(part)) {
+                                                    sourceList = part;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        
+                                        return (
+                                            <tr key={index} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{match.full_name || match.name || 'N/A'}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.dob || formatDate(match.date_of_birth) || 'N/A'}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.id_number || 'N/A'}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                                    {match.country && match.country !== 'Unknown' && match.country !== 'N/A' ? (
+                                                        <div className="flex items-center">
+                                                            <img 
+                                                                src={`https://flagcdn.com/w20/${match.country.toLowerCase()}.png`}
+                                                                alt={match.country}
+                                                                className="mr-2 h-3 rounded shadow-sm"
+                                                                onError={(e) => (e.currentTarget.style.display = 'none')}
+                                                            />
+                                                            {match.country}
+                                                        </div>
+                                                    ) : 'N/A'}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{sourceList || 'N/A'}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.score || 'N/A'}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                                    {match.sanction ? (
+                                                        <span className="inline-flex items-center justify-center w-5 h-5 bg-red-100 rounded-full">
+                                                            <CheckCircle className="w-3 h-3 text-red-600" />
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                                    {match.pep ? (
+                                                        <span className="inline-flex items-center justify-center w-5 h-5 bg-yellow-100 rounded-full">
+                                                            <CheckCircle className="w-3 h-3 text-yellow-600" />
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                                    {match.special_interest ? (
+                                                        <span className="inline-flex items-center justify-center w-5 h-5 bg-purple-100 rounded-full">
+                                                            <CheckCircle className="w-3 h-3 text-purple-600" />
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                                    {match.adverse_media ? (
+                                                        <span className="inline-flex items-center justify-center w-5 h-5 bg-blue-100 rounded-full">
+                                                            <CheckCircle className="w-3 h-3 text-blue-600" />
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center justify-center w-5 h-5">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.hit_determination || 'N/A'}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                                    <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                                    <input type="radio" name={`relevant-${index}`} className="h-4 w-4 text-purple-600" />
+                                                </td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{match.comments || '-'}</td>
+                                                <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                                    <button className="text-purple-600 hover:text-purple-800 font-medium">View</button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
