@@ -116,11 +116,15 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
     const [activeTab, setActiveTab] = useState<TabType>('profile');
     const [matchingProfiles, setMatchingProfiles] = useState<any[]>([]);
     const [isLoadingMatches, setIsLoadingMatches] = useState(false);
+    const [activities, setActivities] = useState<any[]>([]);
+    const [isLoadingActivities, setIsLoadingActivities] = useState(false);
 
     // Fetch matching profiles when tab changes to nameScreening
     useEffect(() => {
         if (activeTab === 'nameScreening') {
             fetchMatchingProfiles();
+        } else if (activeTab === 'activityTimeline') {
+            fetchActivities();
         }
     }, [activeTab]);
 
@@ -203,6 +207,94 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             setIsLoadingMatches(false);
             // In case of error, set empty array to avoid showing random data
             setMatchingProfiles([]);
+        }
+    };
+
+    // New function to fetch real activities from the backend
+    const fetchActivities = async () => {
+        if (!customer || !customer.id) {
+            return;
+        }
+        
+        setIsLoadingActivities(true);
+        try {
+            // First check if activities are already in the customer object
+            if (customer.activities && Array.isArray(customer.activities) && customer.activities.length > 0) {
+                setActivities(customer.activities);
+                setIsLoadingActivities(false);
+                return;
+            }
+            
+            // Otherwise fetch from the API
+            const response = await fetch(`/api/customer/${customer.id}/activities`, {
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Failed to fetch activities: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            setActivities(data);
+        } catch (error) {
+            console.error("Error fetching activities:", error);
+            // If API fails, create some basic activities from timestamps
+            const generatedActivities = [];
+            
+            // Add onboarding activity
+            if (customer.onboardedAt || customer.createdAt || customer.created_at) {
+                const creationDate = new Date(customer.onboardedAt || customer.createdAt || customer.created_at);
+                generatedActivities.push({
+                    id: 'onboarding',
+                    customer_id: customer.id,
+                    customer_name: customer.full_name || customer.name,
+                    actor: customer.onboardedBy || currentUser?.name || 'KYCSync Admin',
+                    actor_type: 'admin',
+                    action: 'Registered new customer into the system.',
+                    purpose: 'Customer Onboarding',
+                    timestamp: creationDate.toISOString(),
+                    legal_basis: 'Legitimate interest',
+                    retention_period: 'Logs retained for 7 years, auto-deleted thereafter'
+                });
+            }
+            
+            // Add approval activity
+            if (customer.approvedAt) {
+                const approvalDate = new Date(customer.approvedAt);
+                generatedActivities.push({
+                    id: 'approval',
+                    customer_id: customer.id,
+                    customer_name: customer.full_name || customer.name,
+                    actor: customer.approvedBy || currentUser?.name || 'KYCSync Admin',
+                    actor_type: 'admin',
+                    action: 'Customer profile approved.',
+                    purpose: 'Account management',
+                    timestamp: approvalDate.toISOString(),
+                    legal_basis: 'Legitimate interest',
+                    retention_period: 'Logs retained for 7 years, auto-deleted thereafter'
+                });
+            }
+            
+            // Add rejection activity
+            if (customer.rejectedAt) {
+                const rejectionDate = new Date(customer.rejectedAt);
+                generatedActivities.push({
+                    id: 'rejection',
+                    customer_id: customer.id,
+                    customer_name: customer.full_name || customer.name,
+                    actor: customer.rejectedBy || currentUser?.name || 'KYCSync Admin',
+                    actor_type: 'admin',
+                    action: 'Customer profile rejected.',
+                    purpose: 'Account management',
+                    timestamp: rejectionDate.toISOString(),
+                    legal_basis: 'Legitimate interest',
+                    retention_period: 'Logs retained for 7 years, auto-deleted thereafter'
+                });
+            }
+            
+            setActivities(generatedActivities);
+        } finally {
+            setIsLoadingActivities(false);
         }
     };
 
@@ -1012,124 +1104,24 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
             year: 'numeric' 
         });
         
-        // Get admin name from currentUser or fall back to customer.onboarded_by
-        const adminName = currentUser?.name || customer.onboarded_by || 'Admin';
-        
-        // Create activity entries from actual customer data
-        const activities = [];
-        
-        // Add customer creation/onboarding activity if we have a creation date
-        // Use the specific onboarded_at timestamp if available, otherwise fall back to created_at
-        if (customer.onboarded_at || customer.createdAt || customer.created_at) {
-            const creationDate = new Date(customer.onboarded_at || customer.createdAt || customer.created_at);
-            activities.push({
-                id: 'onboarding',
-                type: 'admin',
-                actor: adminName,
-                actorType: 'Admin',
-                date: creationDate,
-                action: 'Registered new customer into the system.',
-                purpose: 'Customer Onboarding',
-                actionBy: adminName,
-                legalBasis: 'Legitimate interest',
-                retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
-            });
-        }
-        
-        // Add screening activity if applicable
-        if (customer.dataset && customer.dataset !== 'onboarded') {
-            // Use screening_date if available, otherwise use updated timestamps
-            const screeningDate = new Date(customer.screening_date || customer.updatedAt || customer.updated_at || customer.record_last_updated || today);
-            activities.push({
-                id: 'screening',
-                type: 'system',
-                actor: 'KYCSync',
-                actorType: 'System Activity',
-                date: screeningDate,
-                action: 'Name Screening Hit applied with the approved result.',
-                purpose: 'Regulatory compliance',
-                actionBy: 'KYCSync System',
-                legalBasis: 'Legal Obligation',
-                retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
-            });
-        }
-        
-        // Add document verification activity if we have document verification data
-        if (customer.document_verified || customer.document_matched) {
-            // Use document_verified_date if available
-            const docDate = new Date(customer.document_verified_date || customer.document_matched_date || customer.updatedAt || customer.updated_at || today);
-            
-            activities.push({
-                id: 'document',
-                type: 'system',
-                actor: 'KYCSync',
-                actorType: 'System Activity',
-                date: docDate,
-                action: 'Document verification completed successfully.',
-                purpose: 'Identity verification',
-                actionBy: 'KYCSync System',
-                legalBasis: 'Legal Obligation',
-                retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
-            });
-        }
-        
-        // Add status update activity if we have a status
-        if (customer.status) {
-            // Use specific timestamps for approval/rejection if available
-            let statusDate;
-            
-            if (customer.status === 'approved' && customer.approved_at) {
-                statusDate = new Date(customer.approved_at);
-            } else if (customer.status === 'rejected' && customer.rejected_at) {
-                statusDate = new Date(customer.rejected_at);
-            } else {
-                statusDate = new Date(customer.status_updated_at || customer.record_last_updated || today);
-            }
-            
-            const statusAction = customer.status === 'approved' 
-                ? 'Customer profile approved.' 
-                : customer.status === 'pending' 
-                    ? 'Customer profile pending review.' 
-                    : 'Customer profile rejected.';
-                    
-            activities.push({
-                id: 'status',
-                type: 'admin',
-                actor: adminName,
-                actorType: 'Admin',
-                date: statusDate,
-                action: statusAction,
-                purpose: 'Account management',
-                actionBy: `${adminName} (Admin)`,
-                legalBasis: 'Legitimate interest',
-                retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
-            });
-        }
-        
-        // If we have real activity data in the customer object, use that instead
-        if (customer.activities && Array.isArray(customer.activities) && customer.activities.length > 0) {
-            // Replace our generated activities with real ones
-            activities.length = 0;
-            
-            customer.activities.forEach((activity, index) => {
-                // Convert API activity format to our format
-                activities.push({
-                    id: `activity-${index}`,
-                    type: activity.actor_type === 'system' ? 'system' : 'admin',
-                    actor: activity.actor_type === 'system' ? 'KYCSync' : (activity.actor || adminName),
-                    actorType: activity.actor_type === 'system' ? 'System Activity' : 'Admin',
-                    date: new Date(activity.timestamp || activity.date || activity.created_at),
-                    action: activity.action || activity.description,
-                    purpose: activity.purpose || 'Regulatory compliance',
-                    actionBy: activity.action_by || (activity.actor_type === 'system' ? 'KYCSync System' : adminName),
-                    legalBasis: activity.legal_basis || 'Legal Obligation',
-                    retentionPeriod: activity.retention_period || 'Logs retained for 7 years, auto-deleted thereafter'
-                });
-            });
-        }
+        // Format activities for display
+        const formattedActivities = activities.map((activity, index) => {
+            return {
+                id: activity.id || `activity-${index}`,
+                type: activity.actor_type === 'system' ? 'system' : 'admin',
+                actor: activity.actor_type === 'system' ? 'KYCSync' : (activity.actor || currentUser?.name || 'Admin'),
+                actorType: activity.actor_type === 'system' ? 'System Activity' : 'Admin',
+                date: new Date(activity.timestamp || activity.date || activity.created_at),
+                action: activity.action || activity.description,
+                purpose: activity.purpose || 'Regulatory compliance',
+                actionBy: activity.action_by || (activity.actor_type === 'system' ? 'KYCSync System' : activity.actor || currentUser?.name || 'Admin'),
+                legalBasis: activity.legal_basis || 'Legal Obligation',
+                retentionPeriod: activity.retention_period || 'Logs retained for 7 years, auto-deleted thereafter'
+            };
+        });
         
         // Sort activities by date (newest first)
-        activities.sort((a, b) => b.date.getTime() - a.date.getTime());
+        formattedActivities.sort((a, b) => b.date.getTime() - a.date.getTime());
 
         return (
             <div className="space-y-6">
@@ -1140,108 +1132,117 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     </button>
                 </div>
                 
+                {/* Loading state */}
+                {isLoadingActivities && (
+                    <div className="flex justify-center items-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-700"></div>
+                    </div>
+                )}
+                
                 {/* Timeline entries */}
-                <div className="relative">
-                    {activities.map((activity, index) => {
-                        // Format the time for display
-                        const formattedTime = activity.date.toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: 'numeric',
-                            hour12: true
-                        });
-                        
-                        // Format the full date for display
-                        const formattedFullDate = activity.date.toLocaleDateString('en-US', {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric'
-                        });
-                        
-                        return (
-                            <div key={activity.id} className="mb-8 relative">
-                                {/* Timeline connector */}
-                                {index < activities.length - 1 && (
-                                    <div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gray-200"></div>
-                                )}
-                                
-                                <div className="flex">
-                                    {/* Activity icon */}
-                                    <div className="flex-shrink-0 mr-4">
-                                        <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                                            activity.type === 'system' ? 'bg-purple-900' : 'bg-gray-300'
-                                        }`}>
-                                            {activity.type === 'system' ? (
-                                                <span className="text-white text-sm font-medium">
-                                                    {activity.actor.substring(0, 2).toUpperCase()}
-                                                </span>
-                                            ) : (
-                                                <img 
-                                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(activity.actor)}&background=random`} 
-                                                    alt={activity.actor}
-                                                    className="w-16 h-16 rounded-full"
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
+                {!isLoadingActivities && (
+                    <div className="relative">
+                        {formattedActivities.map((activity, index) => {
+                            // Format the time for display
+                            const formattedTime = activity.date.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                hour12: true
+                            });
+                            
+                            // Format the full date for display
+                            const formattedFullDate = activity.date.toLocaleDateString('en-US', {
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric'
+                            });
+                            
+                            return (
+                                <div key={activity.id} className="mb-8 relative">
+                                    {/* Timeline connector */}
+                                    {index < formattedActivities.length - 1 && (
+                                        <div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gray-200"></div>
+                                    )}
                                     
-                                    {/* Activity content */}
-                                    <div className="flex-1 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900">{activity.actor}</h4>
-                                                <p className="text-sm text-gray-500">{activity.actorType}</p>
+                                    <div className="flex">
+                                        {/* Activity icon */}
+                                        <div className="flex-shrink-0 mr-4">
+                                            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                                                activity.type === 'system' ? 'bg-purple-900' : 'bg-gray-300'
+                                            }`}>
+                                                {activity.type === 'system' ? (
+                                                    <span className="text-white text-sm font-medium">
+                                                        {activity.actor.substring(0, 2).toUpperCase()}
+                                                    </span>
+                                                ) : (
+                                                    <img 
+                                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(activity.actor)}&background=random`} 
+                                                        alt={activity.actor}
+                                                        className="w-16 h-16 rounded-full"
+                                                    />
+                                                )}
                                             </div>
-                                            <span className="text-sm text-gray-500">
-                                                {formattedFullDate} {formattedTime}
-                                            </span>
                                         </div>
                                         
-                                        <p className="mb-4 text-gray-800">{activity.action}</p>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                            <div>
-                                                <span className="text-gray-500">Purpose of Processing :</span>
-                                                <span className="ml-2 font-medium">{activity.purpose}</span>
+                                        {/* Activity content */}
+                                        <div className="flex-1 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900">{activity.actor}</h4>
+                                                    <p className="text-sm text-gray-500">{activity.actorType}</p>
+                                                </div>
+                                                <span className="text-sm text-gray-500">
+                                                    {formattedFullDate} {formattedTime}
+                                                </span>
                                             </div>
-                                            <div>
-                                                <span className="text-gray-500">Action By :</span>
-                                                <span className="ml-2 font-medium">{activity.actionBy}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-gray-500">Legal Basis for Processing :</span>
-                                                <span className="ml-2 font-medium">{activity.legalBasis}</span>
-                                            </div>
-                                            <div>
-                                                <span className="text-gray-500">Retention Period :</span>
-                                                <span className="ml-2 font-medium">{activity.retentionPeriod}</span>
+                                            
+                                            <p className="mb-4 text-gray-800">{activity.action}</p>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <span className="text-gray-500">Purpose of Processing :</span>
+                                                    <span className="ml-2 font-medium">{activity.purpose}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500">Action By :</span>
+                                                    <span className="ml-2 font-medium">{activity.actionBy}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500">Legal Basis for Processing :</span>
+                                                    <span className="ml-2 font-medium">{activity.legalBasis}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-500">Retention Period :</span>
+                                                    <span className="ml-2 font-medium">{activity.retentionPeriod}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            );
+                        })}
+                        
+                        {/* Start marker at the bottom */}
+                        {formattedActivities.length > 0 && (
+                            <div className="flex justify-center mt-8">
+                                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-medium">
+                                    START
+                                </div>
                             </div>
-                        );
-                    })}
-                    
-                    {/* Start marker at the bottom */}
-                    {activities.length > 0 && (
-                        <div className="flex justify-center mt-8">
-                            <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm font-medium">
-                                START
+                        )}
+                        
+                        {/* Empty state if no activities */}
+                        {formattedActivities.length === 0 && (
+                            <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
+                                <div className="bg-purple-100 rounded-full p-3 mb-4">
+                                    <Activity className="w-10 h-10 text-purple-600" />
+                                </div>
+                                <p className="text-lg font-medium text-gray-900">No Activity History</p>
+                                <p className="text-sm text-gray-500 mt-1">This customer has no recorded activities.</p>
                             </div>
-                        </div>
-                    )}
-                    
-                    {/* Empty state if no activities */}
-                    {activities.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-lg">
-                            <div className="bg-purple-100 rounded-full p-3 mb-4">
-                                <Activity className="w-10 h-10 text-purple-600" />
-                            </div>
-                            <p className="text-lg font-medium text-gray-900">No Activity History</p>
-                            <p className="text-sm text-gray-500 mt-1">This customer has no recorded activities.</p>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
         );
     };
