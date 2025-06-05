@@ -1018,17 +1018,18 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
         // Create activity entries from actual customer data
         const activities = [];
         
-        // Add customer creation activity if we have a creation date
-        if (customer.createdAt || customer.created_at) {
-            const creationDate = new Date(customer.createdAt || customer.created_at);
+        // Add customer creation/onboarding activity if we have a creation date
+        // Use the specific onboarded_at timestamp if available, otherwise fall back to created_at
+        if (customer.onboarded_at || customer.createdAt || customer.created_at) {
+            const creationDate = new Date(customer.onboarded_at || customer.createdAt || customer.created_at);
             activities.push({
-                id: 'creation',
-                type: 'system',
-                actor: 'KYCSync',
-                actorType: 'System Activity',
+                id: 'onboarding',
+                type: 'admin',
+                actor: adminName,
+                actorType: 'Admin',
                 date: creationDate,
                 action: 'Registered new customer into the system.',
-                purpose: 'Support user action',
+                purpose: 'Customer Onboarding',
                 actionBy: adminName,
                 legalBasis: 'Legitimate interest',
                 retentionPeriod: 'Logs retained for 7 years, auto-deleted thereafter'
@@ -1037,7 +1038,8 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
         
         // Add screening activity if applicable
         if (customer.dataset && customer.dataset !== 'onboarded') {
-            const screeningDate = new Date(customer.updatedAt || customer.updated_at || customer.record_last_updated || today);
+            // Use screening_date if available, otherwise use updated timestamps
+            const screeningDate = new Date(customer.screening_date || customer.updatedAt || customer.updated_at || customer.record_last_updated || today);
             activities.push({
                 id: 'screening',
                 type: 'system',
@@ -1054,11 +1056,8 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
         
         // Add document verification activity if we have document verification data
         if (customer.document_verified || customer.document_matched) {
+            // Use document_verified_date if available
             const docDate = new Date(customer.document_verified_date || customer.document_matched_date || customer.updatedAt || customer.updated_at || today);
-            // Set doc date to be before screening date if both exist
-            if (activities.length > 0 && activities[activities.length - 1].id === 'screening') {
-                docDate.setHours(docDate.getHours() - 2);
-            }
             
             activities.push({
                 id: 'document',
@@ -1076,10 +1075,15 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
         
         // Add status update activity if we have a status
         if (customer.status) {
-            const statusDate = new Date(customer.status_updated_at || customer.record_last_updated || today);
-            // Set status date to be after other activities
-            if (activities.length > 0) {
-                statusDate.setHours(statusDate.getHours() + 1);
+            // Use specific timestamps for approval/rejection if available
+            let statusDate;
+            
+            if (customer.status === 'approved' && customer.approved_at) {
+                statusDate = new Date(customer.approved_at);
+            } else if (customer.status === 'rejected' && customer.rejected_at) {
+                statusDate = new Date(customer.rejected_at);
+            } else {
+                statusDate = new Date(customer.status_updated_at || customer.record_last_updated || today);
             }
             
             const statusAction = customer.status === 'approved' 
@@ -1114,7 +1118,7 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                     type: activity.actor_type === 'system' ? 'system' : 'admin',
                     actor: activity.actor_type === 'system' ? 'KYCSync' : (activity.actor || adminName),
                     actorType: activity.actor_type === 'system' ? 'System Activity' : 'Admin',
-                    date: new Date(activity.timestamp || activity.date),
+                    date: new Date(activity.timestamp || activity.date || activity.created_at),
                     action: activity.action || activity.description,
                     purpose: activity.purpose || 'Regulatory compliance',
                     actionBy: activity.action_by || (activity.actor_type === 'system' ? 'KYCSync System' : adminName),
@@ -1139,11 +1143,14 @@ const CustomerProfileDetails: React.FC<CustomerProfileDetailsProps> = ({ custome
                 {/* Timeline entries */}
                 <div className="relative">
                     {activities.map((activity, index) => {
+                        // Format the time for display
                         const formattedTime = activity.date.toLocaleTimeString('en-US', {
                             hour: 'numeric',
                             minute: 'numeric',
                             hour12: true
                         });
+                        
+                        // Format the full date for display
                         const formattedFullDate = activity.date.toLocaleDateString('en-US', {
                             month: 'long',
                             day: 'numeric',
