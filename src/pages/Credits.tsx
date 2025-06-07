@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { CreditCard, Loader2, CreditCard as CreditCardIcon, CheckCircle, Star } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { CreditCard, Loader2, CreditCard as CreditCardIcon, CheckCircle, Star, Package } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import Layout from '../components/Layout';
 import { getApiBaseUrl } from '../config';
+import { showAlert } from '../components/ui/Alert';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -164,10 +165,16 @@ const Credits: React.FC<CreditsProps> = () => {
                                 
                                 // Update credits balance
                                 setCredits(result.newBalance);
-                                alert(`Successfully purchased ${purchaseAmount} credits!`);
+                                showAlert({
+                                    message: `Successfully purchased ${purchaseAmount} credits!`,
+                                    type: 'success'
+                                });
                             } catch (error) {
                                 console.error('Error processing credit purchase:', error);
-                                alert('Payment was successful, but we had trouble adding credits to your account. Please contact support.');
+                                showAlert({
+                                    message: 'Payment was successful, but we had trouble adding credits to your account. Please contact support.',
+                                    type: 'error'
+                                });
                             } finally {
                                 setProcessingPayment(false);
                             }
@@ -256,12 +263,18 @@ const Credits: React.FC<CreditsProps> = () => {
     // Legacy method (will be replaced with PayPal)
     const handlePurchase = async () => {
         // This is kept for backward compatibility
-        alert(`Please use PayPal to purchase credits`);
+        showAlert({
+            message: 'Please use PayPal to purchase credits',
+            type: 'info'
+        });
     };
     
     const handleSubscriptionSelect = async (planId: string) => {
         if (activeSubscription?.id === planId) {
-            alert('You are already subscribed to this plan.');
+            showAlert({
+                message: 'You are already subscribed to this plan.',
+                type: 'info'
+            });
             return;
         }
         
@@ -307,14 +320,20 @@ const Credits: React.FC<CreditsProps> = () => {
             );
             
             // Show success message
-            alert(`Successfully subscribed to ${result.subscription.name} plan!`);
+            showAlert({
+                message: `Successfully subscribed to ${result.subscription.name} plan!`,
+                type: 'success'
+            });
             
             // Refresh subscription data
             await fetchSubscription();
             
         } catch (error: any) {
             setPurchaseError(error.message || 'An error occurred while purchasing the subscription');
-            alert(`Error: ${error.message || 'Failed to purchase subscription'}`);
+            showAlert({
+                message: `Error: ${error.message || 'Failed to purchase subscription'}`,
+                type: 'error'
+            });
         } finally {
             setPurchasingSubscription(false);
         }

@@ -4,6 +4,8 @@ import { SearchResult, Tracking } from './types';
 import { generateCustomerPDF } from './utils/pdfGenerator';
 import { useNavigate } from 'react-router-dom';
 import CustomerProfileDetails from './components/CustomerProfileDetails';
+import ConfirmationDialog from './components/ui/ConfirmationDialog';
+import { showAlert } from './components/ui/Alert';
 
 interface ActiveTrackingProps {
     trackedResults: SearchResult[];
@@ -60,47 +62,6 @@ interface Customer {
 type SortableColumn = 'identifiers' | 'name' | 'country' | 'aging' | 'blacklist' | 'risk' | 'status' | 'dataset';
 type SortDirection = 'asc' | 'desc';
 
-// Add confirmation dialog component
-const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, name }: {
-    isOpen: boolean,
-    onConfirm: () => void,
-    onCancel: () => void,
-    name: string
-}) => {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
-                <div className="flex items-center mb-4 text-amber-600">
-                    <AlertCircle className="w-6 h-6 mr-2" />
-                    <h3 className="text-lg font-semibold">Confirm Tracking</h3>
-                </div>
-                <p className="mb-4">
-                    This action will deduct <span className="font-bold">1 credit</span> from your account to start tracking <span className="font-bold">{name}</span>.
-                </p>
-                <p className="mb-6 text-sm text-gray-600">
-                    Credits are only deducted the first time you track a profile. You can pause and resume tracking at any time without additional charges.
-                </p>
-                <div className="flex justify-end space-x-3">
-                    <button
-                        onClick={onCancel}
-                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-                    >
-                        Confirm
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking, tabType = 'alerts' }: ActiveTrackingProps) {
     const [lastUpdated, setLastUpdated] = useState<string>(new Date().toLocaleTimeString());
     const [generatingPdf, setGeneratingPdf] = useState<{[key: number]: boolean}>({});
@@ -141,25 +102,27 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
 
     // Convert SearchResult to Customer for profile viewing
     const convertToCustomer = (result: SearchResult): Customer => {
+        // Extract needed properties from result
+        const { name, country, dataset, riskLevel, identifiers } = result;
+        
+        // Create a clean customer object without spreading the original result
         return {
             id: result.id.toString(),
-            user_id: result.identifiers,
-            identoId: result.identifiers,
-            type: 'individual', // Default to individual, could be enhanced based on data
-            status: result.dataset === 'onboarded' ? 'approved' : 'pending',
-            full_name: result.name,
-            nationality: result.country,
-            country_of_residence: result.country,
-            risk_rating: result.riskLevel?.toString() || '0',
-            sanction_status: result.dataset?.includes('sanctions') ? 'flagged' : 'clear',
-            pep_status: result.dataset?.includes('peps') ? 'flagged' : 'clear',
-            special_interest_status: result.dataset?.includes('terrorists') ? 'flagged' : 'clear',
+            user_id: identifiers,
+            identoId: identifiers,
+            type: 'individual' as const, // Use const assertion to ensure correct type
+            status: dataset === 'onboarded' ? 'approved' : 'pending',
+            full_name: name,
+            nationality: country,
+            country_of_residence: country,
+            risk_rating: riskLevel?.toString() || '0',
+            sanction_status: dataset?.includes('sanctions') ? 'flagged' : 'clear',
+            pep_status: dataset?.includes('peps') ? 'flagged' : 'clear',
+            special_interest_status: dataset?.includes('terrorists') ? 'flagged' : 'clear',
             adverse_media_status: 'clear',
-            document_matched: result.dataset === 'onboarded',
-            document_verified: result.dataset === 'onboarded',
-            last_review: tracking?.[result.name]?.startDate,
-            // Add any other available data from SearchResult
-            ...result
+            document_matched: dataset === 'onboarded',
+            document_verified: dataset === 'onboarded',
+            last_review: tracking?.[name]?.startDate
         };
     };
 
@@ -732,7 +695,10 @@ function ActiveTracking({ trackedResults, tracking, isLoading, onToggleTracking,
                 isOpen={confirmDialog.isOpen}
                 onConfirm={handleConfirmTracking}
                 onCancel={handleCancelTracking}
-                name={confirmDialog.name}
+                title="Confirm Tracking"
+                description={`This action will deduct 1 credit from your account to start tracking ${confirmDialog.name}.
+                Credits are only deducted the first time you track a profile. You can pause and resume tracking at any time without additional charges.`}
+                variant="warning"
             />
         </div>
     );

@@ -1,8 +1,8 @@
 // MainApp.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Search, FileText, Shield, LogOut, Link, Users, File,
-    Plus, Loader2, CheckCircle, XCircle, Eye, CreditCard
+    Plus, Loader2, CheckCircle, XCircle, Eye, CreditCard, AlertCircle, Bell, Download, ChevronDown
 } from 'lucide-react';
 import type { SearchResult, Tracking, TrackingItem } from './types';
 import { useAuth } from './AuthContext';
@@ -21,6 +21,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DebugLog, { addLog } from './components/DebugLog';
 import EditProfile from './EditProfile';
 import Layout from './components/Layout';
+import { showAlert } from './components/ui/Alert';
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -570,7 +571,10 @@ function MainApp(_props: MainAppProps) {
                 setPendingApprovals(filteredApprovals);
                 
                 // Show success message
-                alert(`${matchName} has been approved and added to tracking`);
+                showAlert({
+                    message: `${matchName} has been approved and added to tracking`,
+                    type: 'success'
+                });
                 return;
             } else if (action === 'rejected') {
                 // Simpler approach: When rejecting any match, mark it in the UI and call the backend
@@ -605,17 +609,26 @@ function MainApp(_props: MainAppProps) {
                     addLog(`Successfully removed customer ${customerId} from approvals list`, 'success');
                     
                     // Show success message
-                    alert(`Customer has been rejected successfully`);
+                    showAlert({
+                        message: 'Customer has been rejected successfully',
+                        type: 'success'
+                    });
                 } catch (error) {
                     console.error('Error during rejection:', error);
                     addLog(`Rejection error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-                    alert(`Failed to reject: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    showAlert({
+                        message: `Failed to reject: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                        type: 'error'
+                    });
                 }
             }
             
         } catch (error) {
             console.error(`Error processing match with action '${action}':`, error);
-            alert(`Failed to process match. Please try again.`);
+            showAlert({
+                message: 'Failed to process match. Please try again.',
+                type: 'error'
+            });
         }
     };
 

@@ -2,6 +2,7 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
+import { AlertContainer } from './components/ui/Alert';
 
 // Import MainApp directly for faster loading
 import MainApp from './MainApp';
@@ -61,6 +62,7 @@ function App() {
     return (
         <Router>
             <AuthProvider>
+                <AlertContainer />
                 <PreloadEditProfile />
                 <Suspense fallback={<LoadingSpinner />}>
                     <Routes>

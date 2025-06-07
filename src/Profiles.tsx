@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { getApiBaseUrl } from './config';
 import { generateCustomerPDF } from './utils/pdfGenerator';
 import { SearchResult as AppSearchResult } from './types';
+import ConfirmationDialog from './components/ui/ConfirmationDialog';
+import { showAlert } from './components/ui/Alert';
 
 interface Tracking {
   [key: string]: {
@@ -22,47 +24,6 @@ interface ProfilesProps {
   totalResults?: number;         // Total number of results
   onPageChange?: (page: number) => void; // Callback for page changes
 }
-
-// Add confirmation dialog component
-const ConfirmationDialog = ({ isOpen, onConfirm, onCancel, name }: {
-  isOpen: boolean,
-  onConfirm: () => void,
-  onCancel: () => void,
-  name: string
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 shadow-xl max-w-md w-full">
-        <div className="flex items-center mb-4 text-amber-600">
-          <AlertCircle className="w-6 h-6 mr-2" />
-          <h3 className="text-lg font-semibold">Confirm Tracking</h3>
-        </div>
-        <p className="mb-4">
-          This action will deduct <span className="font-bold">1 credit</span> from your account to start tracking <span className="font-bold">{name}</span>.
-        </p>
-        <p className="mb-6 text-sm text-gray-600">
-          Credits are only deducted the first time you track a profile. You can pause and resume tracking at any time without additional charges.
-        </p>
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-          >
-            Confirm
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 function Profiles({ searchResults = [], isLoading: initialLoading = false, currentPage, totalPages, totalResults, onPageChange }: ProfilesProps) {
   const { user } = useAuth();
@@ -202,7 +163,10 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false, curre
         if (response.status === 402) {
           const data = await response.json();
           if (data.needCredits) {
-            alert('You do not have enough credits to track this profile. Please purchase more credits.');
+            showAlert({
+              message: 'You do not have enough credits to track this profile. Please purchase more credits.',
+              type: 'error'
+            });
             navigate('/credits');
             return;
           }
@@ -239,7 +203,10 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false, curre
     } catch (error) {
       console.error('Error generating PDF:', error);
       setGeneratingPdf(prev => ({ ...prev, [person.id]: false }));
-      alert('Failed to generate PDF. Please try again.');
+      showAlert({
+        message: 'Failed to generate PDF. Please try again.',
+        type: 'error'
+      });
     }
   };
 
@@ -500,7 +467,10 @@ function Profiles({ searchResults = [], isLoading: initialLoading = false, curre
         isOpen={confirmDialog.isOpen}
         onConfirm={handleConfirmTracking}
         onCancel={handleCancelTracking}
-        name={confirmDialog.name}
+        title="Confirm Tracking"
+        description={`This action will deduct 1 credit from your account to start tracking ${confirmDialog.name}.
+        Credits are only deducted the first time you track a profile. You can pause and resume tracking at any time without additional charges.`}
+        variant="warning"
       />
     </div>
   );
