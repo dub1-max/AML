@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { getApiBaseUrl } from './config';
 import { useNavigate } from 'react-router-dom';
 import { getSortedCountries, statesByCountry } from './utils/countries';
+import ConfirmationDialog from './components/ui/ConfirmationDialog';
 
 function SelfLinkIndividualOB() {
     const API_BASE_URL = getApiBaseUrl();
@@ -12,6 +13,9 @@ function SelfLinkIndividualOB() {
     
     // Step management
     const [currentStep, setCurrentStep] = useState<'upload' | 'form'>('upload');
+    
+    // Confirmation dialog state
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     
     // Image upload state
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -299,6 +303,50 @@ function SelfLinkIndividualOB() {
         }
     };
 
+    // Handle back button with confirmation
+    const handleBackToUpload = () => {
+        // Check if form has any data filled
+        if (fullName || email || nationalIdNumber || passportNumber || address || contactNumber) {
+            setShowConfirmDialog(true);
+        } else {
+            // If no data, go back without confirmation
+            setCurrentStep('upload');
+        }
+    };
+    
+    const confirmGoBack = () => {
+        // Reset form fields
+        setFullName('');
+        setEmail('');
+        setResidentStatus('');
+        setGender('');
+        setDateOfBirth('');
+        setNationality('');
+        setCountryOfResidence('');
+        setOtherNationalities(false);
+        setSpecifiedOtherNationalities('');
+        setNationalIdNumber('');
+        setNationalIdExpiry('');
+        setPassportNumber('');
+        setPassportExpiry('');
+        setAddress('');
+        setState('');
+        setCity('');
+        setZipCode('');
+        setContactNumber('');
+        setDialingCode('');
+        setWorkType('');
+        setIndustry('');
+        setProductTypeOffered('');
+        setProductOffered('');
+        setCompanyName('');
+        setPositionInCompany('');
+        
+        // Close dialog and go back to upload step
+        setShowConfirmDialog(false);
+        setCurrentStep('upload');
+    };
+
     return (
         <div className="p-8 bg-gray-50">
             {/* Progress indicator */}
@@ -323,6 +371,18 @@ function SelfLinkIndividualOB() {
                     </div>
                 </div>
             </div>
+
+            {/* Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={showConfirmDialog}
+                onConfirm={confirmGoBack}
+                onCancel={() => setShowConfirmDialog(false)}
+                title="Go back to upload?"
+                description="Going back will clear all the information you've entered. Are you sure you want to continue?"
+                confirmText="Yes, go back"
+                cancelText="No, continue editing"
+                variant="warning"
+            />
 
             {currentStep === 'upload' ? (
                 /* Upload Step */
@@ -459,7 +519,7 @@ function SelfLinkIndividualOB() {
                             <p className="text-gray-600">Review and complete the information below.</p>
                         </div>
                         <button
-                            onClick={() => setCurrentStep('upload')}
+                            onClick={handleBackToUpload}
                             className="flex items-center space-x-2 px-4 py-2 text-purple-600 border border-purple-600 rounded-lg hover:bg-purple-50"
                         >
                             <ArrowLeft className="w-4 h-4" />

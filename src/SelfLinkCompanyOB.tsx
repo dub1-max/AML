@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { getApiBaseUrl } from './config';
 import { useNavigate } from 'react-router-dom';
 import { getSortedCountries, statesByCountry } from './utils/countries';
+import ConfirmationDialog from './components/ui/ConfirmationDialog';
 
 interface FormData {
   companyName: string;
@@ -35,6 +36,9 @@ function SelfLinkCompanyOB() {
     
     // Step management
     const [currentStep, setCurrentStep] = useState<'upload' | 'form'>('upload');
+    
+    // Confirmation dialog state
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     
     // Image upload state
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -233,6 +237,47 @@ function SelfLinkCompanyOB() {
         }
     };
 
+    // Handle back button with confirmation
+    const handleBackToUpload = () => {
+        // Check if form has any data filled
+        if (formData.companyName || formData.registrationNumber || formData.contactEmail || formData.registeredAddress) {
+            setShowConfirmDialog(true);
+        } else {
+            // If no data, go back without confirmation
+            setCurrentStep('upload');
+        }
+    };
+    
+    const confirmGoBack = () => {
+        // Reset form fields
+        setFormData({
+            companyName: "",
+            registrationNumber: "",
+            companyType: "",
+            incorporationDate: "",
+            businessNature: "",
+            industrySector: "",
+            annualTurnover: "",
+            employeeCount: "",
+            websiteUrl: "",
+            registeredAddress: "",
+            operatingAddress: "",
+            country: "",
+            state: "",
+            city: "",
+            postalCode: "",
+            contactPersonName: "",
+            contactEmail: "",
+            contactPhone: "",
+            taxNumber: "",
+            regulatoryLicenses: "",
+        });
+        
+        // Close dialog and go back to upload step
+        setShowConfirmDialog(false);
+        setCurrentStep('upload');
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
@@ -331,6 +376,18 @@ function SelfLinkCompanyOB() {
                     </div>
                 </div>
             </div>
+            
+            {/* Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={showConfirmDialog}
+                onConfirm={confirmGoBack}
+                onCancel={() => setShowConfirmDialog(false)}
+                title="Go back to upload?"
+                description="Going back will clear all the information you've entered. Are you sure you want to continue?"
+                confirmText="Yes, go back"
+                cancelText="No, continue editing"
+                variant="warning"
+            />
 
             {currentStep === 'upload' ? (
                 /* Upload Step */
@@ -467,7 +524,7 @@ function SelfLinkCompanyOB() {
                             <p className="text-gray-600">Review and complete the information below.</p>
                         </div>
                         <button
-                            onClick={() => setCurrentStep('upload')}
+                            onClick={handleBackToUpload}
                             className="flex items-center space-x-2 px-4 py-2 text-purple-600 border border-purple-600 rounded-lg hover:bg-purple-50"
                         >
                             <ArrowLeft className="w-4 h-4" />
