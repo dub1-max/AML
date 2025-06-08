@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { getApiBaseUrl } from './config';
 import { getSortedCountries, statesByCountry } from './utils/countries';
+import ConfirmationDialog from './components/ui/ConfirmationDialog';
 
 interface FormData {
   companyName: string;
@@ -55,6 +56,29 @@ function CompanyOB() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Confirmation dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  
+  // Handle confirmation dialog
+  const confirmAction = (action: () => void, message: string) => {
+    setPendingAction(() => action);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirm = () => {
+    if (pendingAction) {
+      pendingAction();
+    }
+    setShowConfirmDialog(false);
+    setPendingAction(null);
+  };
+
+  const handleCancel = () => {
+    setShowConfirmDialog(false);
+    setPendingAction(null);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -142,6 +166,15 @@ function CompanyOB() {
 
   return (
     <div className="p-8 bg-gray-50">
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showConfirmDialog}
+        onCancel={handleCancel}
+        onConfirm={handleConfirm}
+        title="Confirmation Required"
+        description="Are you sure you want to proceed? Any unsaved changes will be lost."
+      />
+      
       <h1 className="text-3xl font-bold mb-6">Register Company Profile</h1>
       <p className="mb-8 text-gray-600">
         Complete the form below to register your company profile.
@@ -454,7 +487,15 @@ function CompanyOB() {
         </div>
 
         {/* Submit Button */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 flex space-x-4">
+          <button
+            type="button"
+            onClick={() => confirmAction(() => navigate('/mainapp'), "Are you sure you want to go back? All entered data will be lost.")}
+            disabled={loading}
+            className="mt-4 px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 disabled:opacity-50"
+          >
+            BACK
+          </button>
           <button
             type="submit"
             disabled={loading}

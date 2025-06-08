@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext'; // Import useAuth
 import { getApiBaseUrl } from './config';
 import { useNavigate } from 'react-router-dom';
 import { getSortedCountries, statesByCountry } from './utils/countries';
+import ConfirmationDialog from './components/ui/ConfirmationDialog';
 
 function IndividualOB() {
     const API_BASE_URL = getApiBaseUrl();
@@ -33,6 +34,10 @@ function IndividualOB() {
     const [productOffered, setProductOffered] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [positionInCompany, setPositionInCompany] = useState('');
+    
+    // Confirmation dialog state
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
     // Get sorted countries list
     const countries = getSortedCountries();
@@ -41,6 +46,25 @@ function IndividualOB() {
     const states = countryOfResidence ? statesByCountry[countryOfResidence] || [] : [];
 
     const { user } = useAuth(); // Use useAuth to get the user
+
+    // Handle confirmation dialog with custom message
+    const confirmAction = (action: () => void, message: string) => {
+        setPendingAction(() => action);
+        setShowConfirmDialog(true);
+    };
+
+    const handleConfirm = () => {
+        if (pendingAction) {
+            pendingAction();
+        }
+        setShowConfirmDialog(false);
+        setPendingAction(null);
+    };
+
+    const handleCancel = () => {
+        setShowConfirmDialog(false);
+        setPendingAction(null);
+    };
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -151,6 +175,15 @@ function IndividualOB() {
 
     return (
         <div className="p-8 bg-gray-50">
+            {/* Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={showConfirmDialog}
+                onCancel={handleCancel}
+                onConfirm={handleConfirm}
+                title="Confirmation Required"
+                description="Are you sure you want to proceed? Any unsaved changes will be lost."
+            />
+            
             <h1 className="text-3xl font-bold mb-6">Register Individual Profile</h1>
             <p className="mb-8 text-gray-600">Complete the form below to register individual profile.</p>
             
@@ -478,7 +511,14 @@ function IndividualOB() {
                 </div>
 
                 {/* Submit Button */}
-                <div className="md:col-span-3">
+                <div className="md:col-span-3 flex space-x-4">
+                    <button 
+                        type="button"
+                        onClick={() => confirmAction(() => navigate('/mainapp'), "Are you sure you want to go back? All entered data will be lost.")} 
+                        className="mt-4 px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+                    >
+                        BACK
+                    </button>
                     <button 
                         type="submit" 
                         className="mt-4 px-6 py-2 bg-[#4A1D96] text-white rounded-lg hover:bg-[#3c177d] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
