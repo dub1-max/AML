@@ -124,6 +124,9 @@ function SelfLinkCompanyOB() {
     const analyzeImage = async () => {
         if (!selectedFile) return;
 
+        // Close any open dialog
+        setShowConfirmDialog(false);
+        
         setIsUploading(true);
         const uploadFormData = new FormData();
         uploadFormData.append('document', selectedFile);

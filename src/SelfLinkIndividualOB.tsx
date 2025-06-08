@@ -101,6 +101,9 @@ function SelfLinkIndividualOB() {
     const analyzeImage = async () => {
         if (!selectedFile) return;
 
+        // Close any open dialog
+        setShowConfirmDialog(false);
+        
         setIsUploading(true);
         const formData = new FormData();
         formData.append('document', selectedFile);
